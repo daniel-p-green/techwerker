@@ -19,13 +19,11 @@ Use this skill to manage Tech Week as an event portfolio, not a static calendar.
 
 ## CLI
 
-Prefer the `techweek` command when it is on PATH. If PATH is stale, use the bundled script at the plugin root:
+Prefer the `techweek` command when it is on PATH. If PATH is stale, use the bundled script relative to this `SKILL.md`:
 
 ```bash
 scripts/techweek
 ```
-
-When resolving from this skill directory, the same script is also available at `scripts/techweek` relative to this `SKILL.md`.
 
 Common commands:
 

@@ -10,7 +10,7 @@ python3 -m json.tool plugins/techwerker/.codex-plugin/plugin.json >/dev/null
 python3 -m json.tool plugins/techwerker/.claude-plugin/plugin.json >/dev/null
 
 echo "== python compile =="
-python3 -m py_compile \
+PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
   plugins/techwerker/scripts/techweek \
   plugins/techwerker/skills/tech-week-concierge/scripts/techweek
 
@@ -25,5 +25,6 @@ if git grep -nE '/Users/danielgreen|gho_|Token:|password=|api[_-]?key|SECRET|PRI
 fi
 
 rm -f /tmp/techwerker-check-grep.txt
+find plugins/techwerker -type d -name __pycache__ -prune -exec rm -rf {} +
 
 echo "ok"

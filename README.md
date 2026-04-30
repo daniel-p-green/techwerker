@@ -58,11 +58,11 @@ For the RSVP handoff, Codex opens the next Partiful page, fills known fields fro
 codex plugin marketplace add daniel-p-green/techwerker
 ```
 
-Then enable the `Techwerker` plugin in Codex if it is not enabled automatically.
+Then enable the `Techwerker` plugin in Codex if it is not enabled automatically. The plugin commands work inside Codex; the terminal `techweek` command is optional and installed separately below.
 
 ### Optional Terminal CLI
 
-From a clone:
+From a clone, install the optional terminal command:
 
 ```bash
 ./scripts/install-cli.sh
@@ -78,6 +78,8 @@ techweek cockpit --city nyc
 techweek portfolio --city nyc
 techweek apply-queue --city nyc
 ```
+
+Inside Codex, the same workflow is available through `/techweek-setup`, `/techweek-cockpit`, `/techweek-portfolio`, and `/techweek-rsvp`.
 
 For first-time profile and preference entry:
 
