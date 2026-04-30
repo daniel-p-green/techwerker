@@ -4,7 +4,7 @@
 
 Techwerker is an unofficial local Codex helper for managing dense Tech Week calendars, RSVP queues, repeated Partiful fields, and RSVP state.
 
-It is built for attendees who want a better workflow than manually scanning hundreds of events, opening the same signup forms, and remembering which waitlists they already joined.
+It is built for attendees who want a better workflow than manually scanning 1,200+ events, opening the same signup forms, and remembering which waitlists they already joined.
 
 Techwerker is also a public demo of Codex as a practical workflow assistant: it filters a noisy event universe, remembers non-secret attendee details locally, works through RSVP queues, and hands repetitive browser tasks to Codex while keeping final submission under user control.
 
@@ -90,6 +90,27 @@ Persistent local state lives outside the repo:
 ```text
 ~/.codex/data/tech-week/<city>-<year>/
 ```
+
+## Reusable RSVP Info
+
+Techwerker stores non-secret profile fields locally so repeated Partiful forms do not start from scratch:
+
+```bash
+techweek profile --city nyc init
+techweek profile --city nyc show
+```
+
+The profile includes name, email, phone, company, title, LinkedIn, website, a one-line bio, a default why-attending answer, and a default comment template.
+
+If Partiful asks a custom required question that Techwerker does not recognize, record it as a missing field instead of blocking the RSVP queue:
+
+```bash
+techweek missing-fields --city nyc add <event-id> "What are you building?"
+techweek missing-fields --city nyc resolve <event-id> "What are you building?" "I build practical AI workflow tools." --reusable
+techweek missing-fields --city nyc show
+```
+
+Unresolved events are marked `needs-user-answer` and skipped by the apply queue until the missing answer is resolved. Optional unknown fields can be left blank.
 
 ## Plugin Commands
 

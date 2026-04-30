@@ -28,6 +28,7 @@ RSVP_STATES = [
     "shortlisted",
     "opened",
     "filled",
+    "needs-user-answer",
     "needs-user-submit",
     "applied",
     "waitlisted",
@@ -917,7 +918,7 @@ def pending_apply_queue(root: Path) -> list[dict[str, Any]]:
     portfolio_data = read_json(root / "portfolio.json", {"events": []})
     states = read_json(root / "rsvp-state.json", {})
     queue = []
-    skip_states = {"applied", "waitlisted", "accepted", "rejected", "skipped", "needs-user-submit"}
+    skip_states = {"applied", "waitlisted", "accepted", "rejected", "skipped", "needs-user-answer", "needs-user-submit"}
     for event in portfolio_data.get("events", []):
         if not event.get("externalHref"):
             continue
@@ -1165,6 +1166,51 @@ def set_rsvp_state(root: Path, event_id: str, state: str, note: str | None = Non
     write_json(path, data)
 
 
+def load_state_record(root: Path, event_id: str) -> tuple[Path, dict[str, Any], dict[str, Any]]:
+    path = root / "rsvp-state.json"
+    data = read_json(path, {})
+    record = data.get(str(event_id), {})
+    return path, data, record
+
+
+def add_missing_field(root: Path, event_id: str, label: str, required: bool, field_type: str, note: str | None) -> None:
+    path, data, record = load_state_record(root, event_id)
+    normalized = normalize_form_label(label)
+    fields = [field for field in record.get("missingFields", []) if field.get("normalizedLabel") != normalized]
+    fields.append(
+        {
+            "label": label,
+            "normalizedLabel": normalized,
+            "required": required,
+            "fieldType": field_type,
+            "updatedAt": utc_now(),
+        }
+    )
+    record.update({"state": "needs-user-answer", "missingFields": fields, "updatedAt": utc_now()})
+    if note:
+        record["note"] = note
+    data[str(event_id)] = record
+    write_json(path, data)
+
+
+def clear_missing_field(root: Path, event_id: str, label: str | None) -> int:
+    path, data, record = load_state_record(root, event_id)
+    fields = record.get("missingFields", [])
+    if label:
+        normalized = normalize_form_label(label)
+        fields = [field for field in fields if field.get("normalizedLabel") != normalized]
+    else:
+        fields = []
+    record["missingFields"] = fields
+    record["updatedAt"] = utc_now()
+    if not fields and record.get("state") == "needs-user-answer":
+        record["state"] = "opened"
+        record["note"] = "missing form fields resolved; revisit form before submit"
+    data[str(event_id)] = record
+    write_json(path, data)
+    return len(fields)
+
+
 def open_event(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     event = find_event(root, args.event_id)
@@ -1254,11 +1300,77 @@ def form_memory(args: argparse.Namespace) -> int:
     raise TechWeekError(f"unknown form-memory command: {command}")
 
 
+def missing_fields(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    command = args.missing_fields_command
+    states = read_json(root / "rsvp-state.json", {})
+
+    if command == "show":
+        records = states.items()
+        if args.event_id:
+            find_event(root, args.event_id)
+            records = [(str(args.event_id), states.get(str(args.event_id), {}))]
+        found = False
+        for event_id, record in records:
+            fields = record.get("missingFields") or []
+            if not fields:
+                continue
+            found = True
+            try:
+                event = find_event(root, event_id)
+                event_label = event.get("name")
+            except TechWeekError:
+                event_label = "[event missing from latest sync]"
+            print(f"{event_id} {record.get('state', 'needs-user-answer')} {event_label}")
+            for field in fields:
+                required = "required" if field.get("required", True) else "optional"
+                print(f"  - {required} {field.get('fieldType', 'text')}: {field.get('label')}")
+        if not found:
+            print("no missing form fields")
+        return 0
+
+    find_event(root, args.event_id)
+    if command == "add":
+        add_missing_field(root, args.event_id, args.label, not args.optional, args.field_type, args.note)
+        print(f"{args.event_id} -> needs-user-answer")
+        print(f"missing_field={args.label}")
+        print(root / "rsvp-state.json")
+        return 0
+
+    if command == "clear":
+        remaining = clear_missing_field(root, args.event_id, args.label)
+        print(f"{args.event_id} missing_fields_remaining={remaining}")
+        print(root / "rsvp-state.json")
+        return 0
+
+    if command == "resolve":
+        memory_path = root / "form-memory.json"
+        memory = ensure_form_memory(root)
+        label = normalize_form_label(args.label)
+        record = {"label": args.label, "value": args.value, "updatedAt": utc_now()}
+        if args.reusable:
+            memory.setdefault("reusable_answers", {})[label] = record
+            scope = "reusable"
+        else:
+            memory.setdefault("event_answers", {}).setdefault(str(args.event_id), {})[label] = record
+            scope = "event"
+        memory["updatedAt"] = utc_now()
+        write_json(memory_path, memory)
+        remaining = clear_missing_field(root, args.event_id, args.label)
+        print(f"remembered {scope} answer for {args.event_id}: {args.label}")
+        print(f"missing_fields_remaining={remaining}")
+        print(memory_path)
+        return 0
+
+    raise TechWeekError(f"unknown missing-fields command: {command}")
+
+
 def answer_sheet(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     event = find_event(root, args.event_id)
     profile_data = ensure_profile(root)
     form_memory_data = ensure_form_memory(root)
+    state_record = read_json(root / "rsvp-state.json", {}).get(str(event.get("id")), {})
     custom = profile_data.get("custom_answers") or {}
     lines = [
         f"# Partiful Answer Sheet: {event.get('name')}",
@@ -1306,6 +1418,14 @@ def answer_sheet(args: argparse.Namespace) -> int:
             lines.append(f"  - {record.get('label')}: {record.get('value')}")
     if not reusable_answers and not event_answers:
         lines.append("- No saved custom form answers yet.")
+    missing_fields = state_record.get("missingFields") or []
+    lines.extend(["", "## Missing Required Form Fields", ""])
+    if missing_fields:
+        for field in missing_fields:
+            required = "required" if field.get("required", True) else "optional"
+            lines.append(f"- {required} {field.get('fieldType', 'text')}: {field.get('label')}")
+    else:
+        lines.append("- None recorded. If Partiful asks an unknown required question, record it with `techweek missing-fields add`.")
     output = "\n".join(lines) + "\n"
     if args.write:
         path = root / "answer-sheets" / f"{event.get('id')}.md"
@@ -1464,6 +1584,29 @@ def build_parser() -> argparse.ArgumentParser:
     lookup_parser.add_argument("label")
     lookup_parser.add_argument("--event-id")
     lookup_parser.set_defaults(func=form_memory)
+
+    missing_fields_parser = sub.add_parser("missing-fields", parents=[common])
+    missing_fields_sub = missing_fields_parser.add_subparsers(dest="missing_fields_command", required=True)
+    missing_show_parser = missing_fields_sub.add_parser("show")
+    missing_show_parser.add_argument("event_id", nargs="?")
+    missing_show_parser.set_defaults(func=missing_fields)
+    missing_add_parser = missing_fields_sub.add_parser("add")
+    missing_add_parser.add_argument("event_id")
+    missing_add_parser.add_argument("label")
+    missing_add_parser.add_argument("--optional", action="store_true")
+    missing_add_parser.add_argument("--field-type", default="text", choices=["text", "textarea", "select", "checkbox", "radio", "url", "email", "phone", "unknown"])
+    missing_add_parser.add_argument("--note")
+    missing_add_parser.set_defaults(func=missing_fields)
+    missing_clear_parser = missing_fields_sub.add_parser("clear")
+    missing_clear_parser.add_argument("event_id")
+    missing_clear_parser.add_argument("--label")
+    missing_clear_parser.set_defaults(func=missing_fields)
+    missing_resolve_parser = missing_fields_sub.add_parser("resolve")
+    missing_resolve_parser.add_argument("event_id")
+    missing_resolve_parser.add_argument("label")
+    missing_resolve_parser.add_argument("value")
+    missing_resolve_parser.add_argument("--reusable", action="store_true", help="Save as a reusable answer instead of event-only.")
+    missing_resolve_parser.set_defaults(func=missing_fields)
 
     answers_parser = sub.add_parser("answers", parents=[common])
     answers_parser.add_argument("event_id")

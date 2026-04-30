@@ -41,7 +41,11 @@ techweek form-memory --city nyc show
 techweek portfolio --city nyc
 techweek apply-queue --city nyc
 techweek answers --city nyc <event-id> --write
+techweek missing-fields --city nyc add <event-id> "What are you building?"
+techweek missing-fields --city nyc resolve <event-id> "What are you building?" "Reusable or event-specific answer"
+techweek missing-fields --city nyc show
 techweek open --city nyc <event-id>
+techweek state --city nyc <event-id> needs-user-answer
 techweek state --city nyc <event-id> needs-user-submit
 techweek day-plan --city nyc 2026-06-03
 techweek export --city nyc --format md
@@ -75,9 +79,10 @@ For RSVP sessions:
 2. Run `techweek answers --city <city> <event-id> --write`.
 3. Open the event with `techweek open --city <city> <event-id>` or navigate the in-app browser to `externalHref`.
 4. Fill visible fields from `rsvp-profile.json`, `form-memory.json`, and `answer-sheets/<event-id>.md`.
-5. If a required field is unknown, ask once and offer to save it to profile or event-specific memory.
-6. Mark state `filled` or `needs-user-submit`.
-7. Stop before final submit unless explicitly authorized.
+5. If a required field is unknown, record it with `techweek missing-fields add`, ask once, and offer to save the answer as reusable or event-specific memory.
+6. If the user answers, save it with `techweek missing-fields resolve`. If they do not answer, leave the event in `needs-user-answer` and move to the next queue item.
+7. Mark state `filled` or `needs-user-submit` only after all required fields are resolved.
+8. Stop before final submit unless explicitly authorized.
 
 Use `form-memory` for repeated Partiful labels and custom questions:
 
@@ -85,6 +90,14 @@ Use `form-memory` for repeated Partiful labels and custom questions:
 techweek form-memory --city nyc map "LinkedIn URL" linkedin
 techweek form-memory --city nyc remember "What are you building?" "Reusable non-secret answer"
 techweek form-memory --city nyc remember "Why do you want to attend?" "Event-specific answer" --event-id <event-id>
+```
+
+Use `missing-fields` when Partiful asks something not covered by profile or form memory:
+
+```bash
+techweek missing-fields --city nyc add <event-id> "What are you building?"
+techweek missing-fields --city nyc resolve <event-id> "What are you building?" "I build practical AI workflow tools." --reusable
+techweek missing-fields --city nyc show
 ```
 
 Events with no `externalHref` are `invite-only-or-missing-link`, not broken.
