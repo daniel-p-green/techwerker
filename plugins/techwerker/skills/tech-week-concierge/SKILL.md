@@ -8,14 +8,15 @@ version: 0.1.0
 
 Use this skill to manage Tech Week as an event portfolio, not a static calendar. The workflow is:
 
-1. Start with `techweek setup` once per city.
-2. Use `techweek cockpit` as the regular command center.
-3. Sync the live Tech Week calendar when needed.
-4. Extract available facets, hosts, locations, and location clusters.
-5. Learn or update the user's profile and preferences.
-6. Build a geography-aware oversignup portfolio because many events are waitlisted or host-approved.
-7. Work the Partiful RSVP queue in assisted mode.
-8. Collapse accepted, waitlisted, and backup events into a practical day plan.
+1. Ask the user to choose a city using the calendar's labels: New York, Boston, or San Francisco (coming soon).
+2. Start with `techweek setup` once per city.
+3. Use `techweek cockpit` as the regular command center.
+4. Sync the live Tech Week calendar when needed.
+5. Extract available facets, hosts, locations, and location clusters.
+6. Learn or update the user's profile and preferences.
+7. Build a geography-aware oversignup portfolio because many events are waitlisted or host-approved.
+8. Work the Partiful RSVP queue in assisted mode.
+9. Collapse accepted, waitlisted, and backup events into a practical day plan.
 
 ## CLI
 
@@ -37,6 +38,11 @@ techweek sync --city all
 techweek diff --city nyc
 techweek interests --city nyc
 techweek profile --city nyc init
+techweek profile --city nyc missing
+techweek profile --city nyc set country "United States"
+techweek preferences --city nyc show
+techweek preferences --city nyc set-list topics "AI, B2B"
+techweek preferences --city nyc set-list preferred_formats "Networking, Panel / Fireside Chat"
 techweek form-memory --city nyc show
 techweek portfolio --city nyc
 techweek apply-queue --city nyc
@@ -60,6 +66,8 @@ State is stored outside the workspace:
 `cockpit` is the default command center. It summarizes sync status, recent changes, profile readiness, form memory, RSVP states, and next apply targets.
 
 `setup` is the first-run wizard. In non-interactive runs it initializes files and prints missing fields. In interactive runs it prompts for non-secret profile fields, interests, host priorities, location preferences, signup aggressiveness, and RSVP mode.
+
+For a brand-new user, prefer `/techweek-first-use`. First ask for the city using the calendar's labels: New York, Boston, or San Francisco (coming soon). Then collect the common RSVP basics once: name, email, phone number, company, role/title, country, LinkedIn profile, and optional goal of attending. Finally ask lightweight city-specific preferences: topics to prioritize, neighborhoods/location clusters to prefer, event types to prioritize or avoid, and start times to prefer or avoid.
 
 ## Safety Boundary
 

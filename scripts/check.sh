@@ -50,8 +50,30 @@ latest = {
     ],
 }
 (root / "latest.json").write_text(json.dumps(latest), encoding="utf-8")
+
+boston_root = pathlib.Path(sys.argv[1]) / ".codex" / "data" / "tech-week" / "boston-2026"
+boston_root.mkdir(parents=True)
+boston_latest = dict(latest)
+boston_latest["city"] = "boston"
+boston_latest["events"] = [
+    {
+        **latest["events"][0],
+        "id": "bos-1",
+        "city": "boston",
+        "name": "Fixture Boston AI Breakfast",
+        "location": "Kendall Square",
+    }
+]
+(boston_root / "latest.json").write_text(json.dumps(boston_latest), encoding="utf-8")
 PY
 HOME="$tmp_home" plugins/techwerker/scripts/techweek portfolio --city nyc --limit 1 >/dev/null
+HOME="$tmp_home" plugins/techwerker/scripts/techweek profile --city "New York" set country "United States" | grep -q 'country=saved'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek profile --city nyc missing | grep -q 'profile=missing display_name'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-list topics "AI, B2B" | grep -q 'topics=AI, B2B'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-list neighborhoods "Flatiron, Chelsea" | grep -q 'neighborhoods=Flatiron, Chelsea'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-list preferred_formats "Networking, Panel / Fireside Chat" | grep -q 'preferred_formats=Networking, Panel / Fireside Chat'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek portfolio --city Boston --limit 1 >/dev/null
+HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city Boston set-list neighborhoods "Cambridge, Kendall Square" | grep -q 'neighborhoods=Cambridge, Kendall Square'
 HOME="$tmp_home" plugins/techwerker/scripts/techweek apply-queue --city nyc --limit 1 | grep -q '^1 '
 HOME="$tmp_home" plugins/techwerker/scripts/techweek missing-fields --city nyc add 1 "What are you building?" >/dev/null
 if HOME="$tmp_home" plugins/techwerker/scripts/techweek apply-queue --city nyc --limit 1 | grep -q '^1 '; then

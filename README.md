@@ -85,6 +85,8 @@ For first-time profile and preference entry:
 techweek setup --city nyc --interactive
 ```
 
+Inside Codex, use `/techweek-first-use` for chat-based first-time setup. It asks the attendee to choose New York, Boston, or San Francisco (coming soon), collects name, email, phone number, company, role, country, LinkedIn profile, and an optional goal of attending, then saves reusable non-secret values locally.
+
 Persistent local state lives outside the repo:
 
 ```text
@@ -97,10 +99,23 @@ Techwerker stores non-secret profile fields locally so repeated Partiful forms d
 
 ```bash
 techweek profile --city nyc init
+techweek profile --city nyc missing
+techweek profile --city nyc set country "United States"
 techweek profile --city nyc show
+techweek preferences --city nyc show
 ```
 
-The profile includes name, email, phone, company, title, LinkedIn, website, a one-line bio, a default why-attending answer, and a default comment template.
+The profile includes name, email, phone, company, title, country, LinkedIn, website, a one-line bio, a default why-attending answer, and a default comment template.
+
+First-use preference setup can also save city-specific filters:
+
+```bash
+techweek preferences --city nyc set-list topics "AI, B2B"
+techweek preferences --city nyc set-list neighborhoods "Flatiron, Chelsea"
+techweek preferences --city nyc set-list preferred_formats "Networking, Panel / Fireside Chat"
+techweek preferences --city nyc set-list excluded_formats "Hackathon"
+techweek preferences --city nyc set-list time_windows "08:00-12:00, 12:00-17:00"
+```
 
 If Partiful asks a custom required question that Techwerker does not recognize, record it as a missing field instead of blocking the RSVP queue:
 
@@ -115,6 +130,7 @@ Unresolved events are marked `needs-user-answer` and skipped by the apply queue 
 ## Plugin Commands
 
 - `/techweek-setup`
+- `/techweek-first-use`
 - `/techweek-cockpit`
 - `/techweek-profile`
 - `/techweek-interests`

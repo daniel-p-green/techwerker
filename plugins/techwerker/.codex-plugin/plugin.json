@@ -1,7 +1,7 @@
 {
   "name": "techwerker",
   "version": "0.1.0",
-  "description": "Unofficial local Codex helper for managing dense Tech Week calendars, signup queues, repeated RSVP form fields, and RSVP state.",
+  "description": "Unofficial local Codex helper for first-time Tech Week setup, event filtering, signup queues, repeated RSVP fields, and RSVP state.",
   "author": {
     "name": "Daniel Green"
   },
@@ -20,8 +20,8 @@
   "commands": "./commands/",
   "interface": {
     "displayName": "Techwerker",
-    "shortDescription": "Manage Tech Week queues and RSVP form work",
-    "longDescription": "Unofficial local Codex helper for Tech Week attendees. It keeps persistent state under ~/.codex/data/tech-week, builds geography-aware oversignup portfolios, tracks RSVP state, stores non-secret form memory, and uses assisted browser filling while pausing before final submit by default. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
+    "shortDescription": "Set up Tech Week filters and RSVP queues",
+    "longDescription": "Unofficial local Codex helper for Tech Week attendees. First-time setup asks for New York, Boston, or San Francisco, stores reusable non-secret RSVP basics such as name, email, phone, company, role, country, and LinkedIn, then captures city-specific filter preferences for topics, neighborhoods, event types, and start times. It keeps persistent state under ~/.codex/data/tech-week, builds geography-aware oversignup portfolios, tracks RSVP state, and uses assisted browser filling while pausing before final submit by default. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
     "developerName": "Daniel Green",
     "category": "Productivity",
     "capabilities": [
@@ -33,7 +33,9 @@
     "privacyPolicyURL": "https://github.com/daniel-p-green/techwerker/blob/main/SECURITY.md",
     "termsOfServiceURL": "https://github.com/daniel-p-green/techwerker/blob/main/LICENSE",
     "defaultPrompt": [
-      "Set up Techwerker for NYC",
+      "Set up Techwerker for first-time use",
+      "Set up Techwerker for New York",
+      "Set up Techwerker for Boston",
       "Show my Techwerker cockpit",
       "Build my NY Tech Week portfolio",
       "Work through my Techwerker RSVP queue",

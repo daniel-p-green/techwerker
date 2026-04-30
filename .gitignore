@@ -6,3 +6,19 @@ __pycache__/
 .env
 .env.*
 
+# Techwerker local runtime state. Canonical state lives outside the repo under
+# ~/.codex/data/tech-week and may contain personal RSVP/profile details.
+/.codex/
+/data/tech-week/
+/tech-week-data/
+**/rsvp-profile.json
+**/form-memory.json
+**/rsvp-state.json
+**/answer-sheets/
+**/snapshots/
+**/exports/
+**/setup-summary.md
+**/shortlist.json
+**/portfolio.json
+**/interest-options.json
+**/latest.json

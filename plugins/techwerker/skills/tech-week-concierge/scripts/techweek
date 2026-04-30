@@ -39,6 +39,7 @@ RSVP_STATES = [
     "needs-review",
 ]
 CITY_ALIASES = {
+    "new york": "nyc",
     "new-york": "nyc",
     "new-york-city": "nyc",
     "ny": "nyc",
@@ -46,9 +47,19 @@ CITY_ALIASES = {
     "bos": "boston",
     "sf": "san-francisco",
     "sfo": "san-francisco",
+    "san francisco": "san-francisco",
     "san-francisco": "san-francisco",
 }
 DEFAULT_CITIES = ["nyc", "boston", "san-francisco"]
+PREFERENCE_LIST_FIELDS = [
+    "topics",
+    "neighborhoods",
+    "priority_hosts",
+    "preferred_formats",
+    "excluded_formats",
+    "time_windows",
+    "avoid_clusters",
+]
 
 LOCATION_CLUSTERS = {
     "nyc": {
@@ -106,22 +117,26 @@ PROFILE_FIELDS = [
     "phone",
     "company",
     "title",
+    "country",
     "linkedin",
     "website",
     "one_liner",
     "why_attending",
     "comment_template",
 ]
+FIRST_USE_PROFILE_FIELDS = ["display_name", "email", "phone", "company", "title", "country", "linkedin"]
+OPTIONAL_FIRST_USE_PROFILE_FIELDS = ["why_attending"]
 PROFILE_FIELD_LABELS = {
     "display_name": "Name",
     "email": "Email",
     "phone": "Phone",
     "company": "Company",
     "title": "Title / role",
+    "country": "Country",
     "linkedin": "LinkedIn URL",
     "website": "Website",
     "one_liner": "One-line bio",
-    "why_attending": "Default why-attending answer",
+    "why_attending": "Goal of attending / default why-attending answer",
     "comment_template": "Default Partiful comment",
 }
 DEFAULT_LABEL_MAPPINGS = {
@@ -137,12 +152,16 @@ DEFAULT_LABEL_MAPPINGS = {
     "role": "title",
     "title": "title",
     "job title": "title",
+    "country": "country",
+    "where are you based": "country",
+    "country of residence": "country",
     "linkedin": "linkedin",
     "linkedin url": "linkedin",
     "website": "website",
     "personal website": "website",
     "bio": "one_liner",
     "one liner": "one_liner",
+    "goal of attending": "why_attending",
     "why are you interested": "why_attending",
     "why do you want to attend": "why_attending",
     "comment": "comment_template",
@@ -492,6 +511,7 @@ def ensure_preferences(root: Path) -> dict[str, Any]:
         "topics": ["AI", "agents", "founder", "infrastructure", "engineering", "product"],
         "neighborhoods": [],
         "priority_hosts": [],
+        "preferred_formats": [],
         "excluded_formats": [],
         "time_windows": ["08:00-20:00"],
         "max_events_per_day": 4,
@@ -520,6 +540,7 @@ def ensure_profile(root: Path) -> dict[str, Any]:
         "phone": "",
         "company": "",
         "title": "",
+        "country": "",
         "linkedin": "",
         "website": "",
         "one_liner": "",
@@ -705,6 +726,10 @@ def score_event(event: dict[str, Any], prefs: dict[str, Any]) -> tuple[int, list
         if str(host).lower() in blob:
             score += 6
             reasons.append(f"host:{host}")
+    for preferred in prefs.get("preferred_formats", []):
+        if str(preferred).lower() in blob:
+            score += 3
+            reasons.append(f"format:{preferred}")
     for excluded in prefs.get("excluded_formats", []):
         if str(excluded).lower() in blob:
             score -= 8
@@ -938,8 +963,15 @@ def count_by_state(states: dict[str, Any]) -> dict[str, int]:
 
 
 def missing_profile_fields(profile_data: dict[str, Any]) -> list[str]:
-    required = ["display_name", "email", "company", "title", "linkedin"]
-    return [field for field in required if not str(profile_data.get(field) or "").strip()]
+    return [field for field in FIRST_USE_PROFILE_FIELDS if not str(profile_data.get(field) or "").strip()]
+
+
+def print_profile_summary(profile_data: dict[str, Any]) -> None:
+    missing = missing_profile_fields(profile_data)
+    optional_missing = [field for field in OPTIONAL_FIRST_USE_PROFILE_FIELDS if not str(profile_data.get(field) or "").strip()]
+    print(f"profile={'ready' if not missing else 'missing ' + ', '.join(missing)}")
+    if optional_missing:
+        print(f"optional_missing={', '.join(optional_missing)}")
 
 
 def print_event_line(event: dict[str, Any], prefix: str = "-") -> None:
@@ -978,6 +1010,7 @@ def write_setup_summary(root: Path, profile_data: dict[str, Any], prefs: dict[st
         f"- Topics: {format_csv_values(prefs.get('topics', []))}",
         f"- Priority hosts: {format_csv_values(prefs.get('priority_hosts', [])) or '[none]'}",
         f"- Preferred neighborhoods: {format_csv_values(prefs.get('neighborhoods', [])) or '[none]'}",
+        f"- Preferred formats: {format_csv_values(prefs.get('preferred_formats', [])) or '[none]'}",
         f"- Avoid clusters: {format_csv_values(prefs.get('avoid_clusters', [])) or '[none]'}",
         f"- Excluded formats: {format_csv_values(prefs.get('excluded_formats', [])) or '[none]'}",
         f"- Time windows: {format_csv_values(prefs.get('time_windows', []))}",
@@ -1023,6 +1056,7 @@ def setup(args: argparse.Namespace) -> int:
             prefs["topics"] = prompt_list("Topics to reward", prefs.get("topics", []))
             prefs["priority_hosts"] = prompt_list("Priority hosts", prefs.get("priority_hosts", []))
             prefs["neighborhoods"] = prompt_list("Preferred neighborhoods/location words", prefs.get("neighborhoods", []))
+            prefs["preferred_formats"] = prompt_list("Preferred event types/formats", prefs.get("preferred_formats", []))
             prefs["avoid_clusters"] = prompt_list("Avoid clusters", prefs.get("avoid_clusters", []))
             prefs["excluded_formats"] = prompt_list("Excluded formats/words", prefs.get("excluded_formats", []))
             prefs["time_windows"] = prompt_list("Time windows", prefs.get("time_windows", []))
@@ -1244,9 +1278,38 @@ def profile(args: argparse.Namespace) -> int:
         print(path)
     elif args.profile_command == "show":
         print(json.dumps(data, indent=2, sort_keys=True))
+    elif args.profile_command == "missing":
+        print_profile_summary(data)
+    elif args.profile_command == "set":
+        data[args.field] = args.value
+        write_json(path, data)
+        print(f"{args.field}=saved")
+        print_profile_summary(data)
+        print(path)
     else:
         print(f"initialized {path}")
+        print_profile_summary(data)
     return 0
+
+
+def preferences(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    prefs = ensure_preferences(root)
+    path = root / "preferences.json"
+    command = args.preferences_command
+    if command == "path":
+        print(path)
+        return 0
+    if command == "show":
+        print(json.dumps(prefs, indent=2, sort_keys=True))
+        return 0
+    if command == "set-list":
+        prefs[args.field] = parse_csv_values(args.values)
+        write_json(path, prefs)
+        print(f"{args.field}={format_csv_values(prefs[args.field]) or '[none]'}")
+        print(path)
+        return 0
+    raise TechWeekError(f"unknown preferences command: {command}")
 
 
 def form_memory(args: argparse.Namespace) -> int:
@@ -1388,6 +1451,7 @@ def answer_sheet(args: argparse.Namespace) -> int:
         f"- Phone: {profile_data.get('phone') or '[fill rsvp-profile.json]'}",
         f"- Company: {profile_data.get('company') or '[fill rsvp-profile.json]'}",
         f"- Title: {profile_data.get('title') or '[fill rsvp-profile.json]'}",
+        f"- Country: {profile_data.get('country') or '[fill rsvp-profile.json]'}",
         f"- LinkedIn: {profile_data.get('linkedin') or '[fill rsvp-profile.json]'}",
         f"- Website: {profile_data.get('website') or '[fill rsvp-profile.json]'}",
         "",
@@ -1564,8 +1628,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     profile_parser = sub.add_parser("profile", parents=[common])
     profile_sub = profile_parser.add_subparsers(dest="profile_command", required=True)
-    for name in ("init", "show", "path"):
+    for name in ("init", "show", "path", "missing"):
         profile_sub.add_parser(name).set_defaults(func=profile)
+    profile_set_parser = profile_sub.add_parser("set")
+    profile_set_parser.add_argument("field", choices=PROFILE_FIELDS)
+    profile_set_parser.add_argument("value")
+    profile_set_parser.set_defaults(func=profile)
+
+    preferences_parser = sub.add_parser("preferences", parents=[common])
+    preferences_sub = preferences_parser.add_subparsers(dest="preferences_command", required=True)
+    for name in ("show", "path"):
+        preferences_sub.add_parser(name).set_defaults(func=preferences)
+    preferences_set_list_parser = preferences_sub.add_parser("set-list")
+    preferences_set_list_parser.add_argument("field", choices=PREFERENCE_LIST_FIELDS)
+    preferences_set_list_parser.add_argument("values", help="Comma-separated values.")
+    preferences_set_list_parser.set_defaults(func=preferences)
 
     form_memory_parser = sub.add_parser("form-memory", parents=[common])
     form_memory_sub = form_memory_parser.add_subparsers(dest="form_memory_command", required=True)
