@@ -1,10 +1,10 @@
 ---
-name: Tech Week Concierge
+name: Techwerker
 description: Use when the user asks to plan Tech Week, sync NYC/Boston/SF Tech Week calendars, rank Tech Week events, build an oversignup portfolio, manage a Partiful RSVP queue, fill repeated RSVP information, or make Tech Week less of a chore.
 version: 0.1.0
 ---
 
-# Tech Week Concierge
+# Techwerker
 
 Use this skill to manage Tech Week as an event portfolio, not a static calendar. The workflow is:
 
