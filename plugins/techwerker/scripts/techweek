@@ -1419,7 +1419,7 @@ def answer_sheet(args: argparse.Namespace) -> int:
     if not reusable_answers and not event_answers:
         lines.append("- No saved custom form answers yet.")
     missing_fields = state_record.get("missingFields") or []
-    lines.extend(["", "## Missing Required Form Fields", ""])
+    lines.extend(["", "## Missing Form Fields", ""])
     if missing_fields:
         for field in missing_fields:
             required = "required" if field.get("required", True) else "optional"
