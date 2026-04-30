@@ -6,11 +6,13 @@ Techwerker is an unofficial local Codex helper for managing dense Tech Week cale
 
 It is built for attendees who want a better workflow than manually scanning hundreds of events, opening the same signup forms, and remembering which waitlists they already joined.
 
+Techwerker is also a public demo of Codex as a practical workflow assistant: it filters a noisy event universe, remembers non-secret attendee details locally, works through RSVP queues, and hands repetitive browser tasks to Codex while keeping final submission under user control.
+
 > Techwerker is not affiliated with, endorsed by, or sponsored by Tech Week, a16z, Partiful, or any event host.
 
 ## Why This Exists
 
-Tech Week calendars are high-volume, fast-changing, and waitlist-heavy. Many RSVP flows go through Partiful, and exact locations may stay hidden until an attendee is accepted.
+Tech Week calendars are high-volume, fast-changing, and waitlist-heavy. The real workflow drag is not any single form. It is repeatedly deciding what is worth attending, entering the same identity details, tracking waitlists, and remembering which signup pages still need action.
 
 Techwerker does not pretend to perfectly plan your whole week upfront. It helps you:
 
@@ -44,7 +46,7 @@ profile=missing display_name, email, company, title, linkedin
 form_memory=22 mappings, 0 reusable answers, 0 event answers
 ```
 
-For the RSVP handoff, Codex opens the next Partiful page, fills known fields from local profile/form memory, asks once for unknown required fields, and pauses before final submission.
+For the RSVP handoff, Codex opens the next Partiful page, fills known fields from local profile/form memory, asks once for unknown required fields, and pauses before final submission. The point is not that event forms are hard. The point is that obvious workflow drag accumulates fast in the wild, and Codex can remove it when code, browser tools, local state, and human approval work together.
 
 ## Install
 

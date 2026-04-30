@@ -2,6 +2,10 @@
 
 Use this for a live Codex or screen-recorded demo. Keep all profile values sanitized.
 
+Opening frame:
+
+> Techwerker turns Tech Week chaos into a fill-once workflow: find the events worth your time, build a smart RSVP queue, and let Codex remove the repetitive signup drag.
+
 ## Setup
 
 Use a clean or disposable profile state when recording:
@@ -12,7 +16,7 @@ techweek setup --city nyc --no-interactive
 
 Narration:
 
-> Techwerker keeps local state outside the repo and starts by setting up preferences, profile fields, and form memory.
+> The repeated work is identity entry and preference recall, so Techwerker starts by keeping local, non-secret profile and form memory outside the repo.
 
 ## Cockpit
 
@@ -30,7 +34,7 @@ Show:
 
 Narration:
 
-> This is the command center. It tells me what changed, what is ready, and what still needs attention.
+> This is the command center. It turns a noisy event universe into a short operational view: what changed, what is ready, and what still needs attention.
 
 ## Portfolio
 
@@ -46,7 +50,7 @@ Show:
 
 Narration:
 
-> Tech Week is waitlist-heavy, so the goal is not one perfect calendar. The goal is a good options portfolio.
+> The wedge is filtering. Tech Week is waitlist-heavy, so the goal is not one perfect calendar. The goal is a good options portfolio of events worth trying for.
 
 ## Apply Queue
 
@@ -62,7 +66,7 @@ Show:
 
 Narration:
 
-> Instead of remembering what I opened or applied to, I work from a queue.
+> Instead of manually remembering every open signup, I work from a queue with state.
 
 ## Browser / Computer Use Handoff
 
@@ -82,7 +86,7 @@ Then use Codex browser tools or Computer Use to:
 
 Narration:
 
-> Codex can fill the repetitive parts, but Techwerker pauses before the irreversible RSVP action.
+> This is the Codex proof point: code, browser tools, local state, and human approval working together on messy real-world knowledge work. Codex can fill the repetitive parts, and Techwerker pauses before the irreversible RSVP action.
 
 ## Recording Rules
 
