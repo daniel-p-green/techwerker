@@ -1,5 +1,5 @@
 {
-  "name": "techwerk",
+  "name": "techwerker",
   "version": "0.1.0",
   "description": "Unofficial local helper for managing Tech Week calendars, signup queues, repeated RSVP fields, and RSVP state.",
   "commands": "./commands/",
