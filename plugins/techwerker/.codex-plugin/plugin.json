@@ -1,5 +1,5 @@
 {
-  "name": "techwerker",
+  "name": "techwerk",
   "version": "0.1.0",
   "description": "Unofficial local Codex helper for managing dense Tech Week calendars, signup queues, repeated RSVP form fields, and RSVP state.",
   "author": {
@@ -19,7 +19,7 @@
   "skills": "./skills/",
   "commands": "./commands/",
   "interface": {
-    "displayName": "Techwerker",
+    "displayName": "Techwerk",
     "shortDescription": "Manage Tech Week queues and RSVP form work",
     "longDescription": "Unofficial local Codex helper for Tech Week attendees. It keeps persistent state under ~/.codex/data/tech-week, builds geography-aware oversignup portfolios, tracks RSVP state, stores non-secret form memory, and uses assisted browser filling while pausing before final submit by default. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
     "developerName": "Daniel Green",

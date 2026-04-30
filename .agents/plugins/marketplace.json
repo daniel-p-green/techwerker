@@ -1,11 +1,11 @@
 {
-  "name": "techwerker",
+  "name": "techwerk",
   "interface": {
-    "displayName": "Techwerker"
+    "displayName": "Techwerk"
   },
   "plugins": [
     {
-      "name": "techwerker",
+      "name": "techwerk",
       "source": {
         "source": "local",
         "path": "./plugins/techwerker"
@@ -18,4 +18,3 @@
     }
   ]
 }
-
