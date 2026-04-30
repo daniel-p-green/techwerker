@@ -1,0 +1,1491 @@
+#!/usr/bin/env python3
+"""Tech Week calendar helper for the Tech Week Concierge Codex skill."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import html
+import json
+import os
+import re
+import subprocess
+import sys
+import urllib.parse
+import urllib.request
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_BASE_URL = "https://www.tech-week.com/calendar"
+DATA_ROOT = Path.home() / ".codex" / "data" / "tech-week"
+RSVP_STATES = [
+    "new",
+    "target",
+    "shortlisted",
+    "opened",
+    "filled",
+    "needs-user-submit",
+    "applied",
+    "waitlisted",
+    "accepted",
+    "backup",
+    "rejected",
+    "skipped",
+    "needs-review",
+]
+CITY_ALIASES = {
+    "new-york": "nyc",
+    "new-york-city": "nyc",
+    "ny": "nyc",
+    "boston": "boston",
+    "bos": "boston",
+    "sf": "san-francisco",
+    "sfo": "san-francisco",
+    "san-francisco": "san-francisco",
+}
+DEFAULT_CITIES = ["nyc", "boston", "san-francisco"]
+
+LOCATION_CLUSTERS = {
+    "nyc": {
+        "midtown": "Midtown",
+        "hudson yards": "Midtown",
+        "murray hill": "Midtown",
+        "nomad": "Flatiron/NoMad",
+        "flatiron": "Flatiron/NoMad",
+        "gramercy": "Flatiron/NoMad",
+        "union square": "Flatiron/NoMad",
+        "chelsea": "Chelsea/West Side",
+        "meatpacking": "Chelsea/West Side",
+        "west village": "Downtown West",
+        "greenwich village": "Downtown West",
+        "soho": "SoHo/LES",
+        "lower east side": "SoHo/LES",
+        "east village": "SoHo/LES",
+        "chinatown": "SoHo/LES",
+        "tribeca": "Financial District/Tribeca",
+        "financial district": "Financial District/Tribeca",
+        "brooklyn": "Brooklyn",
+        "queens": "Queens",
+        "central park": "Uptown/Central Park",
+        "upper manhattan": "Uptown/Central Park",
+        "upper east side": "Uptown/Central Park",
+        "virtual": "Virtual",
+    },
+    "boston": {
+        "back bay": "Back Bay",
+        "cambridge": "Cambridge",
+        "kendall": "Cambridge",
+        "seaport": "Seaport",
+        "downtown": "Downtown Boston",
+        "financial district": "Downtown Boston",
+        "south end": "South End",
+        "somerville": "Somerville",
+        "virtual": "Virtual",
+    },
+    "san-francisco": {
+        "soma": "SoMa",
+        "south of market": "SoMa",
+        "financial district": "FiDi/Embarcadero",
+        "embarcadero": "FiDi/Embarcadero",
+        "mission": "Mission",
+        "hayes": "Hayes Valley",
+        "mission bay": "Mission Bay",
+        "virtual": "Virtual",
+    },
+}
+
+SLOT_ORDER = {"early": 0, "morning": 1, "noon": 2, "afternoon": 3, "evening": 4, "late": 5}
+PROFILE_FIELDS = [
+    "display_name",
+    "email",
+    "phone",
+    "company",
+    "title",
+    "linkedin",
+    "website",
+    "one_liner",
+    "why_attending",
+    "comment_template",
+]
+PROFILE_FIELD_LABELS = {
+    "display_name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "company": "Company",
+    "title": "Title / role",
+    "linkedin": "LinkedIn URL",
+    "website": "Website",
+    "one_liner": "One-line bio",
+    "why_attending": "Default why-attending answer",
+    "comment_template": "Default Partiful comment",
+}
+DEFAULT_LABEL_MAPPINGS = {
+    "name": "display_name",
+    "your name": "display_name",
+    "full name": "display_name",
+    "email": "email",
+    "email address": "email",
+    "phone": "phone",
+    "phone number": "phone",
+    "company": "company",
+    "organization": "company",
+    "role": "title",
+    "title": "title",
+    "job title": "title",
+    "linkedin": "linkedin",
+    "linkedin url": "linkedin",
+    "website": "website",
+    "personal website": "website",
+    "bio": "one_liner",
+    "one liner": "one_liner",
+    "why are you interested": "why_attending",
+    "why do you want to attend": "why_attending",
+    "comment": "comment_template",
+    "write something fun": "comment_template",
+}
+
+
+class TechWeekError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class Context:
+    city: str
+    year: int | None
+    base_url: str
+
+    @property
+    def calendar_url(self) -> str:
+        return f"{self.base_url.rstrip('/')}/{self.city}"
+
+
+def normalize_city(city: str) -> str:
+    key = city.strip().lower()
+    return CITY_ALIASES.get(key, key)
+
+
+def expand_cities(city: str) -> list[str]:
+    key = city.strip().lower()
+    if key in {"all", "known"}:
+        return DEFAULT_CITIES
+    if key in {"live", "launched"}:
+        return ["nyc", "boston"]
+    return [normalize_city(city)]
+
+
+def location_cluster(city: str, location: str | None) -> str:
+    if not location:
+        return "TBD"
+    normalized = location.lower()
+    for needle, cluster in LOCATION_CLUSTERS.get(city, {}).items():
+        if needle in normalized:
+            return cluster
+    return location
+
+
+def time_slot(time_value: str | None) -> str:
+    if not time_value or len(time_value) < 2:
+        return "unknown"
+    try:
+        hour = int(time_value[:2])
+    except ValueError:
+        return "unknown"
+    if hour < 8:
+        return "early"
+    if hour < 12:
+        return "morning"
+    if hour < 15:
+        return "noon"
+    if hour < 17:
+        return "afternoon"
+    if hour < 21:
+        return "evening"
+    return "late"
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def read_json(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def write_json(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, sort_keys=True)
+        f.write("\n")
+    tmp.replace(path)
+
+
+def normalize_form_label(label: str) -> str:
+    clean = re.sub(r"[^a-z0-9]+", " ", label.lower())
+    return re.sub(r"\s+", " ", clean).strip()
+
+
+def parse_csv_values(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def format_csv_values(values: list[Any]) -> str:
+    return ", ".join(str(value) for value in values if str(value).strip())
+
+
+def prompt_text(label: str, current: Any = "") -> str:
+    default = str(current or "")
+    suffix = f" [{default}]" if default else ""
+    entered = input(f"{label}{suffix}: ").strip()
+    return entered if entered else default
+
+
+def prompt_list(label: str, current: list[Any]) -> list[str]:
+    current_text = format_csv_values(current)
+    entered = input(f"{label} comma-separated [{current_text}]: ").strip()
+    if not entered:
+        return [str(item) for item in current if str(item).strip()]
+    return parse_csv_values(entered)
+
+
+def prompt_int(label: str, current: int, minimum: int = 1) -> int:
+    entered = input(f"{label} [{current}]: ").strip()
+    if not entered:
+        return current
+    try:
+        return max(minimum, int(entered))
+    except ValueError:
+        print(f"invalid number; keeping {current}", file=sys.stderr)
+        return current
+
+
+def prompt_choice(label: str, choices: list[str], current: str) -> str:
+    entered = input(f"{label} ({'/'.join(choices)}) [{current}]: ").strip().lower()
+    if not entered:
+        return current
+    if entered not in choices:
+        print(f"invalid choice; keeping {current}", file=sys.stderr)
+        return current
+    return entered
+
+
+def fetch_text(url: str) -> str:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 TechWeekConcierge/0.1",
+            "Accept": "text/html,application/xhtml+xml",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
+def fetch_json(url: str) -> Any:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 TechWeekConcierge/0.1",
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def decode_next_flight(html_text: str) -> str:
+    decoded_chunks: list[str] = []
+    for match in re.finditer(r"self\.__next_f\.push\(\[1,\"(.*?)\"\]\)</script>", html_text, re.S):
+        raw = match.group(1)
+        try:
+            decoded_chunks.append(json.loads(f'"{raw}"'))
+        except json.JSONDecodeError:
+            decoded_chunks.append(bytes(raw, "utf-8").decode("unicode_escape", errors="replace"))
+    if decoded_chunks:
+        return html.unescape("".join(decoded_chunks))
+    return html.unescape(html_text)
+
+
+def find_balanced_json_object(text: str, start: int) -> str:
+    if start >= len(text) or text[start] != "{":
+        raise TechWeekError("internal parser error: JSON object did not start at expected offset")
+    depth = 0
+    in_string = False
+    escape = False
+    for idx in range(start, len(text)):
+        ch = text[idx]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : idx + 1]
+    raise TechWeekError("could not find the end of the embedded events JSON")
+
+
+def extract_events(html_text: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    flight = decode_next_flight(html_text)
+    marker = '"data":{"pages":'
+    pos = flight.find(marker)
+    if pos < 0:
+        raise TechWeekError("could not find embedded Tech Week event data in page payload")
+    data_start = flight.rfind('"data":', 0, pos + len(marker))
+    brace_start = flight.find("{", data_start)
+    data_json = find_balanced_json_object(flight, brace_start)
+    data = json.loads(data_json)
+
+    events: list[dict[str, Any]] = []
+    pages = data.get("pages", [])
+    for page in pages:
+        for event in page.get("results", []):
+            events.append(event)
+    meta = {
+        "page_count": len(pages),
+        "reported_total": pages[0].get("total") if pages else len(events),
+        "per_page": pages[0].get("perPage") if pages else None,
+    }
+    if not events:
+        raise TechWeekError("embedded payload was found, but contained no events")
+    return events, meta
+
+
+def fetch_calendar_page(ctx: Context, page: int) -> dict[str, Any]:
+    input_payload = {
+        "0": {
+            "city": ctx.city,
+            "q": "",
+            "featured": False,
+            "day": "all",
+            "track": [],
+            "sponsor": [],
+            "theme": [],
+            "format": [],
+            "location": [],
+            "time": [],
+            "host": [],
+            "sortBy": "time",
+            "sortOrder": "asc",
+            "cursor": page,
+            "direction": "forward",
+        }
+    }
+    encoded = urllib.parse.quote(json.dumps(input_payload, separators=(",", ":")))
+    url = f"{ctx.base_url.rstrip('/')}/api/trpc/calendar.events?batch=1&input={encoded}"
+    data = fetch_json(url)
+    try:
+        return data[0]["result"]["data"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise TechWeekError(f"unexpected Tech Week API response for page {page}") from exc
+
+
+def fetch_all_events(ctx: Context, first_page_events: list[dict[str, Any]], meta: dict[str, Any], first_page_only: bool) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    total = int(meta.get("reported_total") or len(first_page_events))
+    per_page = int(meta.get("per_page") or len(first_page_events) or 48)
+    if first_page_only or total <= len(first_page_events) or per_page <= 0:
+        meta["source"] = "hydrated-page"
+        return first_page_events, meta
+
+    all_events = list(first_page_events)
+    by_id = {str(event.get("id")): event for event in first_page_events}
+    page_count = (total + per_page - 1) // per_page
+    fetched_pages = 1
+    for page in range(2, page_count + 1):
+        page_data = fetch_calendar_page(ctx, page)
+        fetched_pages += 1
+        for event in page_data.get("results", []):
+            all_events.append(event)
+            by_id[str(event.get("id"))] = event
+    merged = list(by_id.values())
+    meta.update(
+        {
+            "page_count": fetched_pages,
+            "expected_page_count": page_count,
+            "reported_total": total,
+            "fetched_raw_count": len(all_events),
+            "unique_event_count": len(merged),
+            "duplicate_or_overlap_count": len(all_events) - len(merged),
+            "per_page": per_page,
+            "source": "hydrated-page+trpc",
+        }
+    )
+    return merged, meta
+
+
+def event_year(events: list[dict[str, Any]], fallback: int | None) -> int:
+    if fallback:
+        return fallback
+    for event in events:
+        date = str(event.get("date") or "")
+        if re.match(r"^\d{4}-", date):
+            return int(date[:4])
+    return datetime.now().year
+
+
+def data_dir(city: str, year: int) -> Path:
+    return DATA_ROOT / f"{normalize_city(city)}-{year}"
+
+
+def stable_event_payload(event: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": event.get("id"),
+        "city": event.get("city"),
+        "date": event.get("date"),
+        "time": event.get("time"),
+        "location": event.get("location"),
+        "name": event.get("name"),
+        "company": event.get("company"),
+        "externalHref": event.get("externalHref"),
+        "isInviteOnly": event.get("isInviteOnly"),
+        "facets": event.get("facets") or {},
+    }
+
+
+def source_hash(payload: dict[str, Any]) -> str:
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def normalize_events(raw_events: list[dict[str, Any]], previous: dict[str, Any], now: str, city_slug: str) -> list[dict[str, Any]]:
+    prior_by_id = {str(e.get("id")): e for e in previous.get("events", [])}
+    normalized = []
+    for raw in raw_events:
+        payload = stable_event_payload(raw)
+        event_id = str(payload["id"])
+        prior = prior_by_id.get(event_id, {})
+        normalized.append(
+            {
+                **payload,
+                "statusHint": "invite-only-or-missing-link" if not payload.get("externalHref") else "open-link",
+                "locationCluster": location_cluster(city_slug, payload.get("location")),
+                "timeSlot": time_slot(payload.get("time")),
+                "sourceHash": source_hash(payload),
+                "firstSeenAt": prior.get("firstSeenAt") or now,
+                "lastSeenAt": now,
+            }
+        )
+    normalized.sort(key=lambda e: (str(e.get("date") or ""), str(e.get("time") or ""), str(e.get("name") or "")))
+    return normalized
+
+
+def ensure_preferences(root: Path) -> dict[str, Any]:
+    path = root / "preferences.json"
+    default = {
+        "topics": ["AI", "agents", "founder", "infrastructure", "engineering", "product"],
+        "neighborhoods": [],
+        "priority_hosts": [],
+        "excluded_formats": [],
+        "time_windows": ["08:00-20:00"],
+        "max_events_per_day": 4,
+        "signup_multiplier": 3,
+        "target_events_per_slot": 1,
+        "cluster_first": True,
+        "avoid_clusters": [],
+        "rsvp_mode": "manual",
+    }
+    prefs = read_json(path, default)
+    changed = False
+    for key, value in default.items():
+        if key not in prefs:
+            prefs[key] = value
+            changed = True
+    if changed or not path.exists():
+        write_json(path, prefs)
+    return prefs
+
+
+def ensure_profile(root: Path) -> dict[str, Any]:
+    path = root / "rsvp-profile.json"
+    default = {
+        "display_name": "",
+        "email": "",
+        "phone": "",
+        "company": "",
+        "title": "",
+        "linkedin": "",
+        "website": "",
+        "one_liner": "",
+        "why_attending": "",
+        "comment_template": "Excited to join and meet builders working on AI, product, and founder workflows.",
+        "field_aliases": DEFAULT_LABEL_MAPPINGS,
+        "custom_answers": {},
+        "do_not_store": ["passwords", "one_time_codes", "payment_details"],
+    }
+    profile = read_json(path, default)
+    changed = False
+    for key, value in default.items():
+        if key not in profile:
+            profile[key] = value
+            changed = True
+    if changed or not path.exists():
+        write_json(path, profile)
+    return profile
+
+
+def ensure_form_memory(root: Path) -> dict[str, Any]:
+    path = root / "form-memory.json"
+    default = {
+        "version": 1,
+        "label_mappings": DEFAULT_LABEL_MAPPINGS,
+        "reusable_answers": {},
+        "event_answers": {},
+        "do_not_store": ["passwords", "one_time_codes", "payment_details"],
+        "updatedAt": utc_now(),
+    }
+    memory = read_json(path, default)
+    changed = False
+    for key, value in default.items():
+        if key not in memory:
+            memory[key] = value
+            changed = True
+    mappings = memory.get("label_mappings") or {}
+    for label, profile_key in DEFAULT_LABEL_MAPPINGS.items():
+        normalized = normalize_form_label(label)
+        if normalized not in mappings:
+            mappings[normalized] = profile_key
+            changed = True
+    if mappings != memory.get("label_mappings"):
+        memory["label_mappings"] = mappings
+        changed = True
+    if changed or not path.exists():
+        memory["updatedAt"] = utc_now()
+        write_json(path, memory)
+    return memory
+
+
+def load_latest(root: Path) -> dict[str, Any]:
+    return read_json(root / "latest.json", {"events": [], "syncedAt": None, "meta": {}})
+
+
+def sync_one(city: str, args: argparse.Namespace) -> int:
+    ctx = Context(normalize_city(city), args.year, args.base_url)
+    html_text = fetch_text(ctx.calendar_url)
+    raw_events, meta = extract_events(html_text)
+    raw_events, meta = fetch_all_events(ctx, raw_events, meta, args.first_page)
+    year = event_year(raw_events, ctx.year)
+    root = data_dir(ctx.city, year)
+    now = utc_now()
+    previous = load_latest(root)
+    events = normalize_events(raw_events, previous, now, ctx.city)
+    latest = {
+        "city": ctx.city,
+        "year": year,
+        "sourceUrl": ctx.calendar_url,
+        "syncedAt": now,
+        "meta": meta,
+        "events": events,
+    }
+    root.mkdir(parents=True, exist_ok=True)
+    ensure_preferences(root)
+    ensure_profile(root)
+    ensure_form_memory(root)
+    write_json(root / "latest.json", latest)
+    write_json(root / "snapshots" / f"{now.replace(':', '-')}.json", latest)
+    open_links = sum(1 for e in events if e.get("externalHref"))
+    review = len(events) - open_links
+    print(f"synced {len(events)} events for {ctx.city}-{year}")
+    print(f"reported_total={meta.get('reported_total')} pages={meta.get('page_count')} per_page={meta.get('per_page')} source={meta.get('source')}")
+    if meta.get("fetched_raw_count") is not None:
+        print(f"fetched_raw={meta.get('fetched_raw_count')} unique={meta.get('unique_event_count')} duplicate_or_overlap={meta.get('duplicate_or_overlap_count')}")
+    print(f"open_links={open_links} needs_review={review}")
+    print(root)
+    return 0
+
+
+def sync(args: argparse.Namespace) -> int:
+    failures = 0
+    for city in expand_cities(args.city):
+        try:
+            print(f"== {city} ==") if len(expand_cities(args.city)) > 1 else None
+            sync_one(city, args)
+        except Exception as exc:
+            failures += 1
+            print(f"{city}: sync failed or calendar not launched: {exc}", file=sys.stderr)
+    return 1 if failures and len(expand_cities(args.city)) == failures else 0
+
+
+def snapshot_diff(root: Path) -> dict[str, Any]:
+    snapshots = sorted((root / "snapshots").glob("*.json"))
+    latest = load_latest(root)
+    if len(snapshots) < 2:
+        return {"ready": False, "latestEvents": len(latest.get("events", [])), "added": [], "changed": [], "removed": []}
+    older = read_json(snapshots[-2], {})
+    current = read_json(snapshots[-1], {})
+    old_by_id = {str(e.get("id")): e for e in older.get("events", [])}
+    new_by_id = {str(e.get("id")): e for e in current.get("events", [])}
+    added = [e for k, e in new_by_id.items() if k not in old_by_id]
+    removed = [e for k, e in old_by_id.items() if k not in new_by_id]
+    changed = []
+    watched_fields = ["date", "time", "location", "externalHref", "isInviteOnly", "name", "company"]
+    for key, event in new_by_id.items():
+        old = old_by_id.get(key)
+        if not old or old.get("sourceHash") == event.get("sourceHash"):
+            continue
+        changes = {field: [old.get(field), event.get(field)] for field in watched_fields if old.get(field) != event.get(field)}
+        changed.append({"id": event.get("id"), "name": event.get("name"), "changes": changes})
+    return {"ready": True, "added": added, "changed": changed, "removed": removed}
+
+
+def diff_events(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    diff = snapshot_diff(root)
+    if not diff.get("ready"):
+        print("not enough snapshots to diff yet")
+        print(f"latest_events={diff.get('latestEvents', 0)}")
+        return 0
+    added = diff["added"]
+    changed = diff["changed"]
+    removed = diff["removed"]
+    print(f"added={len(added)} changed={len(changed)} removed={len(removed)}")
+    for label, rows in (("ADDED", added[:10]), ("CHANGED", changed[:10]), ("REMOVED", removed[:10])):
+        if rows:
+            print(f"\n{label}")
+            for row in rows:
+                if label == "CHANGED":
+                    print(f"- {row['id']} {row['name']}: {json.dumps(row['changes'], ensure_ascii=False)}")
+                else:
+                    print(f"- {row.get('id')} {row.get('date')} {row.get('time')} {row.get('name')}")
+    return 0
+
+
+def text_blob(event: dict[str, Any]) -> str:
+    pieces = [
+        event.get("name"),
+        event.get("company"),
+        event.get("location"),
+        json.dumps(event.get("facets") or {}, ensure_ascii=False),
+    ]
+    return " ".join(str(p or "") for p in pieces).lower()
+
+
+def in_time_window(event_time: str, windows: list[str]) -> bool:
+    if not windows:
+        return True
+    t = event_time[:5]
+    for window in windows:
+        if "-" not in window:
+            continue
+        start, end = window.split("-", 1)
+        if start <= t <= end:
+            return True
+    return False
+
+
+def score_event(event: dict[str, Any], prefs: dict[str, Any]) -> tuple[int, list[str]]:
+    blob = text_blob(event)
+    score = 0
+    reasons: list[str] = []
+    for topic in prefs.get("topics", []):
+        if str(topic).lower() in blob:
+            score += 5
+            reasons.append(f"topic:{topic}")
+    for neighborhood in prefs.get("neighborhoods", []):
+        if str(neighborhood).lower() in str(event.get("location") or "").lower():
+            score += 4
+            reasons.append(f"location:{neighborhood}")
+    for host in prefs.get("priority_hosts", []):
+        if str(host).lower() in blob:
+            score += 6
+            reasons.append(f"host:{host}")
+    for excluded in prefs.get("excluded_formats", []):
+        if str(excluded).lower() in blob:
+            score -= 8
+            reasons.append(f"excluded:{excluded}")
+    if event.get("externalHref"):
+        score += 1
+    else:
+        score -= 2
+        reasons.append("needs-review")
+    if in_time_window(str(event.get("time") or ""), prefs.get("time_windows", [])):
+        score += 2
+    else:
+        score -= 3
+        reasons.append("outside-time-window")
+    if event.get("isInviteOnly"):
+        score -= 1
+        reasons.append("invite-only")
+    cluster = event.get("locationCluster") or event.get("location") or "TBD"
+    if cluster in set(prefs.get("avoid_clusters", [])):
+        score -= 6
+        reasons.append(f"avoid-cluster:{cluster}")
+    return score, reasons
+
+
+def scored_events(events: list[dict[str, Any]], prefs: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for event in events:
+        score, reasons = score_event(event, prefs)
+        rows.append({**event, "score": score, "reasons": reasons})
+    rows.sort(
+        key=lambda e: (
+            str(e.get("date") or ""),
+            SLOT_ORDER.get(str(e.get("timeSlot") or ""), 99),
+            -int(e.get("score") or 0),
+            str(e.get("time") or ""),
+            str(e.get("name") or ""),
+        )
+    )
+    return rows
+
+
+def shortlist(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    latest = load_latest(root)
+    prefs = ensure_preferences(root)
+    rows = []
+    per_day: dict[str, int] = {}
+    daily_cap = int(prefs.get("max_events_per_day") or 4)
+    for event in latest.get("events", []):
+        score, reasons = score_event(event, prefs)
+        rows.append({**event, "score": score, "reasons": reasons})
+    rows.sort(key=lambda e: (-int(e["score"]), str(e.get("date") or ""), str(e.get("time") or ""), str(e.get("name") or "")))
+    selected = []
+    for event in rows:
+        day = str(event.get("date") or "unknown")
+        if per_day.get(day, 0) >= daily_cap:
+            continue
+        selected.append(event)
+        per_day[day] = per_day.get(day, 0) + 1
+        if len(selected) >= args.limit:
+            break
+    write_json(root / "shortlist.json", {"generatedAt": utc_now(), "events": selected})
+    for event in selected:
+        print(f"{event['score']:>3} {event.get('id')} {event.get('date')} {event.get('time')[:5]} {event.get('name')}")
+        if event.get("externalHref"):
+            print(f"    {event.get('externalHref')}")
+        else:
+            print("    needs-review: invite-only-or-missing-link")
+    print(f"\nwrote {root / 'shortlist.json'}")
+    return 0
+
+
+def count_values(values: list[str]) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    for value in values:
+        clean = str(value or "").strip()
+        if clean:
+            counts[clean] = counts.get(clean, 0) + 1
+    return [{"value": value, "count": count} for value, count in sorted(counts.items(), key=lambda item: (-item[1], item[0].lower()))]
+
+
+def collect_facet_values(value: Any) -> list[str]:
+    values: list[str] = []
+    if isinstance(value, dict):
+        if value.get("label"):
+            values.append(str(value["label"]))
+        else:
+            for nested in value.values():
+                values.extend(collect_facet_values(nested))
+    elif isinstance(value, list):
+        for item in value:
+            values.extend(collect_facet_values(item))
+    elif value:
+        values.append(str(value))
+    return values
+
+
+def event_facet_values(event: dict[str, Any]) -> list[str]:
+    facets = event.get("facets") or {}
+    values: list[str] = []
+    if isinstance(facets, dict):
+        for value in facets.values():
+            values.extend(collect_facet_values(value))
+    elif isinstance(facets, list):
+        values.extend(collect_facet_values(facets))
+    return values
+
+
+def interests(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    output = build_interest_options(root, args.limit)
+    for section in ("facets", "hosts", "clusters", "timeSlots"):
+        print(f"\n## {section}")
+        for row in output[section][: min(args.limit, 20)]:
+            print(f"{row['count']:>4} {row['value']}")
+    print(f"\nwrote {root / 'interest-options.json'}")
+    return 0
+
+
+def build_interest_options(root: Path, limit: int = 80) -> dict[str, Any]:
+    latest = load_latest(root)
+    events = latest.get("events", [])
+    output = {
+        "generatedAt": utc_now(),
+        "city": latest.get("city"),
+        "year": latest.get("year"),
+        "eventCount": len(events),
+        "facets": count_values([value for event in events for value in event_facet_values(event)])[:limit],
+        "hosts": count_values([str(event.get("company") or "") for event in events])[:limit],
+        "locations": count_values([str(event.get("location") or "") for event in events])[:limit],
+        "clusters": count_values([str(event.get("locationCluster") or "") for event in events])[:limit],
+        "timeSlots": count_values([str(event.get("timeSlot") or "") for event in events]),
+    }
+    write_json(root / "interest-options.json", output)
+    return output
+
+
+def portfolio(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    latest = load_latest(root)
+    prefs = ensure_preferences(root)
+    multiplier = args.multiplier or int(prefs.get("signup_multiplier") or 3)
+    target_per_slot = args.target_per_slot or int(prefs.get("target_events_per_slot") or 1)
+    per_bucket_limit = max(1, multiplier * target_per_slot)
+
+    buckets: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for event in scored_events(latest.get("events", []), prefs):
+        if args.open_links_only and not event.get("externalHref"):
+            continue
+        if event.get("timeSlot") in {"early", "late", "unknown"} and not args.include_edge_slots:
+            continue
+        buckets.setdefault((str(event.get("date")), str(event.get("timeSlot"))), []).append(event)
+
+    selected: list[dict[str, Any]] = []
+    for key in sorted(buckets, key=lambda k: (k[0], SLOT_ORDER.get(k[1], 99))):
+        bucket = sorted(buckets[key], key=lambda e: (-int(e.get("score") or 0), str(e.get("time") or ""), str(e.get("name") or "")))
+        cluster_counts: dict[str, int] = {}
+        picks = []
+        for event in bucket:
+            cluster = str(event.get("locationCluster") or event.get("location") or "TBD")
+            if prefs.get("cluster_first") and cluster_counts.get(cluster, 0) >= max(1, target_per_slot + 1):
+                continue
+            picks.append(event)
+            cluster_counts[cluster] = cluster_counts.get(cluster, 0) + 1
+            if len(picks) >= per_bucket_limit:
+                break
+        for rank, event in enumerate(picks, 1):
+            selected.append({**event, "portfolioRank": rank, "portfolioBucket": f"{key[0]}:{key[1]}", "portfolioAction": "apply"})
+
+    output = {
+        "generatedAt": utc_now(),
+        "strategy": {
+            "signupMultiplier": multiplier,
+            "targetEventsPerSlot": target_per_slot,
+            "perBucketLimit": per_bucket_limit,
+            "openLinksOnly": args.open_links_only,
+        },
+        "events": selected,
+    }
+    write_json(root / "portfolio.json", output)
+
+    current_bucket = None
+    for event in selected[: args.limit]:
+        bucket = event["portfolioBucket"]
+        if bucket != current_bucket:
+            print(f"\n## {bucket}")
+            current_bucket = bucket
+        link_status = "link" if event.get("externalHref") else "needs-review"
+        print(
+            f"{event['portfolioRank']}. score={event['score']} {event.get('id')} "
+            f"{str(event.get('time') or '')[:5]} [{event.get('locationCluster')}] "
+            f"{event.get('name')} ({link_status})"
+        )
+    print(f"\nwrote {root / 'portfolio.json'}")
+    return 0
+
+
+def apply_queue(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    queue = pending_apply_queue(root)
+    for event in queue[: args.limit]:
+        print(
+            f"{event.get('id')} {event.get('date')} {str(event.get('time') or '')[:5]} "
+            f"[{event.get('locationCluster')}] {event.get('name')}\n  {event.get('externalHref')}"
+        )
+    print(f"\nqueue={min(len(queue), args.limit)} shown / {len(queue)} pending")
+    return 0
+
+
+def pending_apply_queue(root: Path) -> list[dict[str, Any]]:
+    portfolio_data = read_json(root / "portfolio.json", {"events": []})
+    states = read_json(root / "rsvp-state.json", {})
+    queue = []
+    skip_states = {"applied", "waitlisted", "accepted", "rejected", "skipped", "needs-user-submit"}
+    for event in portfolio_data.get("events", []):
+        if not event.get("externalHref"):
+            continue
+        state = states.get(str(event.get("id")), {}).get("state", "new")
+        if state in skip_states:
+            continue
+        queue.append(event)
+    return queue
+
+
+def count_by_state(states: dict[str, Any]) -> dict[str, int]:
+    counts = {state: 0 for state in RSVP_STATES}
+    for record in states.values():
+        state = str(record.get("state") or "new")
+        counts[state] = counts.get(state, 0) + 1
+    return {state: count for state, count in counts.items() if count}
+
+
+def missing_profile_fields(profile_data: dict[str, Any]) -> list[str]:
+    required = ["display_name", "email", "company", "title", "linkedin"]
+    return [field for field in required if not str(profile_data.get(field) or "").strip()]
+
+
+def print_event_line(event: dict[str, Any], prefix: str = "-") -> None:
+    print(
+        f"{prefix} {event.get('id')} {event.get('date')} {str(event.get('time') or '')[:5]} "
+        f"[{event.get('locationCluster')}] {event.get('name')}"
+    )
+
+
+def setup_root(args: argparse.Namespace) -> Path:
+    city = normalize_city(args.city)
+    try:
+        root = resolve_existing_root(city, args.year)
+    except TechWeekError:
+        if args.no_sync:
+            raise
+        print(f"no local state for {city}; syncing first")
+        sync_one(city, args)
+        root = resolve_existing_root(city, args.year)
+    if args.sync:
+        sync_one(city, args)
+        root = resolve_existing_root(city, args.year)
+    return root
+
+
+def write_setup_summary(root: Path, profile_data: dict[str, Any], prefs: dict[str, Any], interest_options: dict[str, Any]) -> Path:
+    missing = missing_profile_fields(profile_data)
+    top_facets = ", ".join(row["value"] for row in interest_options.get("facets", [])[:10])
+    top_hosts = ", ".join(row["value"] for row in interest_options.get("hosts", [])[:10])
+    top_clusters = ", ".join(row["value"] for row in interest_options.get("clusters", [])[:10])
+    lines = [
+        "# Tech Week Setup",
+        "",
+        f"- State root: {root}",
+        f"- Profile: {'ready' if not missing else 'missing ' + ', '.join(missing)}",
+        f"- Topics: {format_csv_values(prefs.get('topics', []))}",
+        f"- Priority hosts: {format_csv_values(prefs.get('priority_hosts', [])) or '[none]'}",
+        f"- Preferred neighborhoods: {format_csv_values(prefs.get('neighborhoods', [])) or '[none]'}",
+        f"- Avoid clusters: {format_csv_values(prefs.get('avoid_clusters', [])) or '[none]'}",
+        f"- Excluded formats: {format_csv_values(prefs.get('excluded_formats', [])) or '[none]'}",
+        f"- Time windows: {format_csv_values(prefs.get('time_windows', []))}",
+        f"- Signup multiplier: {prefs.get('signup_multiplier')}",
+        f"- RSVP mode: {prefs.get('rsvp_mode')}",
+        "",
+        "## Available Signals",
+        "",
+        f"- Top facets: {top_facets}",
+        f"- Top hosts: {top_hosts}",
+        f"- Top clusters: {top_clusters}",
+        "",
+        "## Next Commands",
+        "",
+        f"- `techweek cockpit --city {root.name.rsplit('-', 1)[0]}`",
+        f"- `techweek portfolio --city {root.name.rsplit('-', 1)[0]}`",
+        f"- `techweek apply-queue --city {root.name.rsplit('-', 1)[0]}`",
+    ]
+    path = root / "setup-summary.md"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def setup(args: argparse.Namespace) -> int:
+    root = setup_root(args)
+    profile_data = ensure_profile(root)
+    prefs = ensure_preferences(root)
+    ensure_form_memory(root)
+    interest_options = build_interest_options(root, args.limit)
+    interactive = bool(args.interactive or (sys.stdin.isatty() and not args.no_interactive))
+
+    if interactive:
+        print(f"Tech Week setup for {root.name}")
+        print("Press Enter to keep an existing value. Do not enter secrets or credentials.")
+        if not args.preferences_only:
+            for field in PROFILE_FIELDS:
+                profile_data[field] = prompt_text(PROFILE_FIELD_LABELS.get(field, field), profile_data.get(field, ""))
+            write_json(root / "rsvp-profile.json", profile_data)
+        if not args.profile_only:
+            print("\nTop facets:", format_csv_values([row["value"] for row in interest_options.get("facets", [])[:12]]))
+            print("Top hosts:", format_csv_values([row["value"] for row in interest_options.get("hosts", [])[:12]]))
+            print("Top clusters:", format_csv_values([row["value"] for row in interest_options.get("clusters", [])[:12]]))
+            prefs["topics"] = prompt_list("Topics to reward", prefs.get("topics", []))
+            prefs["priority_hosts"] = prompt_list("Priority hosts", prefs.get("priority_hosts", []))
+            prefs["neighborhoods"] = prompt_list("Preferred neighborhoods/location words", prefs.get("neighborhoods", []))
+            prefs["avoid_clusters"] = prompt_list("Avoid clusters", prefs.get("avoid_clusters", []))
+            prefs["excluded_formats"] = prompt_list("Excluded formats/words", prefs.get("excluded_formats", []))
+            prefs["time_windows"] = prompt_list("Time windows", prefs.get("time_windows", []))
+            prefs["signup_multiplier"] = prompt_int("Signup multiplier", int(prefs.get("signup_multiplier") or 3))
+            prefs["target_events_per_slot"] = prompt_int("Target events per slot", int(prefs.get("target_events_per_slot") or 1))
+            prefs["rsvp_mode"] = prompt_choice("Default RSVP mode", ["manual", "assisted", "full-auto"], str(prefs.get("rsvp_mode") or "manual"))
+            write_json(root / "preferences.json", prefs)
+
+    summary_path = write_setup_summary(root, profile_data, prefs, interest_options)
+    missing = missing_profile_fields(profile_data)
+    print(f"setup_root={root}")
+    print(f"profile={'ready' if not missing else 'missing ' + ', '.join(missing)}")
+    print(f"preferences={root / 'preferences.json'}")
+    print(f"profile_path={root / 'rsvp-profile.json'}")
+    print(f"form_memory={root / 'form-memory.json'}")
+    print(f"interest_options={root / 'interest-options.json'}")
+    print(f"summary={summary_path}")
+    if not interactive and missing:
+        print("\nRun `techweek setup --city {city} --interactive` to fill missing profile fields.".format(city=normalize_city(args.city)))
+    print("\nNext:")
+    print(f"  techweek cockpit --city {normalize_city(args.city)}")
+    print(f"  techweek portfolio --city {normalize_city(args.city)}")
+    print(f"  techweek apply-queue --city {normalize_city(args.city)}")
+    return 0
+
+
+def cockpit(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    latest = load_latest(root)
+    events = latest.get("events", [])
+    portfolio_data = read_json(root / "portfolio.json", {"events": []})
+    states = read_json(root / "rsvp-state.json", {})
+    profile_data = ensure_profile(root)
+    form_memory_data = ensure_form_memory(root)
+    diff = snapshot_diff(root)
+    queue = pending_apply_queue(root)
+
+    open_links = sum(1 for event in events if event.get("externalHref"))
+    needs_review = len(events) - open_links
+    state_counts = count_by_state(states)
+    missing_fields = missing_profile_fields(profile_data)
+    reusable_answers = form_memory_data.get("reusable_answers") or {}
+    event_answers = form_memory_data.get("event_answers") or {}
+
+    print(f"# Tech Week Cockpit: {latest.get('city')}-{latest.get('year')}")
+    print(f"state_root={root}")
+    print(f"synced={latest.get('syncedAt')} events={len(events)} open_links={open_links} needs_review={needs_review}")
+    print(f"portfolio_targets={len(portfolio_data.get('events', []))} apply_queue_pending={len(queue)}")
+    print(f"profile={'missing ' + ', '.join(missing_fields) if missing_fields else 'ready'}")
+    print(
+        "form_memory="
+        f"{len(form_memory_data.get('label_mappings') or {})} mappings, "
+        f"{len(reusable_answers)} reusable answers, {sum(len(v) for v in event_answers.values())} event answers"
+    )
+
+    if state_counts:
+        print("\n## RSVP State")
+        for state, count in sorted(state_counts.items(), key=lambda item: (RSVP_STATES.index(item[0]) if item[0] in RSVP_STATES else 99, item[0])):
+            print(f"- {state}: {count}")
+
+    if diff.get("ready"):
+        print("\n## Recent Calendar Changes")
+        print(f"- added={len(diff['added'])} changed={len(diff['changed'])} removed={len(diff['removed'])}")
+        for event in diff["added"][: args.limit]:
+            print_event_line(event)
+    else:
+        print("\n## Recent Calendar Changes")
+        print(f"- not enough snapshots yet; latest_events={diff.get('latestEvents', 0)}")
+
+    print("\n## Next Apply Queue")
+    if queue:
+        for event in queue[: args.limit]:
+            print_event_line(event)
+    else:
+        print("- no pending apply targets")
+
+    if args.date:
+        day_events = [event for event in portfolio_data.get("events", []) if str(event.get("date")) == args.date]
+        if day_events:
+            print(f"\n## Day Focus: {args.date}")
+            day_events.sort(key=lambda e: (SLOT_ORDER.get(str(e.get("timeSlot")), 99), str(e.get("time") or ""), -int(e.get("score") or 0)))
+            for event in day_events[: args.limit]:
+                state = states.get(str(event.get("id")), {}).get("state", "target")
+                print(f"- {state}: {str(event.get('time') or '')[:5]} [{event.get('locationCluster')}] {event.get('name')} id={event.get('id')}")
+        else:
+            print(f"\n## Day Focus: {args.date}")
+            print("- no portfolio targets for this date")
+    return 0
+
+
+def day_plan(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    portfolio_data = read_json(root / "portfolio.json", {"events": []})
+    states = read_json(root / "rsvp-state.json", {})
+    events = [e for e in portfolio_data.get("events", []) if str(e.get("date")) == args.date]
+    if not events:
+        raise TechWeekError(f"no portfolio events found for {args.date}; run portfolio first")
+    events.sort(key=lambda e: (SLOT_ORDER.get(str(e.get("timeSlot")), 99), str(e.get("time") or ""), -int(e.get("score") or 0)))
+    current_slot = None
+    for event in events:
+        slot = str(event.get("timeSlot") or "unknown")
+        if slot != current_slot:
+            print(f"\n## {args.date} {slot}")
+            current_slot = slot
+        state = states.get(str(event.get("id")), {}).get("state", "target")
+        print(
+            f"- {state}: {str(event.get('time') or '')[:5]} [{event.get('locationCluster')}] "
+            f"{event.get('name')} ({event.get('company')}) id={event.get('id')}"
+        )
+    return 0
+
+
+def resolve_existing_root(city: str, year: int | None) -> Path:
+    city = normalize_city(city)
+    if year:
+        root = data_dir(city, year)
+        if root.exists():
+            return root
+    matches = sorted(DATA_ROOT.glob(f"{city}-*"))
+    if matches:
+        return matches[-1]
+    raise TechWeekError(f"no local state found for {city}; run sync first")
+
+
+def find_event(root: Path, event_id: str) -> dict[str, Any]:
+    latest = load_latest(root)
+    for event in latest.get("events", []):
+        if str(event.get("id")) == str(event_id):
+            return event
+    raise TechWeekError(f"event id not found: {event_id}")
+
+
+def set_rsvp_state(root: Path, event_id: str, state: str, note: str | None = None) -> None:
+    path = root / "rsvp-state.json"
+    data = read_json(path, {})
+    record = data.get(str(event_id), {})
+    record.update({"state": state, "updatedAt": utc_now()})
+    if note:
+        record["note"] = note
+    data[str(event_id)] = record
+    write_json(path, data)
+
+
+def open_event(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    event = find_event(root, args.event_id)
+    url = event.get("externalHref") or f"{DEFAULT_BASE_URL}/{args.city}"
+    state = "opened" if event.get("externalHref") else "needs-review"
+    set_rsvp_state(root, args.event_id, state, "opened from techweek script")
+    print(url)
+    if args.no_browser:
+        return 0
+    try:
+        subprocess.run(["open", url], check=False)
+    except OSError as exc:
+        print(f"could not open browser: {exc}", file=sys.stderr)
+    return 0
+
+
+def update_state(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    find_event(root, args.event_id)
+    set_rsvp_state(root, args.event_id, args.state, args.note)
+    print(f"{args.event_id} -> {args.state}")
+    print(root / "rsvp-state.json")
+    return 0
+
+
+def profile(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    data = ensure_profile(root)
+    path = root / "rsvp-profile.json"
+    if args.profile_command == "path":
+        print(path)
+    elif args.profile_command == "show":
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(f"initialized {path}")
+    return 0
+
+
+def form_memory(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    memory = ensure_form_memory(root)
+    path = root / "form-memory.json"
+    command = args.form_memory_command
+    if command == "path":
+        print(path)
+        return 0
+    if command == "show":
+        print(json.dumps(memory, indent=2, sort_keys=True))
+        return 0
+    if command == "map":
+        label = normalize_form_label(args.label)
+        memory.setdefault("label_mappings", {})[label] = args.profile_key
+        memory["updatedAt"] = utc_now()
+        write_json(path, memory)
+        print(f"{label} -> {args.profile_key}")
+        print(path)
+        return 0
+    if command == "remember":
+        label = normalize_form_label(args.label)
+        record = {"label": args.label, "value": args.value, "updatedAt": utc_now()}
+        if args.event_id:
+            event_answers = memory.setdefault("event_answers", {})
+            event_answers.setdefault(str(args.event_id), {})[label] = record
+            print(f"remembered event answer for {args.event_id}: {label}")
+        else:
+            memory.setdefault("reusable_answers", {})[label] = record
+            print(f"remembered reusable answer: {label}")
+        memory["updatedAt"] = utc_now()
+        write_json(path, memory)
+        print(path)
+        return 0
+    if command == "lookup":
+        label = normalize_form_label(args.label)
+        result: dict[str, Any] = {"label": label}
+        mappings = memory.get("label_mappings") or {}
+        if label in mappings:
+            result["profile_key"] = mappings[label]
+        reusable = memory.get("reusable_answers") or {}
+        if label in reusable:
+            result["reusable_answer"] = reusable[label]
+        if args.event_id:
+            event_answer = (memory.get("event_answers") or {}).get(str(args.event_id), {}).get(label)
+            if event_answer:
+                result["event_answer"] = event_answer
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    raise TechWeekError(f"unknown form-memory command: {command}")
+
+
+def answer_sheet(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    event = find_event(root, args.event_id)
+    profile_data = ensure_profile(root)
+    form_memory_data = ensure_form_memory(root)
+    custom = profile_data.get("custom_answers") or {}
+    lines = [
+        f"# Partiful Answer Sheet: {event.get('name')}",
+        "",
+        f"- Event ID: {event.get('id')}",
+        f"- Date/time: {event.get('date')} {str(event.get('time') or '')[:5]}",
+        f"- Host/company: {event.get('company')}",
+        f"- Location: {event.get('location') or 'TBD'}",
+        f"- Link: {event.get('externalHref') or 'needs review'}",
+        "",
+        "## Reusable Fields",
+        "",
+        f"- Name: {profile_data.get('display_name') or '[fill rsvp-profile.json]'}",
+        f"- Email: {profile_data.get('email') or '[fill rsvp-profile.json]'}",
+        f"- Phone: {profile_data.get('phone') or '[fill rsvp-profile.json]'}",
+        f"- Company: {profile_data.get('company') or '[fill rsvp-profile.json]'}",
+        f"- Title: {profile_data.get('title') or '[fill rsvp-profile.json]'}",
+        f"- LinkedIn: {profile_data.get('linkedin') or '[fill rsvp-profile.json]'}",
+        f"- Website: {profile_data.get('website') or '[fill rsvp-profile.json]'}",
+        "",
+        "## Suggested Free-Text",
+        "",
+        profile_data.get("comment_template") or "",
+        "",
+        "## Custom Answers",
+        "",
+    ]
+    if custom:
+        for key, value in custom.items():
+            lines.append(f"- {key}: {value}")
+    else:
+        lines.append("- [add reusable custom answers in rsvp-profile.json if Partiful asks repeated questions]")
+    lines.extend(["", "## Form Memory", ""])
+    mappings = form_memory_data.get("label_mappings") or {}
+    reusable_answers = form_memory_data.get("reusable_answers") or {}
+    event_answers = (form_memory_data.get("event_answers") or {}).get(str(event.get("id")), {})
+    lines.append(f"- Label mappings: {len(mappings)}")
+    if reusable_answers:
+        lines.append("- Reusable answers:")
+        for record in reusable_answers.values():
+            lines.append(f"  - {record.get('label')}: {record.get('value')}")
+    if event_answers:
+        lines.append("- Event-specific answers:")
+        for record in event_answers.values():
+            lines.append(f"  - {record.get('label')}: {record.get('value')}")
+    if not reusable_answers and not event_answers:
+        lines.append("- No saved custom form answers yet.")
+    output = "\n".join(lines) + "\n"
+    if args.write:
+        path = root / "answer-sheets" / f"{event.get('id')}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(output, encoding="utf-8")
+        print(path)
+    else:
+        print(output)
+    return 0
+
+
+def export_events(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    latest = load_latest(root)
+    events = latest.get("events", [])
+    out_dir = root / "exports"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if args.format == "json":
+        path = out_dir / "events.json"
+        write_json(path, events)
+    elif args.format == "csv":
+        path = out_dir / "events.csv"
+        with path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=["id", "date", "time", "timeSlot", "name", "company", "location", "locationCluster", "externalHref", "isInviteOnly", "statusHint"])
+            writer.writeheader()
+            for event in events:
+                writer.writerow({field: event.get(field) for field in writer.fieldnames})
+    elif args.format == "ics":
+        path = out_dir / "events.ics"
+        with path.open("w", encoding="utf-8") as f:
+            f.write("BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Tech Week Concierge//EN\n")
+            for event in events:
+                dt = f"{event.get('date')} {event.get('time') or '00:00:00'}"
+                try:
+                    start = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S")
+                    stamp = start.strftime("%Y%m%dT%H%M%S")
+                except ValueError:
+                    stamp = str(event.get("date") or "").replace("-", "")
+                f.write("BEGIN:VEVENT\n")
+                f.write(f"UID:techweek-{event.get('id')}@local\n")
+                f.write(f"DTSTART:{stamp}\n")
+                f.write(f"SUMMARY:{escape_ics(str(event.get('name') or 'Tech Week event'))}\n")
+                f.write(f"LOCATION:{escape_ics(str(event.get('location') or ''))}\n")
+                if event.get("externalHref"):
+                    f.write(f"URL:{event.get('externalHref')}\n")
+                f.write("END:VEVENT\n")
+            f.write("END:VCALENDAR\n")
+    else:
+        path = out_dir / "events.md"
+        by_day: dict[str, list[dict[str, Any]]] = {}
+        for event in events:
+            by_day.setdefault(str(event.get("date") or "unknown"), []).append(event)
+        with path.open("w", encoding="utf-8") as f:
+            f.write(f"# Tech Week {latest.get('city')} {latest.get('year')}\n\n")
+            f.write(f"Synced: {latest.get('syncedAt')}\n\n")
+            for day in sorted(by_day):
+                f.write(f"## {day}\n\n")
+                for event in by_day[day]:
+                    time_value = str(event.get("time") or "")[:5]
+                    href = event.get("externalHref") or ""
+                    suffix = f" - {href}" if href else " - needs review"
+                    f.write(f"- {time_value} - {event.get('name')} ({event.get('company')}, {event.get('location')}){suffix}\n")
+                f.write("\n")
+    print(path)
+    return 0
+
+
+def escape_ics(value: str) -> str:
+    return value.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="techweek")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--city", default="nyc", help="City slug or alias. Use all/known for NYC, Boston, and pending SF; live/launched for currently live cities.")
+    common.add_argument("--year", type=int)
+    common.add_argument("--base-url", default=DEFAULT_BASE_URL)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    setup_parser = sub.add_parser("setup", parents=[common])
+    setup_parser.add_argument("--interactive", action="store_true", help="Prompt for profile and preference values.")
+    setup_parser.add_argument("--no-interactive", action="store_true", help="Never prompt, even from a TTY.")
+    setup_parser.add_argument("--sync", action="store_true", help="Refresh the city calendar before setup.")
+    setup_parser.add_argument("--no-sync", action="store_true", help="Do not sync if local state is missing.")
+    setup_parser.add_argument("--first-page", action="store_true", help="When syncing, only parse the server-embedded first page.")
+    setup_parser.add_argument("--profile-only", action="store_true", help="Only prompt for profile fields in interactive mode.")
+    setup_parser.add_argument("--preferences-only", action="store_true", help="Only prompt for preferences in interactive mode.")
+    setup_parser.add_argument("--limit", type=int, default=80, help="Interest options to retain.")
+    setup_parser.set_defaults(func=setup)
+
+    cockpit_parser = sub.add_parser("cockpit", parents=[common])
+    cockpit_parser.add_argument("--date", help="Optional day focus in YYYY-MM-DD format.")
+    cockpit_parser.add_argument("--limit", type=int, default=8)
+    cockpit_parser.set_defaults(func=cockpit)
+
+    sync_parser = sub.add_parser("sync", parents=[common])
+    sync_parser.add_argument("--first-page", action="store_true", help="Only parse the server-embedded first page.")
+    sync_parser.set_defaults(func=sync)
+    sub.add_parser("diff", parents=[common]).set_defaults(func=diff_events)
+
+    shortlist_parser = sub.add_parser("shortlist", parents=[common])
+    shortlist_parser.add_argument("--limit", type=int, default=20)
+    shortlist_parser.set_defaults(func=shortlist)
+
+    interests_parser = sub.add_parser("interests", parents=[common])
+    interests_parser.add_argument("--limit", type=int, default=80)
+    interests_parser.set_defaults(func=interests)
+
+    portfolio_parser = sub.add_parser("portfolio", parents=[common])
+    portfolio_parser.add_argument("--multiplier", type=int, help="Oversignup multiplier per intended slot.")
+    portfolio_parser.add_argument("--target-per-slot", type=int, help="Intended final attended events per day/time slot.")
+    portfolio_parser.add_argument("--limit", type=int, default=80)
+    portfolio_parser.add_argument("--open-links-only", action="store_true", default=True)
+    portfolio_parser.add_argument("--include-missing-links", dest="open_links_only", action="store_false")
+    portfolio_parser.add_argument("--include-edge-slots", action="store_true")
+    portfolio_parser.set_defaults(func=portfolio)
+
+    queue_parser = sub.add_parser("apply-queue", parents=[common])
+    queue_parser.add_argument("--limit", type=int, default=25)
+    queue_parser.set_defaults(func=apply_queue)
+
+    day_parser = sub.add_parser("day-plan", parents=[common])
+    day_parser.add_argument("date", help="Date in YYYY-MM-DD format.")
+    day_parser.set_defaults(func=day_plan)
+
+    open_parser = sub.add_parser("open", parents=[common])
+    open_parser.add_argument("event_id")
+    open_parser.add_argument("--no-browser", action="store_true")
+    open_parser.set_defaults(func=open_event)
+
+    state_parser = sub.add_parser("state", parents=[common])
+    state_parser.add_argument("event_id")
+    state_parser.add_argument("state", choices=RSVP_STATES)
+    state_parser.add_argument("--note")
+    state_parser.set_defaults(func=update_state)
+
+    profile_parser = sub.add_parser("profile", parents=[common])
+    profile_sub = profile_parser.add_subparsers(dest="profile_command", required=True)
+    for name in ("init", "show", "path"):
+        profile_sub.add_parser(name).set_defaults(func=profile)
+
+    form_memory_parser = sub.add_parser("form-memory", parents=[common])
+    form_memory_sub = form_memory_parser.add_subparsers(dest="form_memory_command", required=True)
+    for name in ("show", "path"):
+        form_memory_sub.add_parser(name).set_defaults(func=form_memory)
+    map_parser = form_memory_sub.add_parser("map")
+    map_parser.add_argument("label")
+    map_parser.add_argument("profile_key", choices=PROFILE_FIELDS)
+    map_parser.set_defaults(func=form_memory)
+    remember_parser = form_memory_sub.add_parser("remember")
+    remember_parser.add_argument("label")
+    remember_parser.add_argument("value")
+    remember_parser.add_argument("--event-id")
+    remember_parser.set_defaults(func=form_memory)
+    lookup_parser = form_memory_sub.add_parser("lookup")
+    lookup_parser.add_argument("label")
+    lookup_parser.add_argument("--event-id")
+    lookup_parser.set_defaults(func=form_memory)
+
+    answers_parser = sub.add_parser("answers", parents=[common])
+    answers_parser.add_argument("event_id")
+    answers_parser.add_argument("--write", action="store_true")
+    answers_parser.set_defaults(func=answer_sheet)
+
+    export_parser = sub.add_parser("export", parents=[common])
+    export_parser.add_argument("--format", choices=["md", "csv", "ics", "json"], default="md")
+    export_parser.set_defaults(func=export_events)
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        return int(args.func(args) or 0)
+    except TechWeekError as exc:
+        print(f"techweek: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

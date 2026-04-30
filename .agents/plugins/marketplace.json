@@ -1,0 +1,21 @@
+{
+  "name": "techwerker",
+  "interface": {
+    "displayName": "Techwerker"
+  },
+  "plugins": [
+    {
+      "name": "techwerker",
+      "source": {
+        "source": "local",
+        "path": "./plugins/techwerker"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
+

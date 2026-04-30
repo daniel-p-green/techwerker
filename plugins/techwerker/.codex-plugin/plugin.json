@@ -1,0 +1,45 @@
+{
+  "name": "techwerker",
+  "version": "0.1.0",
+  "description": "Unofficial local Codex helper for managing dense Tech Week calendars, signup queues, repeated RSVP form fields, and RSVP state.",
+  "author": {
+    "name": "Daniel Green"
+  },
+  "homepage": "https://www.tech-week.com/",
+  "license": "MIT",
+  "keywords": [
+      "techwerker",
+      "tech-week",
+    "partiful",
+    "events",
+    "calendar",
+    "rsvp",
+    "portfolio"
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/",
+  "interface": {
+    "displayName": "Techwerker",
+    "shortDescription": "Manage Tech Week queues and RSVP form work",
+    "longDescription": "Unofficial local Codex helper for Tech Week attendees. It keeps persistent state under ~/.codex/data/tech-week, builds geography-aware oversignup portfolios, tracks RSVP state, stores non-secret form memory, and uses assisted browser filling while pausing before final submit by default. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
+    "developerName": "Daniel Green",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://www.tech-week.com/",
+    "privacyPolicyURL": "https://www.tech-week.com/",
+    "termsOfServiceURL": "https://www.tech-week.com/",
+    "defaultPrompt": [
+      "Set up my Tech Week concierge",
+      "Show my Tech Week cockpit",
+      "Build my NY Tech Week portfolio",
+      "Work through my Tech Week Partiful RSVP queue",
+      "Make a day plan from accepted Tech Week events"
+    ],
+    "brandColor": "#111827",
+    "screenshots": []
+  }
+}

@@ -1,0 +1,100 @@
+---
+name: Tech Week Concierge
+description: Use when the user asks to plan Tech Week, sync NYC/Boston/SF Tech Week calendars, rank Tech Week events, build an oversignup portfolio, manage a Partiful RSVP queue, fill repeated RSVP information, or make Tech Week less of a chore.
+version: 0.1.0
+---
+
+# Tech Week Concierge
+
+Use this skill to manage Tech Week as an event portfolio, not a static calendar. The workflow is:
+
+1. Start with `techweek setup` once per city.
+2. Use `techweek cockpit` as the regular command center.
+3. Sync the live Tech Week calendar when needed.
+4. Extract available facets, hosts, locations, and location clusters.
+5. Learn or update the user's profile and preferences.
+6. Build a geography-aware oversignup portfolio because many events are waitlisted or host-approved.
+7. Work the Partiful RSVP queue in assisted mode.
+8. Collapse accepted, waitlisted, and backup events into a practical day plan.
+
+## CLI
+
+Prefer the `techweek` command when it is on PATH. If PATH is stale, use the bundled script at the plugin root:
+
+```bash
+scripts/techweek
+```
+
+When resolving from this skill directory, the same script is also available at `scripts/techweek` relative to this `SKILL.md`.
+
+Common commands:
+
+```bash
+techweek setup --city nyc
+techweek setup --city nyc --interactive
+techweek cockpit --city nyc
+techweek cockpit --city nyc --date 2026-06-03
+techweek sync --city live
+techweek sync --city all
+techweek diff --city nyc
+techweek interests --city nyc
+techweek profile --city nyc init
+techweek form-memory --city nyc show
+techweek portfolio --city nyc
+techweek apply-queue --city nyc
+techweek answers --city nyc <event-id> --write
+techweek open --city nyc <event-id>
+techweek state --city nyc <event-id> needs-user-submit
+techweek day-plan --city nyc 2026-06-03
+techweek export --city nyc --format md
+```
+
+State is stored outside the workspace:
+
+```text
+~/.codex/data/tech-week/<city>-<year>/
+```
+
+`cockpit` is the default command center. It summarizes sync status, recent changes, profile readiness, form memory, RSVP states, and next apply targets.
+
+`setup` is the first-run wizard. In non-interactive runs it initializes files and prints missing fields. In interactive runs it prompts for non-secret profile fields, interests, host priorities, location preferences, signup aggressiveness, and RSVP mode.
+
+## Safety Boundary
+
+Never submit an RSVP, application, waitlist form, or "Going" action unless the user explicitly authorizes final submission for that run or that event.
+
+Default mode is `assisted`: open the page, fill obvious visible fields, ask for missing required answers, and stop before final submit. Use `full-auto` only when the user explicitly says final submission is allowed.
+
+Do not store Partiful credentials, one-time codes, payment details, or passwords.
+
+## Browser Strategy
+
+Use Browser/Playwright first for Partiful because it can inspect labels and inputs in the DOM. Use Computer Use only when authenticated UI, visual-only modals, or desktop browser state make DOM automation unreliable.
+
+For RSVP sessions:
+
+1. Run `techweek apply-queue --city <city>` and choose the next unresolved target.
+2. Run `techweek answers --city <city> <event-id> --write`.
+3. Open the event with `techweek open --city <city> <event-id>` or navigate the in-app browser to `externalHref`.
+4. Fill visible fields from `rsvp-profile.json`, `form-memory.json`, and `answer-sheets/<event-id>.md`.
+5. If a required field is unknown, ask once and offer to save it to profile or event-specific memory.
+6. Mark state `filled` or `needs-user-submit`.
+7. Stop before final submit unless explicitly authorized.
+
+Use `form-memory` for repeated Partiful labels and custom questions:
+
+```bash
+techweek form-memory --city nyc map "LinkedIn URL" linkedin
+techweek form-memory --city nyc remember "What are you building?" "Reusable non-secret answer"
+techweek form-memory --city nyc remember "Why do you want to attend?" "Event-specific answer" --event-id <event-id>
+```
+
+Events with no `externalHref` are `invite-only-or-missing-link`, not broken.
+
+## Portfolio Strategy
+
+Use a default `signup_multiplier` of 3. The goal is roughly three plausible applications per intended day/time slot, then choosing after waitlist and acceptance outcomes are known.
+
+Prefer high-signal events that are close enough to chain. Do not optimize a final route before acceptances exist; first create options, then use `day-plan` to collapse the route.
+
+Use sub-agents only when the user explicitly asks for parallel agent work. Good delegated side tasks include ranking a bounded set of AI events, summarizing host quality, or reviewing a generated portfolio. The main agent owns profile, RSVP state, and final-submit safety.
