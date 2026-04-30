@@ -5,11 +5,11 @@
   "author": {
     "name": "Daniel Green"
   },
-  "homepage": "https://www.tech-week.com/",
+  "homepage": "https://github.com/daniel-p-green/techwerker",
   "license": "MIT",
   "keywords": [
-      "techwerker",
-      "tech-week",
+    "techwerker",
+    "tech-week",
     "partiful",
     "events",
     "calendar",
@@ -29,15 +29,15 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://www.tech-week.com/",
-    "privacyPolicyURL": "https://www.tech-week.com/",
-    "termsOfServiceURL": "https://www.tech-week.com/",
+    "websiteURL": "https://github.com/daniel-p-green/techwerker",
+    "privacyPolicyURL": "https://github.com/daniel-p-green/techwerker/blob/main/SECURITY.md",
+    "termsOfServiceURL": "https://github.com/daniel-p-green/techwerker/blob/main/LICENSE",
     "defaultPrompt": [
-      "Set up my Tech Week concierge",
-      "Show my Tech Week cockpit",
+      "Set up Techwerker for NYC",
+      "Show my Techwerker cockpit",
       "Build my NY Tech Week portfolio",
-      "Work through my Tech Week Partiful RSVP queue",
-      "Make a day plan from accepted Tech Week events"
+      "Work through my Techwerker RSVP queue",
+      "Make a Tech Week day plan from accepted events"
     ],
     "brandColor": "#111827",
     "screenshots": []
