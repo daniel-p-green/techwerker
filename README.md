@@ -25,7 +25,7 @@ Techwerker does not pretend to perfectly plan your whole week upfront. It helps 
 
 ![Techwerker demo](assets/techwerker-demo.gif)
 
-The core flow:
+App-style demo flow:
 
 ```bash
 techweek setup --city nyc --no-interactive

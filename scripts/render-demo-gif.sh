@@ -21,69 +21,119 @@ if [ ! -f "$FONT" ]; then
   FONT="/System/Library/Fonts/Monaco.ttf"
 fi
 
-cat >"$TMP_DIR/scene1.txt" <<'EOF'
-$ codex
-> Show my Techwerker cockpit
+cat >"$TMP_DIR/chat1.txt" <<'EOF'
+User
+Show my Techwerker cockpit for NYC.
+
+Codex
+Using Techwerker. I will check state,
+profile readiness, changes, and queue.
+EOF
+
+cat >"$TMP_DIR/out1.txt" <<'EOF'
+Tool: techweek cockpit --city nyc
 
 # Tech Week Cockpit: nyc-2026
-synced=2026-04-30T20:56:18Z events=1221 open_links=1054
-portfolio_targets=83 apply_queue_pending=83
-profile=ready: name, email, company, title, linkedin
-form_memory=22 mappings, 0 secrets stored
+events=1221  links=1054  review=167
+portfolio_targets=83  queue_pending=82
+profile=ready for demo, non-secret only
+form_memory=22 mappings, 0 secrets
+recent_changes: added=4 changed=0 removed=4
 EOF
 
-cat >"$TMP_DIR/scene2.txt" <<'EOF'
-$ techweek portfolio --city nyc --limit 5
+cat >"$TMP_DIR/chat2.txt" <<'EOF'
+User
+Build the high-signal portfolio.
 
-Top targets by slot:
-09:00  AI infra breakfast        Flatiron    score 91
-11:30  Founder office hours      SoHo        score 87
-14:00  Applied AI demos          Union Sq    score 84
-17:30  Operator happy hour       NoMad       score 81
-
-Strategy: 3 plausible RSVP attempts per intended slot.
+Codex
+I will rank the calendar by your interests, bucket events
+by day/time, and group nearby options.
 EOF
 
-cat >"$TMP_DIR/scene3.txt" <<'EOF'
-$ techweek apply-queue --city nyc --limit 3
+cat >"$TMP_DIR/out2.txt" <<'EOF'
+Tool: techweek portfolio --city nyc --limit 5
 
-1. AI infra breakfast        target   Partiful link ready
-2. Founder office hours      target   Partiful link ready
-3. Applied AI demos          target   needs review
+2026-06-01 morning
+1. 08:00 [Brooklyn] Agents Meet
+2. 09:00 [Financial Dist.] Investors
+3. 10:00 [Midtown] AI x Investing
 
-$ techweek answers --city nyc ai-infra-breakfast --write
-Wrote sanitized answer sheet from local profile/form memory.
+Strategy: plausible backups per slot.
 EOF
 
-cat >"$TMP_DIR/scene4.txt" <<'EOF'
-Browser handoff
+cat >"$TMP_DIR/chat3.txt" <<'EOF'
+User
+Work through the RSVP queue, but don't submit.
 
-Open Partiful page
-Inspect visible fields
-Fill reusable non-secret answers
-Ask once for unknown required fields
+Codex
+I will prepare the next answer sheet, open the Partiful
+handoff, fill known fields, and pause.
+EOF
 
-Status: filled
-Next: pause before final RSVP submit
+cat >"$TMP_DIR/out3.txt" <<'EOF'
+Tool: techweek apply-queue --city nyc --limit 3
+
+238   09:00 [Financial Dist.] Investors
+      Partiful link ready
+5088  10:00 [Midtown] AI x Investing
+      Partiful link ready
+4375  12:00 [Brooklyn] AI Founders Lunch
+      Partiful link ready
+
+Tool: techweek answers --city nyc 238 --write
+Wrote sanitized answer sheet.
+EOF
+
+cat >"$TMP_DIR/chat4.txt" <<'EOF'
+Codex
+Staged reusable answers.
+Unknown required fields stay paused.
+EOF
+
+cat >"$TMP_DIR/browser4.txt" <<'EOF'
+partiful.com/e/...
+
+RSVP form
+
+Name        Demo Attendee
+Email       demo@example.com
+Company     Example Co
+Title       Founder
+LinkedIn    linkedin.com/in/example
+
+Submit button visible
+Status: paused before submit
 EOF
 
 cat >"$TMP_DIR/filter.txt" <<EOF
-[0:v]drawbox=x=56:y=54:w=1168:h=612:color=0x101828:t=fill,
-drawbox=x=56:y=54:w=1168:h=46:color=0x182235:t=fill,
-drawbox=x=82:y=72:w=12:h=12:color=0xff5f56:t=fill,
-drawbox=x=104:y=72:w=12:h=12:color=0xffbd2e:t=fill,
-drawbox=x=126:y=72:w=12:h=12:color=0x27c93f:t=fill,
-drawtext=fontfile='$FONT':text='Techwerker':x=548:y=68:fontsize=20:fontcolor=0xe5e7eb,
-drawtext=fontfile='$FONT':text='Tech Week without the Werk.':x=388:y=620:fontsize=24:fontcolor=0xa7f3d0,
-drawtext=fontfile='$FONT':textfile='$TMP_DIR/scene1.txt':x=92:y=132:fontsize=25:line_spacing=9:fontcolor=0xf9fafb:enable='between(t,0,2.8)',
-drawtext=fontfile='$FONT':textfile='$TMP_DIR/scene2.txt':x=92:y=132:fontsize=25:line_spacing=9:fontcolor=0xf9fafb:enable='between(t,2.8,5.6)',
-drawtext=fontfile='$FONT':textfile='$TMP_DIR/scene3.txt':x=92:y=132:fontsize=25:line_spacing=9:fontcolor=0xf9fafb:enable='between(t,5.6,8.4)',
-drawtext=fontfile='$FONT':textfile='$TMP_DIR/scene4.txt':x=92:y=132:fontsize=31:line_spacing=12:fontcolor=0xf9fafb:enable='between(t,8.4,11.2)'
+[0:v]drawbox=x=34:y=28:w=1212:h=664:color=0xf7f7f8:t=fill,
+drawbox=x=34:y=28:w=1212:h=44:color=0xffffff:t=fill,
+drawbox=x=58:y=45:w=10:h=10:color=0xff5f56:t=fill,
+drawbox=x=78:y=45:w=10:h=10:color=0xffbd2e:t=fill,
+drawbox=x=98:y=45:w=10:h=10:color=0x27c93f:t=fill,
+drawtext=fontfile='$FONT':text='Codex  /  Techwerker':x=528:y=43:fontsize=18:fontcolor=0x111827,
+drawbox=x=58:y=92:w=544:h=548:color=0xffffff:t=fill,
+drawbox=x=626:y=92:w=596:h=548:color=0x0f172a:t=fill,
+drawbox=x=58:y=92:w=544:h=42:color=0x111827:t=fill,
+drawbox=x=626:y=92:w=596:h=42:color=0x182235:t=fill,
+drawtext=fontfile='$FONT':text='Codex chat':x=80:y=108:fontsize=17:fontcolor=0xf9fafb,
+drawtext=fontfile='$FONT':text='Techwerker workspace':x=650:y=108:fontsize=17:fontcolor=0xf9fafb,
+drawtext=fontfile='$FONT':text='Tech Week without the Werk.':x=455:y=660:fontsize=21:fontcolor=0x047857,
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/chat1.txt':x=86:y=160:fontsize=20:line_spacing=8:fontcolor=0x111827:enable='between(t,0,3)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/out1.txt':x=654:y=156:fontsize=19:line_spacing=8:fontcolor=0xf9fafb:enable='between(t,0,3)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/chat2.txt':x=86:y=160:fontsize=20:line_spacing=8:fontcolor=0x111827:enable='between(t,3,6)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/out2.txt':x=654:y=156:fontsize=20:line_spacing=8:fontcolor=0xf9fafb:enable='between(t,3,6)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/chat3.txt':x=86:y=160:fontsize=20:line_spacing=8:fontcolor=0x111827:enable='between(t,6,9)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/out3.txt':x=654:y=156:fontsize=19:line_spacing=7:fontcolor=0xf9fafb:enable='between(t,6,9)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/chat4.txt':x=86:y=160:fontsize=20:line_spacing=8:fontcolor=0x111827:enable='between(t,9,12)',
+drawbox=x=650:y=156:w=548:h=420:color=0xffffff:t=fill:enable='between(t,9,12)',
+drawbox=x=650:y=156:w=548:h=38:color=0xe5e7eb:t=fill:enable='between(t,9,12)',
+drawtext=fontfile='$FONT':textfile='$TMP_DIR/browser4.txt':x=676:y=176:fontsize=20:line_spacing=8:fontcolor=0x111827:enable='between(t,9,12)'
 [v]
 EOF
 
 "$FFMPEG" -y \
-  -f lavfi -i color=c=0x060914:s=1280x720:d=11.2:r=12 \
+  -f lavfi -i color=c=0xe5e7eb:s=1280x720:d=12:r=12 \
   -filter_complex_script "$TMP_DIR/filter.txt" \
   -map '[v]' -an "$TMP_DIR/demo.mp4" >/dev/null 2>&1
 
