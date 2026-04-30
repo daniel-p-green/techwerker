@@ -23,13 +23,9 @@ Techwerker does not pretend to perfectly plan your whole week upfront. It helps 
 
 ## See It Work
 
-Demo recording slot:
+![Techwerker demo](assets/techwerker-demo.gif)
 
-```text
-assets/techwerker-demo.gif
-```
-
-Until the GIF is recorded, the core flow is:
+The core flow:
 
 ```bash
 techweek setup --city nyc --no-interactive
