@@ -31,9 +31,10 @@ Core commands:
 - `/techweek-interests`
 - `/techweek-portfolio`
 - `/techweek-rsvp`
+- `/techweek-live-rsvp`
 - `/techweek-day`
 
-Default RSVP mode is assisted: fill known fields, then pause before final submission.
+Default RSVP mode is assisted: build a narrow live queue when speed matters, fill known fields with Computer Use first on Partiful, then pause before final submission.
 
 The public surface is intentionally practical: first-time signup setup, calendar triage, oversignup portfolio management, repeated identity-entry relief, and safer Partiful handoff. It does not store credentials or submit RSVPs unless explicitly authorized for a run.
 

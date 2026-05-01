@@ -45,11 +45,68 @@ latest = {
             "locationCluster": "Midtown",
             "externalHref": "https://partiful.com/e/fixture",
             "isInviteOnly": False,
-            "facets": {},
-        }
+            "facets": {"topics": [{"label": "AI"}], "types": [{"label": "Breakfast"}]},
+        },
+        {
+            "id": "2",
+            "city": "nyc",
+            "date": "2026-06-01",
+            "time": "12:30:00",
+            "timeSlot": "noon",
+            "name": "AI Noon Matchmaking",
+            "company": "Fixture Host",
+            "location": "Flatiron",
+            "locationCluster": "Flatiron/NoMad",
+            "externalHref": "https://partiful.com/e/noon-ai",
+            "isInviteOnly": False,
+            "facets": {"topics": [{"label": "AI"}], "types": [{"label": "Matchmaking"}]},
+        },
+        {
+            "id": "3",
+            "city": "nyc",
+            "date": "2026-06-01",
+            "time": "18:00:00",
+            "timeSlot": "evening",
+            "name": "AI Evening Panel",
+            "company": "Fixture Host",
+            "location": "Chelsea",
+            "locationCluster": "Chelsea/West Side",
+            "externalHref": "https://partiful.com/e/evening-ai",
+            "isInviteOnly": False,
+            "facets": {"topics": [{"label": "AI"}], "types": [{"label": "Panel / Fireside Chat"}]},
+        },
+        {
+            "id": "4",
+            "city": "nyc",
+            "date": "2026-06-01",
+            "time": "18:30:00",
+            "timeSlot": "evening",
+            "name": "AI External Event",
+            "company": "Fixture Host",
+            "location": "Chelsea",
+            "locationCluster": "Chelsea/West Side",
+            "externalHref": "https://example.com/e/not-partiful",
+            "isInviteOnly": False,
+            "facets": {"topics": [{"label": "AI"}], "types": [{"label": "Networking"}]},
+        },
+        {
+            "id": "5",
+            "city": "nyc",
+            "date": "2026-06-01",
+            "time": "18:45:00",
+            "timeSlot": "evening",
+            "name": "Fintech Evening",
+            "company": "Fixture Host",
+            "location": "Chelsea",
+            "locationCluster": "Chelsea/West Side",
+            "externalHref": "https://partiful.com/e/fintech",
+            "isInviteOnly": False,
+            "facets": {"topics": [{"label": "Fintech"}], "types": [{"label": "Networking"}]},
+        },
     ],
 }
 (root / "latest.json").write_text(json.dumps(latest), encoding="utf-8")
+(root / "rsvp-state.json").write_text(json.dumps({"3": {"state": "applied"}}), encoding="utf-8")
 
 boston_root = pathlib.Path(sys.argv[1]) / ".codex" / "data" / "tech-week" / "boston-2026"
 boston_root.mkdir(parents=True)
@@ -61,10 +118,29 @@ boston_latest["events"] = [
         "id": "bos-1",
         "city": "boston",
         "name": "Fixture Boston AI Breakfast",
+        "time": "18:00:00",
+        "timeSlot": "evening",
         "location": "Kendall Square",
+        "externalHref": "https://partiful.com/e/boston-ai",
     }
 ]
 (boston_root / "latest.json").write_text(json.dumps(boston_latest), encoding="utf-8")
+
+sf_root = pathlib.Path(sys.argv[1]) / ".codex" / "data" / "tech-week" / "san-francisco-2026"
+sf_root.mkdir(parents=True)
+sf_latest = dict(latest)
+sf_latest["city"] = "san-francisco"
+sf_latest["events"] = [
+    {
+        **latest["events"][1],
+        "id": "sf-1",
+        "city": "san-francisco",
+        "name": "Fixture SF AI Lunch",
+        "location": "SoMa",
+        "locationCluster": "SoMa",
+    }
+]
+(sf_root / "latest.json").write_text(json.dumps(sf_latest), encoding="utf-8")
 PY
 HOME="$tmp_home" plugins/techwerker/scripts/techweek portfolio --city nyc --limit 1 >/dev/null
 HOME="$tmp_home" plugins/techwerker/scripts/techweek profile --city "New York" set country "United States" | grep -q 'country=saved'
@@ -74,6 +150,15 @@ HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-
 HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-list preferred_formats "Networking, Panel / Fireside Chat" | grep -q 'preferred_formats=Networking, Panel / Fireside Chat'
 HOME="$tmp_home" plugins/techwerker/scripts/techweek portfolio --city Boston --limit 1 >/dev/null
 HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city Boston set-list neighborhoods "Cambridge, Kendall Square" | grep -q 'neighborhoods=Cambridge, Kendall Square'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3 --from-cache | grep -q '^2 '
+HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3 --from-cache | grep -q 'queue=1 shown / 1 matched'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city Boston --topics AI --time-slots noon,evening --limit 3 --from-cache | grep -q '^bos-1 '
+HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city "San Francisco" --topics AI --time-slots noon --limit 3 --from-cache | grep -q '^sf-1 '
+test -f "$tmp_home/.codex/data/tech-week/nyc-2026/live-queue.json"
+test -f "$tmp_home/.codex/data/tech-week/san-francisco-2026/live-queue.json"
+test ! -f "$tmp_home/.codex/data/tech-week/san-francisco-2026/portfolio.json"
+test ! -f "$tmp_home/.codex/data/tech-week/san-francisco-2026/rsvp-profile.json"
+test ! -f "$tmp_home/.codex/data/tech-week/san-francisco-2026/form-memory.json"
 HOME="$tmp_home" plugins/techwerker/scripts/techweek apply-queue --city nyc --limit 1 | grep -q '^1 '
 HOME="$tmp_home" plugins/techwerker/scripts/techweek missing-fields --city nyc add 1 "What are you building?" >/dev/null
 if HOME="$tmp_home" plugins/techwerker/scripts/techweek apply-queue --city nyc --limit 1 | grep -q '^1 '; then

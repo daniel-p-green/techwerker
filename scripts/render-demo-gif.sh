@@ -23,71 +23,67 @@ fi
 
 cat >"$TMP_DIR/chat1.txt" <<'EOF'
 User
-Show my Techwerker cockpit for NYC.
+Set up Techwerker for New York.
 
 Codex
-Using Techwerker. I will check state,
-profile readiness, changes, and queue.
+Using Techwerker. I will collect reusable basics,
+city filters, and keep the profile local.
 EOF
 
 cat >"$TMP_DIR/out1.txt" <<'EOF'
-Tool: techweek cockpit --city nyc
+Tool: techweek setup --city "New York"
 
-# Tech Week Cockpit: nyc-2026
-events=1221  links=1054  review=167
-portfolio_targets=83  queue_pending=82
-profile=ready for demo, non-secret only
-form_memory=22 mappings, 0 secrets
-recent_changes: added=4 changed=0 removed=4
+city=nyc-2026
+profile=ready, non-secret only
+filters=AI; Noon, Evening
+formats=Networking, Panel / Fireside Chat
+submit_policy=pause before final submit
 EOF
 
 cat >"$TMP_DIR/chat2.txt" <<'EOF'
 User
-Build the high-signal portfolio.
+Build a fast live RSVP queue.
 
 Codex
-I will rank the calendar by your interests, bucket events
-by day/time, and group nearby options.
+I will fetch the official calendar directly, filter
+to AI noon/evening Partiful links, and avoid the full queue.
 EOF
 
 cat >"$TMP_DIR/out2.txt" <<'EOF'
-Tool: techweek portfolio --city nyc --limit 5
+Tool: techweek live-queue --city "New York" \
+  --topics AI --time-slots noon,evening --limit 3
 
-2026-06-01 morning
-1. 08:00 [Brooklyn] Agents Meet
-2. 09:00 [Financial Dist.] Investors
-3. 10:00 [Midtown] AI x Investing
+1. 12:00 [Flatiron] AI Founders Lunch
+2. 18:00 [Chelsea] AI Operators Dinner
+3. 19:00 [SoHo] Applied AI Meetup
 
-Strategy: plausible backups per slot.
+wrote live-queue.json
 EOF
 
 cat >"$TMP_DIR/chat3.txt" <<'EOF'
 User
-Work through the RSVP queue, but don't submit.
+Work the first event, but don't submit.
 
 Codex
-I will prepare the next answer sheet, open the Partiful
-handoff, fill known fields, and pause.
+I will prepare the answer sheet, open Partiful,
+use Computer Use first, and pause.
 EOF
 
 cat >"$TMP_DIR/out3.txt" <<'EOF'
-Tool: techweek apply-queue --city nyc --limit 3
+Tool: techweek answers --city "New York" 1 --write
 
-238   09:00 [Financial Dist.] Investors
-      Partiful link ready
-5088  10:00 [Midtown] AI x Investing
-      Partiful link ready
-4375  12:00 [Brooklyn] AI Founders Lunch
-      Partiful link ready
+Answer sheet:
+Name, email, phone, company, role,
+country, LinkedIn, goal
 
-Tool: techweek answers --city nyc 238 --write
-Wrote sanitized answer sheet.
+Tool: techweek open --city "New York" 1
+Opened Partiful target.
 EOF
 
 cat >"$TMP_DIR/chat4.txt" <<'EOF'
 Codex
-Staged reusable answers.
-Unknown required fields stay paused.
+Computer Use filled reusable answers.
+Unknown required fields are recorded and skipped.
 EOF
 
 cat >"$TMP_DIR/browser4.txt" <<'EOF'
@@ -97,6 +93,7 @@ RSVP form
 
 Name        Demo Attendee
 Email       demo@example.com
+Phone       demo phone
 Company     Example Co
 Title       Founder
 LinkedIn    linkedin.com/in/example

@@ -20,20 +20,20 @@ Techwerker does not pretend to perfectly plan your whole week upfront. It helps 
 - build an oversignup portfolio,
 - keep RSVP state straight,
 - reuse non-secret form answers,
-- hand off Partiful pages to Codex browser tools,
+- hand off Partiful pages to Codex Computer Use,
 - stop before final submit unless you explicitly allow it.
 
 ## See It Work
 
 ![Techwerker demo](assets/techwerker-demo.gif)
 
-App-style demo flow:
+Fast live RSVP demo flow:
 
 ```bash
-techweek setup --city nyc --no-interactive
-techweek cockpit --city nyc
-techweek portfolio --city nyc --limit 5
-techweek apply-queue --city nyc --limit 3
+techweek setup --city "New York" --no-interactive
+techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3
+techweek answers --city "New York" <event-id> --write
+techweek open --city "New York" <event-id>
 ```
 
 Example cockpit output:
@@ -41,12 +41,20 @@ Example cockpit output:
 ```text
 # Tech Week Cockpit: nyc-2026
 synced=2026-04-30T20:56:18+00:00 events=1221 open_links=1054 needs_review=167
-portfolio_targets=83 apply_queue_pending=83
-profile=missing display_name, email, company, title, linkedin
+portfolio_targets=83 apply_queue_pending=83 live_queue=3
+profile=missing display_name, email, phone, company, title, country, linkedin
 form_memory=22 mappings, 0 reusable answers, 0 event answers
 ```
 
-For the RSVP handoff, Codex opens the next Partiful page, fills known fields from local profile/form memory, asks once for unknown required fields, and pauses before final submission. The point is not that event forms are hard. The point is that obvious workflow drag accumulates fast in the wild, and Codex can remove it when code, browser tools, local state, and human approval work together.
+For the RSVP handoff, Codex opens one Partiful page, uses Computer Use to fill known fields from local profile/form memory, asks once for unknown required fields, and pauses before final submission. The point is not that event forms are hard. The point is that obvious workflow drag accumulates fast in the wild, and Codex can remove it when code, Computer Use, local state, and human approval work together.
+
+For live RSVP demos, use the narrower live path:
+
+```bash
+techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 10
+```
+
+This fetches the official Tech Week calendar directly, avoids printing the full portfolio queue, and works one Partiful target at a time with Computer Use first.
 
 ## Install
 
@@ -70,22 +78,36 @@ This adds a `techweek` shim to `~/.local/bin` by default. Make sure that directo
 
 ## Quick Start
 
-```bash
-techweek setup --city nyc
-techweek cockpit --city nyc
-techweek portfolio --city nyc
-techweek apply-queue --city nyc
+Inside Codex, start with the chat-first setup:
+
+```text
+/techweek-first-use
 ```
 
-Inside Codex, the same workflow is available through `/techweek-setup`, `/techweek-cockpit`, `/techweek-portfolio`, and `/techweek-rsvp`.
+It asks the attendee to choose New York, Boston, or San Francisco (coming soon), collects name, email, phone number, company, role, country, LinkedIn profile, and an optional goal of attending, then saves reusable non-secret values locally.
 
-For first-time profile and preference entry:
+For a fast live RSVP run:
 
-```bash
-techweek setup --city nyc --interactive
+```text
+/techweek-live-rsvp New York
 ```
 
-Inside Codex, use `/techweek-first-use` for chat-based first-time setup. It asks the attendee to choose New York, Boston, or San Francisco (coming soon), collects name, email, phone number, company, role, country, LinkedIn profile, and an optional goal of attending, then saves reusable non-secret values locally.
+That builds a narrow live queue from the official Tech Week calendar, defaults to AI noon/evening Partiful targets, and works one event at a time with Computer Use first.
+
+For broader planning:
+
+```text
+/techweek-cockpit New York
+/techweek-portfolio New York
+/techweek-rsvp New York
+```
+
+Optional terminal equivalent:
+
+```bash
+techweek setup --city "New York" --interactive
+techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 10
+```
 
 Persistent local state lives outside the repo:
 
@@ -136,6 +158,7 @@ Unresolved events are marked `needs-user-answer` and skipped by the apply queue 
 - `/techweek-interests`
 - `/techweek-portfolio`
 - `/techweek-rsvp`
+- `/techweek-live-rsvp`
 - `/techweek-day`
 
 ## Safety
@@ -152,7 +175,7 @@ See [SECURITY.md](SECURITY.md) for details.
 
 - Locations may be hidden by Partiful until acceptance.
 - RSVP acceptance and waitlist status still need to be tracked manually unless you update state yourself.
-- Browser/Computer Use handoff depends on your logged-in browser session and visible page state.
+- Partiful Computer Use handoff depends on your logged-in browser session and visible page state.
 - San Francisco support is present, but the calendar may report pending until it launches.
 - This is an attendee workflow helper, not an official calendar or RSVP client.
 

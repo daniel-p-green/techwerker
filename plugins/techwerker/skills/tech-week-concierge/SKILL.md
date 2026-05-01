@@ -46,6 +46,7 @@ techweek preferences --city nyc set-list preferred_formats "Networking, Panel / 
 techweek form-memory --city nyc show
 techweek portfolio --city nyc
 techweek apply-queue --city nyc
+techweek live-queue --city nyc --topics AI --time-slots noon,evening --limit 10
 techweek answers --city nyc <event-id> --write
 techweek missing-fields --city nyc add <event-id> "What are you building?"
 techweek missing-fields --city nyc resolve <event-id> "What are you building?" "Reusable or event-specific answer"
@@ -79,11 +80,21 @@ Do not store Partiful credentials, one-time codes, payment details, or passwords
 
 ## Browser Strategy
 
-Use Browser/Playwright first for Partiful because it can inspect labels and inputs in the DOM. Use Computer Use only when authenticated UI, visual-only modals, or desktop browser state make DOM automation unreliable.
+Use direct HTTP/calendar parsing for the Tech Week calendar whenever possible. The visual calendar lazy-loads, but the CLI can fetch the structured event data faster than clicking filters or scrolling.
+
+Use Computer Use first for Partiful because the RSVP UI is often authenticated, visual, and modal-heavy. Use Browser/Playwright only for Tech Week calendar parsing, simple static page inspection, or non-Partiful pages. If Partiful becomes modal-heavy or accessibility refs are poor, do not keep fighting DOM automation.
+
+For live RSVP runs, prefer:
+
+```bash
+techweek live-queue --city <city> --topics AI --time-slots noon,evening --limit 10
+```
+
+Then work one event at a time from `live-queue.json`.
 
 For RSVP sessions:
 
-1. Run `techweek apply-queue --city <city>` and choose the next unresolved target.
+1. For live RSVP work, run `techweek live-queue --city <city> --topics AI --time-slots noon,evening --limit 10` and choose the first target. For planned portfolio work, run `techweek apply-queue --city <city>`.
 2. Run `techweek answers --city <city> <event-id> --write`.
 3. Open the event with `techweek open --city <city> <event-id>` or navigate the in-app browser to `externalHref`.
 4. Fill visible fields from `rsvp-profile.json`, `form-memory.json`, and `answer-sheets/<event-id>.md`.

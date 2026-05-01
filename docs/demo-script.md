@@ -2,6 +2,12 @@
 
 Use this for a live Codex or screen-recorded demo. Keep all profile values sanitized.
 
+Recommended recording setup:
+
+- Use Spark if available for the live RSVP run; the work is command orchestration plus visual form interaction, so speed matters more than deep code reasoning.
+- Keep Computer Use available and logged into the browser session you expect to use for Partiful.
+- Use Browser/direct parsing for the Tech Week calendar, not visual scrolling.
+
 Opening frame:
 
 > Techwerker turns Tech Week chaos into a fill-once workflow: find the events worth your time, build a smart RSVP queue, and let Codex remove the repetitive signup drag.
@@ -68,16 +74,17 @@ Narration:
 
 > Instead of manually remembering every open signup, I work from a queue with state.
 
-## Browser / Computer Use Handoff
+## Live RSVP Handoff
 
-Pick one event from the queue:
+For the live RSVP demo, use the narrow queue instead of the full portfolio queue:
 
 ```bash
+techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3
 techweek answers --city nyc <event-id> --write
 techweek open --city nyc <event-id> --no-browser
 ```
 
-Then use Codex browser tools or Computer Use to:
+Then use Computer Use for the Partiful page:
 
 1. open the Partiful URL,
 2. inspect visible fields,
@@ -86,7 +93,7 @@ Then use Codex browser tools or Computer Use to:
 
 Narration:
 
-> This is the Codex proof point: code, browser tools, local state, and human approval working together on messy real-world knowledge work. Codex can fill the repetitive parts, and Techwerker pauses before the irreversible RSVP action.
+> This is the Codex proof point: direct calendar parsing, local state, Computer Use, and human approval working together on messy real-world knowledge work. Codex can fill the repetitive parts, and Techwerker pauses before the irreversible RSVP action.
 
 ## Recording Rules
 

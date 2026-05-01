@@ -7,13 +7,15 @@ Work the Tech Week RSVP queue safely.
 
 Default to assisted mode. Never submit, RSVP, join waitlist, or click a final confirmation button unless the user explicitly authorizes final submission for this run or this specific event.
 
+For live RSVP runs, prefer `/techweek-live-rsvp`. It fetches the live calendar directly, filters to a narrow AI noon/evening queue, and uses Computer Use first for Partiful.
+
 Use this flow:
 
 1. Determine city, defaulting to `nyc`.
 2. If no event id is provided, run `techweek apply-queue --city <city> --limit 10` and pick the next unresolved event.
 3. Run `techweek answers --city <city> <event-id> --write`.
 4. Open the event URL with `techweek open --city <city> <event-id>` or navigate the in-app browser to the printed Partiful URL.
-5. Use Browser/Playwright first to inspect visible labels and inputs.
+5. Use Computer Use first for Partiful. Use Browser/Playwright only for simple static inspection or non-Partiful pages.
 6. Fill clear fields from `rsvp-profile.json`, `field_aliases`, `form-memory.json`, and the generated answer sheet.
 7. If a required field is unknown, record it and keep moving: `techweek missing-fields --city <city> add <event-id> "Visible Partiful label"`.
 8. Ask the user once for the missing answers in a compact batch. If an answer is reusable, save it with `techweek missing-fields --city <city> resolve <event-id> "Visible Partiful label" "Answer" --reusable`; otherwise omit `--reusable` to save it event-only.
@@ -32,6 +34,6 @@ techweek missing-fields --city <city> add <event-id> "What are you building?"
 techweek missing-fields --city <city> resolve <event-id> "What are you building?" "Reusable non-secret answer" --reusable
 ```
 
-Use Computer Use only if the browser DOM is not enough because the authenticated Partiful UI is visual-only or modal-heavy.
+Do not keep fighting DOM/accessibility refs if the Partiful modal is visual-only, authenticated, slow, or modal-heavy. Switch to Computer Use and keep moving.
 
 If the event has no external link, mark it `needs-review` and move to the next queue item.

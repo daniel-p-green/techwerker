@@ -8,10 +8,10 @@ I made a local Codex plugin for Tech Week attendees:
 
 - sync the calendar
 - find higher-signal events
-- build an oversignup queue
+- build a narrow live RSVP queue
 - reuse RSVP form answers
 - track applied / waitlisted / accepted / skipped
-- pause before final Partiful submit
+- use Computer Use for Partiful and pause before final submit
 
 Unofficial, local-first, attendee-focused.
 
@@ -26,7 +26,7 @@ Techwerker is a Codex helper for the actual attendee workflow:
 1. sort through hundreds of events
 2. oversignup because waitlists are real
 3. stop retyping the same RSVP fields
-4. keep a clean apply queue
+4. work one Partiful target at a time
 5. decide later when acceptances land
 
 Not affiliated with Tech Week, a16z, Partiful, or hosts. Just a local helper.
@@ -44,13 +44,13 @@ It is a local Codex plugin that turns the chaos into a queue.
 Demo:
 
 ```bash
-techweek setup --city nyc
-techweek cockpit --city nyc
-techweek portfolio --city nyc
-techweek apply-queue --city nyc
+techweek setup --city "New York"
+techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3
+techweek answers --city "New York" <event-id> --write
+techweek open --city "New York" <event-id>
 ```
 
-It syncs the calendar, ranks events, builds an oversignup portfolio, tracks RSVP state, and hands Partiful pages to Codex for assisted form filling.
+It fetches the live calendar, builds a narrow AI noon/evening queue, tracks RSVP state, and hands Partiful pages to Codex Computer Use for assisted form filling.
 
 The important safety bit: it pauses before final submit by default.
 

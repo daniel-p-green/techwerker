@@ -38,6 +38,15 @@ RSVP_STATES = [
     "skipped",
     "needs-review",
 ]
+LIVE_QUEUE_SKIP_STATES = {
+    "applied",
+    "waitlisted",
+    "accepted",
+    "rejected",
+    "skipped",
+    "needs-user-answer",
+    "needs-user-submit",
+}
 CITY_ALIASES = {
     "new york": "nyc",
     "new-york": "nyc",
@@ -255,6 +264,14 @@ def normalize_form_label(label: str) -> str:
 
 def parse_csv_values(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def parse_filter_values(value: str | None, default: list[str] | None = None) -> list[str]:
+    if value is None:
+        return list(default or [])
+    if value.strip().lower() in {"", "all", "any"}:
+        return []
+    return parse_csv_values(value)
 
 
 def format_csv_values(values: list[Any]) -> str:
@@ -505,9 +522,8 @@ def normalize_events(raw_events: list[dict[str, Any]], previous: dict[str, Any],
     return normalized
 
 
-def ensure_preferences(root: Path) -> dict[str, Any]:
-    path = root / "preferences.json"
-    default = {
+def default_preferences() -> dict[str, Any]:
+    return {
         "topics": ["AI", "agents", "founder", "infrastructure", "engineering", "product"],
         "neighborhoods": [],
         "priority_hosts": [],
@@ -521,6 +537,11 @@ def ensure_preferences(root: Path) -> dict[str, Any]:
         "avoid_clusters": [],
         "rsvp_mode": "manual",
     }
+
+
+def ensure_preferences(root: Path) -> dict[str, Any]:
+    path = root / "preferences.json"
+    default = default_preferences()
     prefs = read_json(path, default)
     changed = False
     for key, value in default.items():
@@ -596,16 +617,22 @@ def load_latest(root: Path) -> dict[str, Any]:
     return read_json(root / "latest.json", {"events": [], "syncedAt": None, "meta": {}})
 
 
-def sync_one(city: str, args: argparse.Namespace) -> int:
-    ctx = Context(normalize_city(city), args.year, args.base_url)
+def fetch_calendar_events(city: str, year: int | None, base_url: str, first_page: bool) -> tuple[Context, int, str, list[dict[str, Any]], dict[str, Any]]:
+    ctx = Context(normalize_city(city), year, base_url)
     html_text = fetch_text(ctx.calendar_url)
     raw_events, meta = extract_events(html_text)
-    raw_events, meta = fetch_all_events(ctx, raw_events, meta, args.first_page)
-    year = event_year(raw_events, ctx.year)
-    root = data_dir(ctx.city, year)
+    raw_events, meta = fetch_all_events(ctx, raw_events, meta, first_page)
+    resolved_year = event_year(raw_events, ctx.year)
+    root = data_dir(ctx.city, resolved_year)
     now = utc_now()
     previous = load_latest(root)
     events = normalize_events(raw_events, previous, now, ctx.city)
+    return ctx, resolved_year, now, events, meta
+
+
+def sync_one(city: str, args: argparse.Namespace) -> int:
+    ctx, year, now, events, meta = fetch_calendar_events(city, args.year, args.base_url, args.first_page)
+    root = data_dir(ctx.city, year)
     latest = {
         "city": ctx.city,
         "year": year,
@@ -838,6 +865,23 @@ def event_facet_values(event: dict[str, Any]) -> list[str]:
     return values
 
 
+def text_matches_filter(text: str, needle: str) -> bool:
+    clean = needle.strip().lower()
+    if not clean:
+        return False
+    if re.search(r"[^a-z0-9]", clean):
+        return clean in text
+    return re.search(rf"(?<![a-z0-9]){re.escape(clean)}(?![a-z0-9])", text) is not None
+
+
+def event_matches_any(event: dict[str, Any], filters: list[str]) -> bool:
+    if not filters:
+        return True
+    facet_text = " ".join(event_facet_values(event)).lower()
+    blob = text_blob(event)
+    return any(text_matches_filter(facet_text, value) or text_matches_filter(blob, value) for value in filters)
+
+
 def interests(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     output = build_interest_options(root, args.limit)
@@ -936,6 +980,103 @@ def apply_queue(args: argparse.Namespace) -> int:
             f"[{event.get('locationCluster')}] {event.get('name')}\n  {event.get('externalHref')}"
         )
     print(f"\nqueue={min(len(queue), args.limit)} shown / {len(queue)} pending")
+    return 0
+
+
+def is_partiful_url(url: str | None) -> bool:
+    if not url:
+        return False
+    parsed = urllib.parse.urlparse(url)
+    return "partiful.com" in parsed.netloc.lower()
+
+
+def live_queue(args: argparse.Namespace) -> int:
+    city = normalize_city(args.city)
+    topic_filters = parse_filter_values(args.topics, ["AI"])
+    time_slot_filters = {value.strip().lower() for value in parse_filter_values(args.time_slots, ["noon", "evening"])}
+    partiful_only = not args.include_non_partiful
+
+    if args.from_cache:
+        root = resolve_existing_root(city, args.year)
+        latest = load_latest(root)
+        events = latest.get("events", [])
+        year = int(latest.get("year") or root.name.rsplit("-", 1)[-1])
+        source_url = latest.get("sourceUrl") or f"{args.base_url.rstrip('/')}/{city}"
+        meta = latest.get("meta") or {}
+    else:
+        ctx, year, _now, events, meta = fetch_calendar_events(city, args.year, args.base_url, args.first_page)
+        root = data_dir(ctx.city, year)
+        source_url = ctx.calendar_url
+
+    root.mkdir(parents=True, exist_ok=True)
+    prefs = read_json(root / "preferences.json", default_preferences())
+    states = read_json(root / "rsvp-state.json", {})
+
+    matched: list[dict[str, Any]] = []
+    for event in scored_events(events, prefs):
+        url = event.get("externalHref")
+        if not url:
+            continue
+        if partiful_only and not is_partiful_url(url):
+            continue
+        if time_slot_filters and str(event.get("timeSlot") or "").lower() not in time_slot_filters:
+            continue
+        if not event_matches_any(event, topic_filters):
+            continue
+        state = str(states.get(str(event.get("id")), {}).get("state") or "new")
+        if state in LIVE_QUEUE_SKIP_STATES:
+            continue
+        matched.append({**event, "rsvpState": state})
+
+    matched.sort(
+        key=lambda event: (
+            -int(event.get("score") or 0),
+            str(event.get("date") or ""),
+            SLOT_ORDER.get(str(event.get("timeSlot") or ""), 99),
+            str(event.get("time") or ""),
+            str(event.get("name") or ""),
+        )
+    )
+    selected = [{**event, "liveQueueRank": idx + 1} for idx, event in enumerate(matched[: args.limit])]
+    output = {
+        "generatedAt": utc_now(),
+        "city": city,
+        "year": year,
+        "sourceUrl": source_url,
+        "strategy": {
+            "topics": topic_filters,
+            "timeSlots": sorted(time_slot_filters),
+            "partifulOnly": partiful_only,
+            "limit": args.limit,
+            "skipStates": sorted(LIVE_QUEUE_SKIP_STATES),
+            "source": "latest.json" if args.from_cache else meta.get("source", "live-calendar"),
+        },
+        "matchedCount": len(matched),
+        "events": selected,
+    }
+    write_json(root / "live-queue.json", output)
+
+    print(f"# Live RSVP Queue: {city}-{year}")
+    print(f"source={source_url}")
+    print(f"filters=topics:{format_csv_values(topic_filters) or 'any'} time_slots:{format_csv_values(sorted(time_slot_filters)) or 'any'} partiful_only={partiful_only}")
+    if not selected:
+        print("\nno matching live RSVP targets")
+        print(f"\nwrote {root / 'live-queue.json'}")
+        return 0
+
+    first = selected[0]
+    print("\n## First target")
+    print(f"{first.get('id')} {first.get('date')} {str(first.get('time') or '')[:5]} [{first.get('timeSlot')}] [{first.get('locationCluster')}] {first.get('name')}")
+    print(f"  {first.get('externalHref')}")
+
+    backups = selected[1:]
+    if backups:
+        print("\n## Backups")
+        for event in backups:
+            print(f"{event.get('liveQueueRank')}. score={event.get('score')} {event.get('id')} {event.get('date')} {str(event.get('time') or '')[:5]} [{event.get('timeSlot')}] {event.get('name')}")
+            print(f"   {event.get('externalHref')}")
+    print(f"\nqueue={len(selected)} shown / {len(matched)} matched")
+    print(f"wrote {root / 'live-queue.json'}")
     return 0
 
 
@@ -1182,10 +1323,11 @@ def resolve_existing_root(city: str, year: int | None) -> Path:
 
 
 def find_event(root: Path, event_id: str) -> dict[str, Any]:
-    latest = load_latest(root)
-    for event in latest.get("events", []):
-        if str(event.get("id")) == str(event_id):
-            return event
+    for name in ("latest.json", "live-queue.json", "portfolio.json"):
+        data = read_json(root / name, {"events": []})
+        for event in data.get("events", []):
+            if str(event.get("id")) == str(event_id):
+                return event
     raise TechWeekError(f"event id not found: {event_id}")
 
 
@@ -1610,6 +1752,15 @@ def build_parser() -> argparse.ArgumentParser:
     queue_parser = sub.add_parser("apply-queue", parents=[common])
     queue_parser.add_argument("--limit", type=int, default=25)
     queue_parser.set_defaults(func=apply_queue)
+
+    live_queue_parser = sub.add_parser("live-queue", parents=[common])
+    live_queue_parser.add_argument("--topics", default="AI", help="Comma-separated topic filters. Use all for no topic filter.")
+    live_queue_parser.add_argument("--time-slots", default="noon,evening", help="Comma-separated time slot filters. Use all for no slot filter.")
+    live_queue_parser.add_argument("--limit", type=int, default=10)
+    live_queue_parser.add_argument("--include-non-partiful", action="store_true")
+    live_queue_parser.add_argument("--from-cache", action="store_true", help="Use existing latest.json instead of fetching the live calendar.")
+    live_queue_parser.add_argument("--first-page", action="store_true", help="When fetching live, only parse the server-embedded first page.")
+    live_queue_parser.set_defaults(func=live_queue)
 
     day_parser = sub.add_parser("day-plan", parents=[common])
     day_parser.add_argument("date", help="Date in YYYY-MM-DD format.")
