@@ -17,6 +17,17 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
 echo "== cli smoke =="
 plugins/techwerker/scripts/techweek --help >/dev/null
 
+echo "== slash command surface =="
+expected_commands="techweek-rsvp.md
+techweek-setup.md
+techweek.md"
+actual_commands="$(find plugins/techwerker/commands -maxdepth 1 -type f -name '*.md' -exec basename {} \; | sort)"
+if [ "$actual_commands" != "$expected_commands" ]; then
+  echo "unexpected slash commands:" >&2
+  echo "$actual_commands" >&2
+  exit 1
+fi
+
 echo "== missing field smoke =="
 tmp_home="$(mktemp -d)"
 trap 'rm -rf "$tmp_home" /tmp/techwerker-check-grep.txt' EXIT

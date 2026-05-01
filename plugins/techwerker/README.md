@@ -24,15 +24,9 @@ First-time signup flow:
 
 Core commands:
 
-- `/techweek-first-use`
 - `/techweek-setup`
-- `/techweek-cockpit`
-- `/techweek-profile`
-- `/techweek-interests`
-- `/techweek-portfolio`
+- `/techweek`
 - `/techweek-rsvp`
-- `/techweek-live-rsvp`
-- `/techweek-day`
 
 Default RSVP mode is assisted: build a narrow live queue when speed matters, fill known fields with Computer Use first on Partiful, then pause before final submission.
 

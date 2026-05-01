@@ -16,8 +16,8 @@ Opening frame:
 
 Use a clean or disposable profile state when recording:
 
-```bash
-techweek setup --city nyc --no-interactive
+```text
+/techweek-setup
 ```
 
 Narration:
@@ -26,8 +26,8 @@ Narration:
 
 ## Cockpit
 
-```bash
-techweek cockpit --city nyc
+```text
+/techweek New York
 ```
 
 Show:
@@ -44,8 +44,8 @@ Narration:
 
 ## Portfolio
 
-```bash
-techweek portfolio --city nyc --limit 5
+```text
+/techweek New York portfolio
 ```
 
 Show:
@@ -78,10 +78,8 @@ Narration:
 
 For the live RSVP demo, use the narrow queue instead of the full portfolio queue:
 
-```bash
-techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3
-techweek answers --city nyc <event-id> --write
-techweek open --city nyc <event-id> --no-browser
+```text
+/techweek-rsvp New York
 ```
 
 Then use Computer Use for the Partiful page:

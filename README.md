@@ -81,7 +81,7 @@ This adds a `techweek` shim to `~/.local/bin` by default. Make sure that directo
 Inside Codex, start with the chat-first setup:
 
 ```text
-/techweek-first-use
+/techweek-setup
 ```
 
 It asks the attendee to choose New York, Boston, or San Francisco (coming soon), collects name, email, phone number, company, role, country, LinkedIn profile, and an optional goal of attending, then saves reusable non-secret values locally.
@@ -89,7 +89,7 @@ It asks the attendee to choose New York, Boston, or San Francisco (coming soon),
 For a fast live RSVP run:
 
 ```text
-/techweek-live-rsvp New York
+/techweek-rsvp New York
 ```
 
 That builds a narrow live queue from the official Tech Week calendar, defaults to AI noon/evening Partiful targets, and works one event at a time with Computer Use first.
@@ -97,9 +97,9 @@ That builds a narrow live queue from the official Tech Week calendar, defaults t
 For broader planning:
 
 ```text
-/techweek-cockpit New York
-/techweek-portfolio New York
-/techweek-rsvp New York
+/techweek New York
+/techweek New York portfolio
+/techweek New York day 2026-06-03
 ```
 
 Optional terminal equivalent:
@@ -152,14 +152,8 @@ Unresolved events are marked `needs-user-answer` and skipped by the apply queue 
 ## Plugin Commands
 
 - `/techweek-setup`
-- `/techweek-first-use`
-- `/techweek-cockpit`
-- `/techweek-profile`
-- `/techweek-interests`
-- `/techweek-portfolio`
+- `/techweek`
 - `/techweek-rsvp`
-- `/techweek-live-rsvp`
-- `/techweek-day`
 
 ## Safety
 

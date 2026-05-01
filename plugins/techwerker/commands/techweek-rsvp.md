@@ -1,28 +1,58 @@
 ---
-description: Work through Tech Week Partiful RSVP queue in assisted mode.
-argument-hint: [city] [event-id|next] [--allow-submit only if explicitly requested]
+description: Build a narrow live RSVP queue and work one Partiful event safely.
+argument-hint: [city] [topics/time slots] [--allow-submit only if explicitly requested]
 ---
 
-Work the Tech Week RSVP queue safely.
+Work one Tech Week RSVP target quickly and safely. This replaces the old separate live RSVP and planned queue commands.
 
 Default to assisted mode. Never submit, RSVP, join waitlist, or click a final confirmation button unless the user explicitly authorizes final submission for this run or this specific event.
 
-For live RSVP runs, prefer `/techweek-live-rsvp`. It fetches the live calendar directly, filters to a narrow AI noon/evening queue, and uses Computer Use first for Partiful.
+Default live-run filters are AI plus Noon and Evening, Partiful-only, limit 10. If the user gives different topics, time slots, or limit, use those.
 
 Use this flow:
 
-1. Determine city, defaulting to `nyc`.
-2. If no event id is provided, run `techweek apply-queue --city <city> --limit 10` and pick the next unresolved event.
-3. Run `techweek answers --city <city> <event-id> --write`.
-4. Open the event URL with `techweek open --city <city> <event-id>` or navigate the in-app browser to the printed Partiful URL.
-5. Use Computer Use first for Partiful. Use Browser/Playwright only for simple static inspection or non-Partiful pages.
-6. Fill clear fields from `rsvp-profile.json`, `field_aliases`, `form-memory.json`, and the generated answer sheet.
-7. If a required field is unknown, record it and keep moving: `techweek missing-fields --city <city> add <event-id> "Visible Partiful label"`.
-8. Ask the user once for the missing answers in a compact batch. If an answer is reusable, save it with `techweek missing-fields --city <city> resolve <event-id> "Visible Partiful label" "Answer" --reusable`; otherwise omit `--reusable` to save it event-only.
-9. If the user does not answer, leave the event in `needs-user-answer` and move to the next queue item instead of blocking the session.
-10. When all required fields are filled but not submitted, run `techweek state --city <city> <event-id> needs-user-submit --note "filled assisted form; awaiting user submit"` or `filled` if the user still needs to review.
+1. Determine city. If missing, ask for the calendar label: New York, Boston, or San Francisco (coming soon).
+2. Build a narrow live queue from the official Tech Week calendar, not the cached portfolio:
 
-Useful form-memory commands:
+```bash
+techweek live-queue --city <city> --topics AI --time-slots noon,evening --limit 10
+```
+
+3. Pick the printed first target unless the user chooses a backup.
+4. Generate the answer sheet:
+
+```bash
+techweek answers --city <city> <event-id> --write
+```
+
+5. Open the target:
+
+```bash
+techweek open --city <city> <event-id>
+```
+
+6. Use Computer Use first for the Partiful page. Treat Partiful as visual/modal-heavy by default.
+7. Fill clear fields from `rsvp-profile.json`, `field_aliases`, `form-memory.json`, and the generated answer sheet.
+8. If a required field is unknown, record it and move on:
+
+```bash
+techweek missing-fields --city <city> add <event-id> "Visible Partiful label"
+techweek state --city <city> <event-id> needs-user-answer --note "missing required Partiful answer"
+```
+
+9. When all required fields are filled but not submitted, run:
+
+```bash
+techweek state --city <city> <event-id> needs-user-submit --note "filled assisted Partiful form; awaiting user submit"
+```
+
+Use the planned portfolio queue only when the user explicitly asks to work the saved queue:
+
+```bash
+techweek apply-queue --city <city> --limit 10
+```
+
+Useful memory commands:
 
 ```bash
 techweek form-memory --city <city> lookup "Visible Partiful label" --event-id <event-id>
@@ -34,6 +64,6 @@ techweek missing-fields --city <city> add <event-id> "What are you building?"
 techweek missing-fields --city <city> resolve <event-id> "What are you building?" "Reusable non-secret answer" --reusable
 ```
 
-Do not keep fighting DOM/accessibility refs if the Partiful modal is visual-only, authenticated, slow, or modal-heavy. Switch to Computer Use and keep moving.
+Use Browser/Playwright only for the Tech Week calendar or simple static inspection. Do not keep fighting DOM/accessibility refs if the Partiful modal is visual-only, authenticated, slow, or modal-heavy. Switch to Computer Use and keep moving.
 
-If the event has no external link, mark it `needs-review` and move to the next queue item.
+Work one event at a time. Do not load or print the full portfolio queue during a live RSVP run.

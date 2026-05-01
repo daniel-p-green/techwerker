@@ -68,7 +68,13 @@ State is stored outside the workspace:
 
 `setup` is the first-run wizard. In non-interactive runs it initializes files and prints missing fields. In interactive runs it prompts for non-secret profile fields, interests, host priorities, location preferences, signup aggressiveness, and RSVP mode.
 
-For a brand-new user, prefer `/techweek-first-use`. First ask for the city using the calendar's labels: New York, Boston, or San Francisco (coming soon). Then collect the common RSVP basics once: name, email, phone number, company, role/title, country, LinkedIn profile, and optional goal of attending. Finally ask lightweight city-specific preferences: topics to prioritize, neighborhoods/location clusters to prefer, event types to prioritize or avoid, and start times to prefer or avoid.
+For a brand-new user, prefer `/techweek-setup`. First ask for the city using the calendar's labels: New York, Boston, or San Francisco (coming soon). Then collect the common RSVP basics once: name, email, phone number, company, role/title, country, LinkedIn profile, and optional goal of attending. Finally ask lightweight city-specific preferences: topics to prioritize, neighborhoods/location clusters to prefer, event types to prioritize or avoid, and start times to prefer or avoid.
+
+Use the simplified slash command surface:
+
+- `/techweek-setup` for first-time city, profile, and preference setup.
+- `/techweek` for status, sync, portfolio planning, interests, and day plans.
+- `/techweek-rsvp` for one live RSVP target with Computer Use first.
 
 ## Safety Boundary
 
