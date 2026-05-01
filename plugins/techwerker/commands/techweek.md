@@ -1,17 +1,31 @@
 ---
-description: Show Techwerker status, refresh events, build a portfolio, or make a day plan.
+description: Explain Techwerker, recommend Tech Week events, refresh status, or make a day plan.
 argument-hint: [city] [portfolio|day YYYY-MM-DD|interests]
 ---
 
-Use this as the main Techwerker command after setup.
+Use this as the main Techwerker command after setup. Techwerker takes the work out of Tech Week: the user gives profile and preference information once, then Codex uses the local state, Browser Use, and Computer Use to find events and handle repetitive RSVP forms.
 
-Ask for the city if it is missing, using the calendar labels: New York, Boston, or San Francisco (coming soon). Default to a quick status view unless the user asks for a portfolio, day plan, or preference update.
+If the user asks "what can you do?", "how does this work?", or similar, do not print commands. Explain:
 
-For status:
+- Techwerker syncs and parses dense Tech Week calendars.
+- It remembers non-secret RSVP basics locally: name, email, phone, company, role, country, LinkedIn, and reusable answers.
+- It recommends events based on topics, format, time, and geography.
+- It builds a practical oversignup queue because many events are waitlisted or host-approved.
+- When the user says "get on the list" or "sign me up", Codex opens the event, fills the Tech Week/Partiful forms with Browser Use and Computer Use, records unknown questions, and updates RSVP state.
 
-```bash
-techweek cockpit --city <city>
-```
+Ask for the city if it is missing, using the calendar labels: New York, Boston, or San Francisco (coming soon). Default to a curated recommendation view unless the user explicitly asks for diagnostics/status, a day plan, or preference updates.
+
+For recommendations, privately run the needed sync/status/portfolio commands, then show a short list of 3-6 options with:
+
+- event name,
+- date/time,
+- neighborhood or location cluster,
+- why it matches,
+- RSVP/list status if known.
+
+Do not show event ids, raw queue output, file paths, or command strings in the normal response. The user should be able to say "yes", "that one", "skip it", "show me more hackathons", or "get on the list" without touching ids.
+
+For internal status, use:
 
 If sync is stale or missing:
 

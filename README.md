@@ -1,12 +1,12 @@
 # Techwerker
 
-**Tech Week without the Werk.**
+**Takes the work out of Tech Week.**
 
 Techwerker is an unofficial local Codex helper for managing dense Tech Week calendars, RSVP queues, repeated Partiful fields, and RSVP state.
 
 It is built for attendees who want a better workflow than manually scanning 1,200+ events, opening the same signup forms, and remembering which waitlists they already joined.
 
-Techwerker is also a public demo of Codex as a practical workflow assistant: it filters a noisy event universe, remembers non-secret attendee details locally, works through RSVP queues, and hands repetitive browser tasks to Codex while keeping final submission under user control.
+Techwerker is also a public demo of Codex as a practical workflow assistant: it filters a noisy event universe, remembers non-secret attendee details locally, works through RSVP queues, and uses Browser Use plus Computer Use to handle repetitive Tech Week and Partiful form work.
 
 > Techwerker is not affiliated with, endorsed by, or sponsored by Tech Week, a16z, Partiful, or any event host.
 
@@ -20,23 +20,32 @@ Techwerker does not pretend to perfectly plan your whole week upfront. It helps 
 - build an oversignup portfolio,
 - keep RSVP state straight,
 - reuse non-secret form answers,
-- hand off Partiful pages to Codex Computer Use,
-- stop before final submit unless you explicitly allow it.
+- hand off Tech Week and Partiful pages to Browser Use and Computer Use,
+- get on the list when you explicitly ask it to.
 
 ## See It Work
 
 ![Techwerker demo](assets/techwerker-demo.gif)
 
-Fast live RSVP demo flow:
+Chat-first demo flow:
 
-```bash
-techweek setup --city "New York" --no-interactive
-techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3
-techweek answers --city "New York" <event-id> --write
-techweek open --city "New York" <event-id>
+```text
+You: What can you do?
+Techwerker: I can sync Tech Week, remember your non-secret RSVP basics, recommend events, and use Browser Use plus Computer Use to handle the repetitive signup forms.
+
+You: Get started.
+Techwerker: Which city: New York, Boston, or San Francisco?
+
+You: Find the best AI hackathons for me.
+Techwerker: Here are the strongest matches...
+
+You: Yes, get me on the list for that one.
+Techwerker: Opens the event, fills known fields, handles the Partiful flow, and records the outcome.
 ```
 
-Example cockpit output:
+The optional CLI remains the private engine behind the plugin. During a normal Codex run, the user should not need to copy event IDs, paste links, run commands, or manually fill repeated RSVP fields.
+
+Example internal cockpit output:
 
 ```text
 # Tech Week Cockpit: nyc-2026
@@ -46,15 +55,7 @@ profile=missing display_name, email, phone, company, title, country, linkedin
 form_memory=22 mappings, 0 reusable answers, 0 event answers
 ```
 
-For the RSVP handoff, Codex opens one Partiful page, uses Computer Use to fill known fields from local profile/form memory, asks once for unknown required fields, and pauses before final submission. The point is not that event forms are hard. The point is that obvious workflow drag accumulates fast in the wild, and Codex can remove it when code, Computer Use, local state, and human approval work together.
-
-For live RSVP demos, use the narrower live path:
-
-```bash
-techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 10
-```
-
-This fetches the official Tech Week calendar directly, avoids printing the full portfolio queue, and works one Partiful target at a time with Computer Use first.
+For the RSVP handoff, Codex opens the event itself, uses Browser Use or Computer Use to fill known fields from local profile/form memory, asks once for unknown required fields, and updates local RSVP state. The point is not that event forms are hard. The point is that obvious workflow drag accumulates fast in the wild, and Codex can remove it when code, browser control, local state, and human intent work together.
 
 ## Install
 
@@ -86,20 +87,20 @@ Inside Codex, start with the chat-first setup:
 
 It asks the attendee to choose New York, Boston, or San Francisco (coming soon), collects name, email, phone number, company, role, country, LinkedIn profile, and an optional goal of attending, then saves reusable non-secret values locally.
 
-For a fast live RSVP run:
+For a fast live RSVP run, ask naturally:
 
 ```text
-/techweek-rsvp New York
+Find AI hackathons in New York and get me on the list for the best one.
 ```
 
-That builds a narrow live queue from the official Tech Week calendar, defaults to AI noon/evening Partiful targets, and works one event at a time with Computer Use first.
+That builds a narrow live queue from the official Tech Week calendar, defaults to relevant Partiful targets, and works one event at a time with Browser Use and Computer Use.
 
-For broader planning:
+For broader planning, ask naturally:
 
 ```text
-/techweek New York
-/techweek New York portfolio
-/techweek New York day 2026-06-03
+What can you do?
+Find the best events for me.
+Make me a day plan for June 3.
 ```
 
 Optional terminal equivalent:
@@ -139,7 +140,7 @@ techweek preferences --city nyc set-list excluded_formats "Hackathon"
 techweek preferences --city nyc set-list time_windows "08:00-12:00, 12:00-17:00"
 ```
 
-If Partiful asks a custom required question that Techwerker does not recognize, record it as a missing field instead of blocking the RSVP queue:
+If Partiful asks a custom required question that Techwerker does not recognize, Techwerker records it as a missing field and asks once instead of blocking the RSVP queue:
 
 ```bash
 techweek missing-fields --city nyc add <event-id> "What are you building?"

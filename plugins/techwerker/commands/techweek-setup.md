@@ -3,7 +3,7 @@ description: Run first-time Techwerker setup for city, RSVP profile, and event f
 argument-hint: [city]
 ---
 
-Run first-time Techwerker onboarding. This replaces the old separate first-use, profile, and interest commands.
+Run first-time Techwerker onboarding. Techwerker takes the work out of Tech Week by collecting the reusable RSVP/profile information once, then using it later to fill repetitive Tech Week and Partiful forms.
 
 First ask the user which Tech Week city they want to plan, using the calendar's labels:
 
@@ -13,7 +13,7 @@ First ask the user which Tech Week city they want to plan, using the calendar's 
 
 Do not assume a city in chat onboarding. If the user chooses San Francisco, explain that support is present but the calendar may stay pending until San Francisco launches.
 
-After the city is chosen, initialize local state:
+After the city is chosen, initialize local state privately:
 
 ```bash
 techweek setup --city <city> --no-interactive
@@ -59,7 +59,7 @@ Map start-time labels to time windows:
 - Afternoon: `15:00-17:00`
 - Evening: `17:00-21:00`
 
-Save profile answers with:
+Save profile answers privately with:
 
 ```bash
 techweek profile --city <city> set display_name "<name>"
@@ -72,13 +72,15 @@ techweek profile --city <city> set linkedin "<linkedin-url>"
 techweek profile --city <city> set why_attending "<goal>"
 ```
 
-Save preference answers with `techweek preferences --city <city> set-list <field> "<comma-separated values>"`.
+Save preference answers privately with `techweek preferences --city <city> set-list <field> "<comma-separated values>"`.
 
 Do not ask for or store credentials, passwords, one-time codes, payment details, or anything Partiful-login-specific.
 
-After setup, show the next simple choices:
+After setup, do not tell the user to run commands. Say that Techwerker is ready and offer natural next moves:
 
-- `/techweek <city>` for status and planning
-- `/techweek-rsvp <city>` for a fast live RSVP run
+- find the best events for them,
+- focus on a topic such as AI hackathons,
+- get them on the list for recommended events,
+- build a day plan.
 
 Keep this command focused on initial configuration. Do not add Gmail, Calendar, routing, sub-agents, or auto-submit behavior here.
