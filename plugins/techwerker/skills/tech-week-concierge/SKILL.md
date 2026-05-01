@@ -59,6 +59,7 @@ techweek state --city nyc <event-id> needs-user-answer
 techweek state --city nyc <event-id> needs-user-submit
 techweek day-plan --city nyc 2026-06-03
 techweek export --city nyc --format md
+techweek demo-reset --city nyc
 ```
 
 These commands are for agent execution, not user instructions. Run them yourself and summarize results. In normal operation, never tell the user "run `techweek ...`" or ask them to provide an event id. Translate user intent to the appropriate command and browser/computer action.
@@ -76,6 +77,8 @@ State is stored outside the workspace:
 For a brand-new user, prefer `/techweek-setup`. First ask for the city using the calendar's labels: New York, Boston, or San Francisco (coming soon). Then collect the common RSVP basics once: name, email, phone number, company, role/title, country, LinkedIn profile, and optional goal of attending. Finally ask lightweight city-specific preferences: topics to prioritize, neighborhoods/location clusters to prefer, event types to prioritize or avoid, and start times to prefer or avoid.
 
 For demos, demo profile values are acceptable. Still run the same setup flow so the product promise is clear: the user gives information once, and Techwerker reuses it for every relevant form.
+
+For recording prep, use `techweek demo-reset --city <city>` privately when you need a clean safe local state. It seeds the fake `Justin Buildman` profile/preferences and clears local RSVP queue/state files. Do not expose this as a normal user-facing feature unless the user is explicitly preparing a demo.
 
 Use the simplified slash command surface:
 

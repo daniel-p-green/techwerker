@@ -10,6 +10,7 @@ import html
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib.parse
@@ -60,6 +61,28 @@ CITY_ALIASES = {
     "san-francisco": "san-francisco",
 }
 DEFAULT_CITIES = ["nyc", "boston", "san-francisco"]
+DEMO_PROFILE = {
+    "display_name": "Justin Buildman",
+    "email": "justin@demo.example",
+    "phone": "123-456-7981",
+    "company": "Buildman Labs",
+    "title": "Founder",
+    "country": "United States",
+    "linkedin": "linkedin.com/in/justin-buildman",
+    "website": "",
+    "one_liner": "I build practical AI workflow tools for founders and operators.",
+    "why_attending": "Connect with builders working on AI, product, and founder workflows.",
+    "comment_template": "Excited to join and meet builders working on AI, product, and founder workflows.",
+}
+DEMO_PREFERENCES = {
+    "topics": ["AI", "agents", "consumer AI", "hackathons"],
+    "neighborhoods": ["Chelsea", "Flatiron", "SoHo", "Midtown"],
+    "preferred_formats": ["Hackathon", "Networking", "Panel / Fireside Chat"],
+    "time_windows": ["12:00-15:00", "15:00-17:00", "17:00-21:00"],
+    "signup_multiplier": 3,
+    "target_events_per_slot": 1,
+    "rsvp_mode": "assisted",
+}
 PREFERENCE_LIST_FIELDS = [
     "topics",
     "neighborhoods",
@@ -1224,6 +1247,37 @@ def setup(args: argparse.Namespace) -> int:
     return 0
 
 
+def demo_reset(args: argparse.Namespace) -> int:
+    root = setup_root(args)
+    profile_data = ensure_profile(root)
+    prefs = ensure_preferences(root)
+    ensure_form_memory(root)
+
+    profile_data.update(DEMO_PROFILE)
+    prefs.update(DEMO_PREFERENCES)
+    write_json(root / "rsvp-profile.json", profile_data)
+    write_json(root / "preferences.json", prefs)
+
+    if not args.keep_state:
+        for filename in ("rsvp-state.json", "live-queue.json", "portfolio.json"):
+            path = root / filename
+            if path.exists():
+                path.unlink()
+        answer_sheets = root / "answer-sheets"
+        if answer_sheets.exists():
+            shutil.rmtree(answer_sheets)
+
+    interest_options = build_interest_options(root, args.limit)
+    summary_path = write_setup_summary(root, profile_data, prefs, interest_options)
+    print(f"demo_root={root}")
+    print("profile=demo Justin Buildman")
+    print(f"preferences={root / 'preferences.json'}")
+    print(f"profile_path={root / 'rsvp-profile.json'}")
+    print(f"summary={summary_path}")
+    print(f"state={'kept' if args.keep_state else 'cleared'}")
+    return 0
+
+
 def cockpit(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     latest = load_latest(root)
@@ -1721,6 +1775,14 @@ def build_parser() -> argparse.ArgumentParser:
     setup_parser.add_argument("--preferences-only", action="store_true", help="Only prompt for preferences in interactive mode.")
     setup_parser.add_argument("--limit", type=int, default=80, help="Interest options to retain.")
     setup_parser.set_defaults(func=setup)
+
+    demo_reset_parser = sub.add_parser("demo-reset", parents=[common], help="Seed safe demo profile/preferences and clear local RSVP state.")
+    demo_reset_parser.add_argument("--sync", action="store_true", help="Refresh the city calendar before seeding demo values.")
+    demo_reset_parser.add_argument("--no-sync", action="store_true", help="Do not sync if local state is missing.")
+    demo_reset_parser.add_argument("--first-page", action="store_true", help="When syncing, only parse the server-embedded first page.")
+    demo_reset_parser.add_argument("--keep-state", action="store_true", help="Keep RSVP queue/state files instead of clearing them.")
+    demo_reset_parser.add_argument("--limit", type=int, default=80, help="Interest options to retain.")
+    demo_reset_parser.set_defaults(func=demo_reset)
 
     cockpit_parser = sub.add_parser("cockpit", parents=[common])
     cockpit_parser.add_argument("--date", help="Optional day focus in YYYY-MM-DD format.")

@@ -161,6 +161,7 @@ HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-
 HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city nyc set-list preferred_formats "Networking, Panel / Fireside Chat" | grep -q 'preferred_formats=Networking, Panel / Fireside Chat'
 HOME="$tmp_home" plugins/techwerker/scripts/techweek portfolio --city Boston --limit 1 >/dev/null
 HOME="$tmp_home" plugins/techwerker/scripts/techweek preferences --city Boston set-list neighborhoods "Cambridge, Kendall Square" | grep -q 'neighborhoods=Cambridge, Kendall Square'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek demo-reset --city Boston --no-sync --keep-state | grep -q 'profile=demo Justin Buildman'
 HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3 --from-cache | grep -q '^2 '
 HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3 --from-cache | grep -q 'queue=1 shown / 1 matched'
 HOME="$tmp_home" plugins/techwerker/scripts/techweek live-queue --city Boston --topics AI --time-slots noon,evening --limit 3 --from-cache | grep -q '^bos-1 '
