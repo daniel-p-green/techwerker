@@ -4,15 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import hashlib
 import html
+import io
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -21,8 +24,75 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_BASE_URL = "https://www.tech-week.com/calendar"
+MAIN_SITE_URL = "https://www.tech-week.com/"
+DEFAULT_BASE_URL = "https://tech-week.com/calendar"
 DATA_ROOT = Path.home() / ".codex" / "data" / "tech-week"
+TOOL_SEQUENCE = [
+    "techweek live-queue --city <city> --topics <topics> --time-slots <slots> --limit <limit>",
+    "techweek answers --city <city> <event-id> --write",
+    "techweek rsvp-context --city <city> <event-id> --json",
+    "techweek answer-field --city <city> <event-id> <visible-label> --json, passing --visible-value when Partiful already filled a non-sensitive response",
+    "Browser Use iab: navigate to eventUrl, inspect visible labels/buttons, fill known fields, and click scoped authorized RSVP/list controls",
+    "Optional Computer Use fallback: only for an intentionally selected desktop browser/app when Browser Use cannot complete the in-app flow",
+    "Authorized RSVP loop: re-inspect after each Continue/RSVP/list click until visible confirmation, waitlist, or stop condition",
+    "techweek state --city <city> <event-id> applied|waitlisted|needs-user-answer|needs-user-submit",
+]
+STOP_CONDITIONS = [
+    "credentials",
+    "one-time code",
+    "payment details",
+    "captcha",
+    "unknown required field",
+    "ambiguous final confirmation",
+]
+AUTHORIZATION_PHRASES = [
+    "get me on the list",
+    "sign me up",
+    "join this one",
+    "yes, do it",
+    "click RSVP",
+]
+PARTIFUL_AUTHORIZED_ACTION_LABELS = [
+    "Get on the list",
+    "RSVP",
+    "Join waitlist",
+    "Join the waitlist",
+    "Request to join",
+    "Continue",
+    "Submit",
+    "Complete RSVP",
+    "Confirm RSVP",
+    "Going",
+]
+RSVP_CLICK_THROUGH_STEPS = [
+    "Confirm the visible page or modal is for the selected event before clicking.",
+    "Open the RSVP/list modal if the selected event page is not already in RSVP mode.",
+    "Fill only known non-secret profile, form-memory, or answer-sheet fields.",
+    "Click one unique or scoped authorized Partiful action label at a time.",
+    "Re-inspect after every click and continue only while the next action is still for the selected event.",
+    "Stop for any safety stop condition or unknown required field.",
+]
+BROWSER_TAB_POLICY = {
+    "mode": "controlled-tab-queue",
+    "calendarSource": "Use CLI/local state as the primary Tech Week calendar engine; use the visual calendar only for spot checks.",
+    "staging": "It is okay to open several candidate Partiful event pages in Browser Use tabs for inspection and comparison.",
+    "activation": "Only one tab is the active RSVP target at a time. Before filling or clicking, confirm the active tab URL/event title matches the selected event id.",
+    "modalRule": "Prefer plain event URLs for background staging tabs. Add ?rsvp=true or open the RSVP modal only for the active event tab.",
+    "completion": "After each event reaches confirmation, waitlist, needs-user-answer, or a stop condition, record state before switching tabs.",
+}
+PLATFORM_POLICY = {
+    "planning": "Calendar planning, local state, profile memory, and portfolio generation are ordinary Codex plugin behavior.",
+    "liveRsvp": "Mac-first today: official Partiful form work uses Codex Desktop with Browser Use iab, and Computer Use is only a macOS desktop fallback when the in-app browser cannot complete the flow.",
+    "primaryLiveTool": "Browser Use iab",
+    "fallbackLiveTool": "Computer Use on macOS only for intentionally selected desktop-browser fallback/debugging.",
+    "nonMacExpectation": "Non-Mac users can still use planning and local state helpers, but live desktop form-control fallback is not promised until Codex Computer Use is available for that environment.",
+}
+RSVP_FINAL_STATE_GUIDANCE = {
+    "applied": "Use when Partiful visibly confirms RSVP, going, requested, applied, or on-list status for the selected event.",
+    "waitlisted": "Use when Partiful visibly confirms waitlist/list status for the selected event.",
+    "needs-user-answer": "Use when a required visible field has no profile, form-memory, answer-sheet, or user-provided value.",
+    "needs-user-submit": "Use only when the form is filled but the user has not authorized the RSVP/list action for this selected event.",
+}
 RSVP_STATES = [
     "new",
     "target",
@@ -48,6 +118,10 @@ LIVE_QUEUE_SKIP_STATES = {
     "needs-user-answer",
     "needs-user-submit",
 }
+SECURED_STATES = {"accepted", "applied"}
+ATTEMPTED_STATES = {"accepted", "applied", "waitlisted"}
+BLOCKED_STATES = {"needs-user-answer", "needs-user-submit"}
+DONE_OR_BLOCKED_STATES = ATTEMPTED_STATES | BLOCKED_STATES | {"rejected", "skipped"}
 CITY_ALIASES = {
     "new york": "nyc",
     "new-york": "nyc",
@@ -96,27 +170,112 @@ PREFERENCE_LIST_FIELDS = [
 LOCATION_CLUSTERS = {
     "nyc": {
         "midtown": "Midtown",
+        "midtown east": "Midtown",
+        "midtown west": "Midtown",
         "hudson yards": "Midtown",
         "murray hill": "Midtown",
+        "kips bay": "Midtown",
+        "koreatown": "Midtown",
+        "garment district": "Midtown",
+        "bryant park": "Midtown",
+        "times square": "Midtown",
+        "theater district": "Midtown",
+        "theatre district": "Midtown",
+        "columbus circle": "Midtown",
+        "hells kitchen": "Midtown",
+        "hell's kitchen": "Midtown",
+        "grand central": "Midtown",
+        "rockefeller center": "Midtown",
+        "penn station": "Midtown",
+        "madison square garden": "Midtown",
+        "port authority": "Midtown",
+        "turtle bay": "Midtown",
+        "diamond district": "Midtown",
         "nomad": "Flatiron/NoMad",
+        "no mad": "Flatiron/NoMad",
         "flatiron": "Flatiron/NoMad",
+        "madison square": "Flatiron/NoMad",
+        "madison square park": "Flatiron/NoMad",
+        "rose hill": "Flatiron/NoMad",
         "gramercy": "Flatiron/NoMad",
+        "gramercy park": "Flatiron/NoMad",
         "union square": "Flatiron/NoMad",
         "chelsea": "Chelsea/West Side",
+        "west chelsea": "Chelsea/West Side",
+        "high line": "Chelsea/West Side",
         "meatpacking": "Chelsea/West Side",
+        "meatpacking district": "Chelsea/West Side",
+        "west side": "Chelsea/West Side",
         "west village": "Downtown West",
         "greenwich village": "Downtown West",
+        "village": "Downtown West",
+        "washington square": "Downtown West",
+        "washington square park": "Downtown West",
+        "nyu": "Downtown West",
+        "noho": "Downtown West",
+        "nolita": "SoHo/LES",
         "soho": "SoHo/LES",
         "lower east side": "SoHo/LES",
+        "lower east": "SoHo/LES",
+        "les": "SoHo/LES",
         "east village": "SoHo/LES",
         "chinatown": "SoHo/LES",
+        "little italy": "SoHo/LES",
+        "bowery": "SoHo/LES",
+        "two bridges": "SoHo/LES",
         "tribeca": "Financial District/Tribeca",
+        "fidi": "Financial District/Tribeca",
         "financial district": "Financial District/Tribeca",
+        "lower manhattan": "Financial District/Tribeca",
+        "downtown manhattan": "Financial District/Tribeca",
+        "world trade center": "Financial District/Tribeca",
+        "wall street": "Financial District/Tribeca",
+        "battery park": "Financial District/Tribeca",
+        "seaport": "Financial District/Tribeca",
+        "south street seaport": "Financial District/Tribeca",
+        "civic center": "Financial District/Tribeca",
+        "city hall": "Financial District/Tribeca",
+        "downtown brooklyn": "Brooklyn",
+        "dumbo": "Brooklyn",
+        "williamsburg": "Brooklyn",
+        "greenpoint": "Brooklyn",
+        "bushwick": "Brooklyn",
+        "fort greene": "Brooklyn",
+        "brooklyn heights": "Brooklyn",
+        "cobble hill": "Brooklyn",
+        "carroll gardens": "Brooklyn",
+        "red hook": "Brooklyn",
+        "gowanus": "Brooklyn",
+        "prospect heights": "Brooklyn",
+        "bed stuy": "Brooklyn",
+        "bedford stuyvesant": "Brooklyn",
+        "crown heights": "Brooklyn",
+        "sunset park": "Brooklyn",
+        "brooklyn navy yard": "Brooklyn",
+        "navy yard": "Brooklyn",
+        "park slope": "Brooklyn",
         "brooklyn": "Brooklyn",
+        "long island city": "Queens",
+        "lic": "Queens",
+        "astoria": "Queens",
+        "flushing": "Queens",
+        "jackson heights": "Queens",
+        "sunnyside": "Queens",
         "queens": "Queens",
         "central park": "Uptown/Central Park",
+        "upper west side": "Uptown/Central Park",
+        "uws": "Uptown/Central Park",
         "upper manhattan": "Uptown/Central Park",
         "upper east side": "Uptown/Central Park",
+        "ues": "Uptown/Central Park",
+        "lincoln center": "Uptown/Central Park",
+        "harlem": "Uptown/Central Park",
+        "morningside heights": "Uptown/Central Park",
+        "columbia": "Uptown/Central Park",
+        "columbia university": "Uptown/Central Park",
+        "bronx": "Uptown/Central Park",
+        "long island": "Queens",
+        "staten island": "Staten Island",
         "virtual": "Virtual",
     },
     "boston": {
@@ -142,7 +301,77 @@ LOCATION_CLUSTERS = {
     },
 }
 
+LOCATION_ZONES = {
+    "nyc": {
+        "Midtown": "Manhattan Core",
+        "Flatiron/NoMad": "Manhattan Core",
+        "Chelsea/West Side": "Manhattan Core",
+        "Downtown West": "Downtown Manhattan",
+        "SoHo/LES": "Downtown Manhattan",
+        "Financial District/Tribeca": "Downtown Manhattan",
+        "Uptown/Central Park": "Uptown",
+        "Brooklyn": "Brooklyn/Queens",
+        "Queens": "Brooklyn/Queens",
+        "Staten Island": "Staten Island",
+        "Virtual": "Virtual",
+    },
+    "boston": {
+        "Back Bay": "Boston Core",
+        "Downtown Boston": "Boston Core",
+        "South End": "Boston Core",
+        "Seaport": "Seaport",
+        "Cambridge": "Cambridge/Somerville",
+        "Somerville": "Cambridge/Somerville",
+        "Virtual": "Virtual",
+    },
+    "san-francisco": {
+        "SoMa": "SF Core",
+        "FiDi/Embarcadero": "SF Core",
+        "Mission Bay": "SF Core",
+        "Mission": "Mission/Hayes",
+        "Hayes Valley": "Mission/Hayes",
+        "Virtual": "Virtual",
+    },
+}
+
 SLOT_ORDER = {"early": 0, "morning": 1, "noon": 2, "afternoon": 3, "evening": 4, "late": 5}
+WEEKDAY_TO_DATE_2026 = {
+    "monday": "2026-06-01",
+    "tuesday": "2026-06-02",
+    "wednesday": "2026-06-03",
+    "thursday": "2026-06-04",
+    "friday": "2026-06-05",
+    "saturday": "2026-06-06",
+    "sunday": "2026-06-07",
+}
+SLOT_KEYWORDS = {
+    "morning": "morning",
+    "breakfast": "morning",
+    "lunch": "noon",
+    "noon": "noon",
+    "midday": "noon",
+    "afternoon": "afternoon",
+    "evening": "evening",
+    "night": "evening",
+    "happy hour": "evening",
+}
+TOPIC_QUERY_ALIASES = {
+    "ai": ["AI"],
+    "agent": ["AI", "agents"],
+    "agents": ["AI", "agents"],
+    "artificial intelligence": ["AI"],
+    "hackathon": ["Hackathon"],
+    "founder": ["founder", "startup"],
+    "vc": ["VC", "venture"],
+    "venture": ["VC", "venture"],
+    "saas": ["SaaS"],
+    "voice": ["voice"],
+    "consumer": ["consumer"],
+    "fintech": ["Fintech"],
+    "health": ["health"],
+    "robotics": ["robotics"],
+    "crypto": ["crypto", "web3"],
+}
 PROFILE_FIELDS = [
     "display_name",
     "email",
@@ -158,6 +387,24 @@ PROFILE_FIELDS = [
 ]
 FIRST_USE_PROFILE_FIELDS = ["display_name", "email", "phone", "company", "title", "country", "linkedin"]
 OPTIONAL_FIRST_USE_PROFILE_FIELDS = ["why_attending"]
+PROFILE_COLLECTION_POLICY = {
+    "default": "Collect non-secret RSVP basics once, then reuse saved profile and form memory across Tech Week forms.",
+    "collectOnceFields": FIRST_USE_PROFILE_FIELDS + OPTIONAL_FIRST_USE_PROFILE_FIELDS,
+    "allowedSources": [
+        "Saved Techwerker RSVP profile and form memory.",
+        "User-provided chat answers for missing non-secret fields.",
+        "Visible browser account or form values only when they are clearly shown and the user allows saving or using them.",
+    ],
+    "doNotInferOrStore": [
+        "credentials",
+        "passwords",
+        "one-time codes",
+        "payment details",
+        "captcha solutions",
+        "private notes",
+    ],
+}
+ANSWER_SOURCES = ["user", "generated", "visible"]
 PROFILE_FIELD_LABELS = {
     "display_name": "Name",
     "email": "Email",
@@ -177,20 +424,41 @@ DEFAULT_LABEL_MAPPINGS = {
     "full name": "display_name",
     "email": "email",
     "email address": "email",
+    "your email": "email",
+    "what is your email": "email",
+    "what is your email the host may contact you at this email": "email",
     "phone": "phone",
     "phone number": "phone",
+    "your phone": "phone",
+    "what is your phone": "phone",
     "company": "company",
     "organization": "company",
+    "company name": "company",
+    "your company": "company",
+    "what is your company": "company",
+    "what is the name of your company": "company",
     "role": "title",
+    "current role": "title",
     "title": "title",
     "job title": "title",
+    "your job title": "title",
+    "what is your job title": "title",
+    "what is your current role": "title",
     "country": "country",
     "where are you based": "country",
     "country of residence": "country",
     "linkedin": "linkedin",
     "linkedin url": "linkedin",
+    "linkedin profile": "linkedin",
+    "your linkedin": "linkedin",
+    "what is your linkedin": "linkedin",
     "website": "website",
     "personal website": "website",
+    "github": "website",
+    "github link": "website",
+    "github profile": "website",
+    "github profile link": "website",
+    "what is your github profile link": "website",
     "bio": "one_liner",
     "one liner": "one_liner",
     "goal of attending": "why_attending",
@@ -199,6 +467,72 @@ DEFAULT_LABEL_MAPPINGS = {
     "comment": "comment_template",
     "write something fun": "comment_template",
 }
+GENERIC_PROFILE_FIELDS = {
+    "why_attending": "motivation",
+    "comment_template": "comment",
+}
+GENERATED_ANSWER_CLASSES = {
+    "motivation": {
+        "description": "Low-stakes why-attend or what-are-you-excited-about prompts.",
+        "labels": [
+            "why do you want to attend",
+            "why are you interested",
+            "why do you want to come",
+            "what are you excited about",
+            "what brings you",
+            "what are you hoping to get out of this",
+            "reason for attending",
+        ],
+    },
+    "comment": {
+        "description": "Optional Partiful comments or write-something-fun prompts.",
+        "labels": [
+            "comment",
+            "write something fun",
+            "leave a comment",
+            "anything else",
+            "note to host",
+        ],
+    },
+}
+SENSITIVE_LABEL_HINTS = [
+    "password",
+    "passcode",
+    "one time code",
+    "one-time code",
+    "otp",
+    "verification code",
+    "auth code",
+    "credit card",
+    "card number",
+    "payment",
+    "billing",
+    "captcha",
+    "ssn",
+    "social security",
+]
+FACTUAL_ASK_HINTS = [
+    "dietary",
+    "allergies",
+    "accessibility",
+    "accommodation",
+    "what are you building",
+    "what do you build",
+    "what is your startup",
+    "twitter",
+    "x handle",
+    "github",
+]
+ANSWER_SOURCE_PRECEDENCE = [
+    "visible prefilled value from the active Partiful form",
+    "event-specific saved answer",
+    "reusable saved answer",
+    "mapped factual profile field",
+    "approved generated generic answer class",
+    "draft generic answer for approval",
+    "ask user for factual unknown",
+    "stop for sensitive fields",
+]
 
 
 class TechWeekError(RuntimeError):
@@ -273,7 +607,7 @@ def read_json(path: Path, default: Any) -> Any:
 
 def write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, sort_keys=True)
         f.write("\n")
@@ -299,6 +633,65 @@ def parse_filter_values(value: str | None, default: list[str] | None = None) -> 
 
 def format_csv_values(values: list[Any]) -> str:
     return ", ".join(str(value) for value in values if str(value).strip())
+
+
+def label_has_hint(normalized_label: str, hints: list[str]) -> bool:
+    return any(normalize_form_label(hint) in normalized_label for hint in hints)
+
+
+def generated_answer_class(normalized_label: str, profile_key: str | None = None) -> str | None:
+    if profile_key in GENERIC_PROFILE_FIELDS:
+        return GENERIC_PROFILE_FIELDS[profile_key]
+    for answer_class, config in GENERATED_ANSWER_CLASSES.items():
+        if label_has_hint(normalized_label, config["labels"]):
+            return answer_class
+    return None
+
+
+def generated_policy(memory: dict[str, Any]) -> dict[str, Any]:
+    policy = memory.get("generated_answer_policy") or {}
+    approved = sorted({str(value) for value in policy.get("approved_classes", []) if str(value) in GENERATED_ANSWER_CLASSES})
+    mode = str(policy.get("mode") or "draft-first")
+    return {
+        "mode": mode,
+        "approvedClasses": approved,
+        "autoFillGeneratedWhenApproved": True,
+        "updatedAt": policy.get("updatedAt"),
+    }
+
+
+def answer_record(label: str, value: str, source: str = "user", scope: str = "reusable", answer_class: str | None = None) -> dict[str, Any]:
+    record = {
+        "label": label,
+        "value": value,
+        "source": source if source in ANSWER_SOURCES else "user",
+        "scope": scope,
+        "updatedAt": utc_now(),
+    }
+    if answer_class:
+        record["answerClass"] = answer_class
+    return record
+
+
+def build_answer_strategy(memory: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "sourcePrecedence": ANSWER_SOURCE_PRECEDENCE,
+        "generatedPolicy": generated_policy(memory),
+        "fieldClasses": {
+            "factualProfile": sorted(field for field in FIRST_USE_PROFILE_FIELDS + ["website", "one_liner"] if field not in GENERIC_PROFILE_FIELDS),
+            "visiblePrefill": "Use visible non-sensitive values already filled by Partiful account details or previous responses for the current form; do not save unless approved.",
+            "savedAnswer": "Event-specific answers override reusable answers.",
+            "generatedGeneric": GENERATED_ANSWER_CLASSES,
+            "factualUnknown": FACTUAL_ASK_HINTS,
+            "sensitiveStop": SENSITIVE_LABEL_HINTS,
+        },
+        "defaults": {
+            "factualPersonalData": "Never invent factual personal data; use saved profile/form memory or ask the user.",
+            "visiblePrefill": "If Partiful visibly prefilled a non-sensitive field from account details or previous responses, leave or use that value for the current form without saving it unless the user approves.",
+            "generatedGeneric": "Draft from event context and saved preferences; require approval unless the generated answer class is approved.",
+            "unknownRequired": "Record needs-user-answer and ask once.",
+        },
+    }
 
 
 def prompt_text(label: str, current: Any = "") -> str:
@@ -347,6 +740,24 @@ def fetch_text(url: str) -> str:
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8", errors="replace")
+
+
+def fetch_status(url: str) -> dict[str, Any]:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 TechWeekConcierge/0.1",
+            "Accept": "text/html,application/xhtml+xml",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read(2048)
+            return {"ok": True, "httpStatus": int(resp.status), "finalUrl": resp.geturl()}
+    except urllib.error.HTTPError as exc:
+        return {"ok": False, "httpStatus": int(exc.code), "finalUrl": exc.geturl(), "error": str(exc)}
+    except urllib.error.URLError as exc:
+        return {"ok": False, "httpStatus": None, "finalUrl": url, "error": str(exc.reason)}
 
 
 def fetch_json(url: str) -> Any:
@@ -557,6 +968,7 @@ def default_preferences() -> dict[str, Any]:
         "signup_multiplier": 3,
         "target_events_per_slot": 1,
         "cluster_first": True,
+        "max_clusters_per_day": 2,
         "avoid_clusters": [],
         "rsvp_mode": "manual",
     }
@@ -592,7 +1004,7 @@ def ensure_profile(root: Path) -> dict[str, Any]:
         "comment_template": "Excited to join and meet builders working on AI, product, and founder workflows.",
         "field_aliases": DEFAULT_LABEL_MAPPINGS,
         "custom_answers": {},
-        "do_not_store": ["passwords", "one_time_codes", "payment_details"],
+        "do_not_store": ["passwords", "one_time_codes", "payment_details", "captcha_solutions", "private_notes"],
     }
     profile = read_json(path, default)
     changed = False
@@ -612,7 +1024,8 @@ def ensure_form_memory(root: Path) -> dict[str, Any]:
         "label_mappings": DEFAULT_LABEL_MAPPINGS,
         "reusable_answers": {},
         "event_answers": {},
-        "do_not_store": ["passwords", "one_time_codes", "payment_details"],
+        "generated_answer_policy": {"mode": "draft-first", "approved_classes": []},
+        "do_not_store": ["passwords", "one_time_codes", "payment_details", "captcha_solutions", "private_notes"],
         "updatedAt": utc_now(),
     }
     memory = read_json(path, default)
@@ -905,6 +1318,180 @@ def event_matches_any(event: dict[str, Any], filters: list[str]) -> bool:
     return any(text_matches_filter(facet_text, value) or text_matches_filter(blob, value) for value in filters)
 
 
+def normalize_query_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value.lower().strip())
+
+
+def cluster_aliases(city: str, cluster: str) -> list[str]:
+    city = normalize_city(city)
+    cluster = str(cluster or "").strip()
+    aliases = [cluster] if cluster else []
+    for alias, target in LOCATION_CLUSTERS.get(city, {}).items():
+        if target == cluster:
+            aliases.append(alias)
+    return sorted({alias for alias in aliases if alias}, key=len)
+
+
+def nearby_clusters(city: str, anchor: str) -> list[str]:
+    city = normalize_city(city)
+    anchor = str(anchor or "").strip()
+    if not anchor:
+        return []
+    zone = cluster_zone(city, anchor)
+    clusters = [anchor]
+    for cluster, cluster_zone_value in LOCATION_ZONES.get(city, {}).items():
+        if cluster != anchor and cluster_zone_value == zone:
+            clusters.append(cluster)
+    return clusters
+
+
+def parse_natural_query(city: str, query: str) -> dict[str, Any]:
+    city = normalize_city(city)
+    text = normalize_query_text(query)
+    dates = []
+    for weekday, date_value in WEEKDAY_TO_DATE_2026.items():
+        if text_matches_filter(text, weekday):
+            dates.append(date_value)
+    slots = []
+    for phrase, slot in SLOT_KEYWORDS.items():
+        if text_matches_filter(text, phrase) and slot not in slots:
+            slots.append(slot)
+    clusters = []
+    for alias, cluster in LOCATION_CLUSTERS.get(city, {}).items():
+        if text_matches_filter(text, alias) and cluster not in clusters:
+            clusters.append(cluster)
+    topic_filters = []
+    for phrase, aliases in TOPIC_QUERY_ALIASES.items():
+        if text_matches_filter(text, phrase):
+            for alias in aliases:
+                if alias not in topic_filters:
+                    topic_filters.append(alias)
+    return {
+        "raw": query,
+        "dates": dates,
+        "timeSlots": slots,
+        "locationAnchors": clusters,
+        "nearbyClusters": {cluster: nearby_clusters(city, cluster) for cluster in clusters},
+        "topicFilters": topic_filters,
+    }
+
+
+def event_matches_query(event: dict[str, Any], city: str, parsed: dict[str, Any]) -> tuple[bool, int, list[str]]:
+    score_bonus = 0
+    reasons: list[str] = []
+    dates = set(parsed.get("dates") or [])
+    if dates:
+        if str(event.get("date") or "") not in dates:
+            return False, 0, []
+        score_bonus += 6
+        reasons.append(f"date:{event.get('date')}")
+    slots = set(parsed.get("timeSlots") or [])
+    if slots:
+        slot = str(event.get("timeSlot") or "")
+        if slot not in slots:
+            return False, 0, []
+        score_bonus += 5
+        reasons.append(f"time:{slot}")
+    topics = list(parsed.get("topicFilters") or [])
+    if topics and not event_matches_any(event, topics):
+        return False, 0, []
+    if topics:
+        score_bonus += 5
+        reasons.append(f"topic:{'/'.join(topics[:3])}")
+    anchors = list(parsed.get("locationAnchors") or [])
+    if anchors:
+        cluster = event_cluster(event)
+        if cluster in anchors:
+            score_bonus += 7
+            reasons.append(f"location:{cluster}")
+        elif any(cluster in nearby_clusters(city, anchor) for anchor in anchors):
+            score_bonus += 4
+            reasons.append(f"nearby:{cluster}")
+        else:
+            return False, 0, []
+    return True, score_bonus, reasons
+
+
+def ask_events(args: argparse.Namespace) -> int:
+    city = normalize_city(args.city)
+    root = resolve_existing_root(city, args.year)
+    latest = load_latest(root)
+    prefs = ensure_preferences(root)
+    parsed = parse_natural_query(city, args.query)
+    rows = []
+    for event in scored_events(latest.get("events", []), prefs):
+        if args.open_links_only and not event.get("externalHref"):
+            continue
+        ok, bonus, query_reasons = event_matches_query(event, city, parsed)
+        if not ok:
+            continue
+        cluster = event_cluster(event)
+        anchors = set(parsed.get("locationAnchors") or [])
+        relation = commute_relation(city, cluster, anchors)
+        rows.append(
+            {
+                **event,
+                "score": int(event.get("score") or 0) + bonus,
+                "queryReasons": query_reasons,
+                "commuteRelation": relation,
+                "locationZone": cluster_zone(city, cluster),
+            }
+        )
+    rows.sort(
+        key=lambda event: (
+            commute_penalty(str(event.get("commuteRelation") or "unknown")),
+            -int(event.get("score") or 0),
+            str(event.get("date") or ""),
+            SLOT_ORDER.get(str(event.get("timeSlot") or ""), 99),
+            str(event.get("time") or ""),
+            str(event.get("name") or ""),
+        )
+    )
+    selected = rows[: args.limit]
+    output = {
+        "generatedAt": utc_now(),
+        "city": city,
+        "query": parsed,
+        "matchedCount": len(rows),
+        "events": selected,
+        "guidance": {
+            "plainEnglish": "Use this for requests like 'find me a cool AI event on Tuesday afternoon near Williamsburg' or any configured city neighborhood alias.",
+            "locationAwareness": "Location anchors expand to nearby clusters in the same city zone, then sort same-cluster before nearby options.",
+            "userFacing": "Summarize event names, day/time, neighborhood, why it matches, and RSVP/list status without exposing event ids unless debugging.",
+        },
+    }
+    write_json(root / "ask-results.json", output)
+    if args.json:
+        print(json.dumps(output, indent=2, sort_keys=True))
+        return 0
+    print(f"# Techwerker Ask: {city}")
+    print(f"query={args.query}")
+    print(
+        "parsed="
+        f"dates:{format_csv_values(parsed['dates']) or 'any'} "
+        f"time_slots:{format_csv_values(parsed['timeSlots']) or 'any'} "
+        f"topics:{format_csv_values(parsed['topicFilters']) or 'any'} "
+        f"near:{format_csv_values(parsed['locationAnchors']) or 'any'}"
+    )
+    if parsed["locationAnchors"]:
+        for anchor, clusters in parsed["nearbyClusters"].items():
+            print(f"nearby:{anchor} -> {format_csv_values(clusters)}")
+    if not selected:
+        print("\nno matching events")
+        print(f"\nwrote {root / 'ask-results.json'}")
+        return 0
+    for event in selected:
+        url = event.get("externalHref") or "invite-only-or-missing-link"
+        print(
+            f"- score={event.get('score')} {event.get('id')} {event.get('date')} {str(event.get('time') or '')[:5]} "
+            f"[{event.get('timeSlot')}] [{event.get('locationCluster')}] {event.get('commuteRelation')} "
+            f"{event.get('name')}\n  {url}"
+        )
+    print(f"\nmatched={len(rows)} shown={len(selected)}")
+    print(f"wrote {root / 'ask-results.json'}")
+    return 0
+
+
 def interests(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     output = build_interest_options(root, args.limit)
@@ -934,6 +1521,118 @@ def build_interest_options(root: Path, limit: int = 80) -> dict[str, Any]:
     return output
 
 
+def portfolio_bucket_key(event: dict[str, Any]) -> str:
+    return str(event.get("portfolioBucket") or f"{event.get('date')}:{event.get('timeSlot')}")
+
+
+def event_cluster(event: dict[str, Any]) -> str:
+    return str(event.get("locationCluster") or event.get("location") or "TBD")
+
+
+def cluster_zone(city: str, cluster: str) -> str:
+    return LOCATION_ZONES.get(normalize_city(city), {}).get(cluster, cluster)
+
+
+def commute_relation(city: str, cluster: str, anchors: set[str]) -> str:
+    if not anchors:
+        return "anchor"
+    if not cluster or cluster == "TBD":
+        return "unknown"
+    if cluster == "Virtual":
+        return "flexible"
+    if cluster in anchors:
+        return "same-cluster"
+    zone = cluster_zone(city, cluster)
+    if any(cluster_zone(city, anchor) == zone for anchor in anchors):
+        return "nearby"
+    return "far"
+
+
+def commute_penalty(relation: str) -> int:
+    return {
+        "anchor": 0,
+        "same-cluster": 0,
+        "flexible": 0,
+        "nearby": 1,
+        "unknown": 2,
+        "far": 4,
+    }.get(relation, 2)
+
+
+def preferred_day_clusters(events: list[dict[str, Any]], city: str, max_clusters_per_day: int) -> dict[str, set[str]]:
+    by_day: dict[str, dict[str, int]] = {}
+    for event in events:
+        cluster = event_cluster(event)
+        if cluster in {"", "TBD", "Virtual"}:
+            continue
+        day = str(event.get("date") or "unknown")
+        score = max(0, int(event.get("score") or 0)) + 1
+        zone = cluster_zone(city, cluster)
+        by_day.setdefault(day, {})
+        by_day[day][cluster] = by_day[day].get(cluster, 0) + score
+        by_day[day][zone] = by_day[day].get(zone, 0) + score // 2
+
+    anchors: dict[str, set[str]] = {}
+    for day, cluster_scores in by_day.items():
+        real_clusters = [item for item in cluster_scores.items() if item[0] not in set(LOCATION_ZONES.get(normalize_city(city), {}).values())]
+        ordered = sorted(real_clusters, key=lambda item: (-item[1], item[0]))
+        anchors[day] = {cluster for cluster, _score in ordered[:max_clusters_per_day]}
+    return anchors
+
+
+def portfolio_coverage(events: list[dict[str, Any]], states: dict[str, Any], prefs: dict[str, Any], city: str, multiplier: int | None = None, target_per_slot: int | None = None) -> dict[str, Any]:
+    multiplier = multiplier or int(prefs.get("signup_multiplier") or 3)
+    target_per_slot = target_per_slot or int(prefs.get("target_events_per_slot") or 1)
+    recommended_attempts = max(1, multiplier * target_per_slot)
+    buckets: dict[str, dict[str, Any]] = {}
+    for event in events:
+        bucket = portfolio_bucket_key(event)
+        state = str(states.get(str(event.get("id")), {}).get("state") or "new")
+        cluster = event_cluster(event)
+        record = buckets.setdefault(
+            bucket,
+            {
+                "bucket": bucket,
+                "date": str(event.get("date") or ""),
+                "timeSlot": str(event.get("timeSlot") or ""),
+                "recommendedAttempts": recommended_attempts,
+                "targetEvents": target_per_slot,
+                "plannedCount": 0,
+                "pendingCount": 0,
+                "attemptedCount": 0,
+                "securedCount": 0,
+                "blockedCount": 0,
+                "clusters": {},
+            },
+        )
+        record["plannedCount"] += 1
+        record["clusters"][cluster] = record["clusters"].get(cluster, 0) + 1
+        if state in ATTEMPTED_STATES:
+            record["attemptedCount"] += 1
+        elif state in BLOCKED_STATES:
+            record["blockedCount"] += 1
+        elif state not in DONE_OR_BLOCKED_STATES:
+            record["pendingCount"] += 1
+        if state in SECURED_STATES:
+            record["securedCount"] += 1
+    for record in buckets.values():
+        record["attemptsShortfall"] = max(0, int(record["recommendedAttempts"]) - int(record["attemptedCount"]))
+        record["securedShortfall"] = max(0, int(record["targetEvents"]) - int(record["securedCount"]))
+        record["clusterCount"] = len(record["clusters"])
+        record["primaryClusters"] = [
+            {"cluster": cluster, "count": count, "zone": cluster_zone(city, cluster)}
+            for cluster, count in sorted(record["clusters"].items(), key=lambda item: (-item[1], item[0]))
+        ]
+    ordered = sorted(buckets.values(), key=lambda row: (row["date"], SLOT_ORDER.get(row["timeSlot"], 99), row["bucket"]))
+    return {
+        "riskModel": "High waitlist/low acceptance: keep several RSVP attempts per date/time slot, then collapse overlapping acceptances later.",
+        "locationModel": "Prefer clustered or nearby neighborhoods within a day; avoid creating a route that depends on far cross-city hops.",
+        "recommendedAttemptsPerBucket": recommended_attempts,
+        "targetEventsPerBucket": target_per_slot,
+        "buckets": ordered,
+    }
+
+
 def portfolio(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     latest = load_latest(root)
@@ -941,30 +1640,62 @@ def portfolio(args: argparse.Namespace) -> int:
     multiplier = args.multiplier or int(prefs.get("signup_multiplier") or 3)
     target_per_slot = args.target_per_slot or int(prefs.get("target_events_per_slot") or 1)
     per_bucket_limit = max(1, multiplier * target_per_slot)
+    city = normalize_city(args.city)
+    max_clusters_per_day = max(1, int(args.max_clusters_per_day or prefs.get("max_clusters_per_day") or 2))
 
+    scored = scored_events(latest.get("events", []), prefs)
+    day_anchor_map = preferred_day_clusters(scored, city, max_clusters_per_day)
     buckets: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for event in scored_events(latest.get("events", []), prefs):
+    for event in scored:
         if args.open_links_only and not event.get("externalHref"):
             continue
         if event.get("timeSlot") in {"early", "late", "unknown"} and not args.include_edge_slots:
+            continue
+        if not args.include_outside_time_windows and not in_time_window(str(event.get("time") or ""), prefs.get("time_windows", [])):
             continue
         buckets.setdefault((str(event.get("date")), str(event.get("timeSlot"))), []).append(event)
 
     selected: list[dict[str, Any]] = []
     for key in sorted(buckets, key=lambda k: (k[0], SLOT_ORDER.get(k[1], 99))):
-        bucket = sorted(buckets[key], key=lambda e: (-int(e.get("score") or 0), str(e.get("time") or ""), str(e.get("name") or "")))
+        day, slot = key
+        anchors = set(day_anchor_map.get(day) or set())
+        bucket = sorted(
+            buckets[key],
+            key=lambda e: (
+                commute_penalty(commute_relation(city, event_cluster(e), anchors)) if prefs.get("cluster_first") else 0,
+                -int(e.get("score") or 0),
+                str(e.get("time") or ""),
+                str(e.get("name") or ""),
+            ),
+        )
         cluster_counts: dict[str, int] = {}
         picks = []
         for event in bucket:
             cluster = str(event.get("locationCluster") or event.get("location") or "TBD")
+            relation = commute_relation(city, cluster, anchors)
+            if prefs.get("cluster_first") and relation == "far" and anchors:
+                continue
             if prefs.get("cluster_first") and cluster_counts.get(cluster, 0) >= max(1, target_per_slot + 1):
                 continue
-            picks.append(event)
+            picks.append({**event, "commuteRelation": relation, "locationZone": cluster_zone(city, cluster)})
             cluster_counts[cluster] = cluster_counts.get(cluster, 0) + 1
             if len(picks) >= per_bucket_limit:
                 break
+        if len(picks) < per_bucket_limit and bucket:
+            picked_ids = {str(event.get("id")) for event in picks}
+            for event in bucket:
+                if str(event.get("id")) in picked_ids:
+                    continue
+                cluster = event_cluster(event)
+                relation = commute_relation(city, cluster, anchors)
+                picks.append({**event, "commuteRelation": f"{relation}-exception" if relation == "far" else relation, "locationZone": cluster_zone(city, cluster)})
+                if len(picks) >= per_bucket_limit:
+                    break
         for rank, event in enumerate(picks, 1):
-            selected.append({**event, "portfolioRank": rank, "portfolioBucket": f"{key[0]}:{key[1]}", "portfolioAction": "apply"})
+            selected.append({**event, "portfolioRank": rank, "portfolioBucket": f"{day}:{slot}", "portfolioAction": "apply"})
+
+    states = read_json(root / "rsvp-state.json", {})
+    coverage = portfolio_coverage(selected, states, prefs, city, multiplier, target_per_slot)
 
     output = {
         "generatedAt": utc_now(),
@@ -973,7 +1704,14 @@ def portfolio(args: argparse.Namespace) -> int:
             "targetEventsPerSlot": target_per_slot,
             "perBucketLimit": per_bucket_limit,
             "openLinksOnly": args.open_links_only,
+            "includeOutsideTimeWindows": args.include_outside_time_windows,
+            "clusterFirst": bool(prefs.get("cluster_first")),
+            "maxClustersPerDay": max_clusters_per_day,
+            "riskModel": "High waitlist/low acceptance: target multiple RSVP attempts per date/time slot, then collapse overlapping acceptances later.",
+            "locationModel": "Favor same or nearby location clusters within a day so accepted events can become a realistic route.",
+            "dayAnchorClusters": {day: sorted(clusters) for day, clusters in day_anchor_map.items()},
         },
+        "coverage": coverage,
         "events": selected,
     }
     write_json(root / "portfolio.json", output)
@@ -988,7 +1726,15 @@ def portfolio(args: argparse.Namespace) -> int:
         print(
             f"{event['portfolioRank']}. score={event['score']} {event.get('id')} "
             f"{str(event.get('time') or '')[:5]} [{event.get('locationCluster')}] "
+            f"{event.get('commuteRelation', 'anchor')} "
             f"{event.get('name')} ({link_status})"
+        )
+    print("\n## Coverage")
+    for bucket in coverage["buckets"][: args.limit]:
+        clusters = ", ".join(row["cluster"] for row in bucket["primaryClusters"][:3])
+        print(
+            f"- {bucket['bucket']}: attempts {bucket['attemptedCount']}/{bucket['recommendedAttempts']} "
+            f"secured {bucket['securedCount']}/{bucket['targetEvents']} planned {bucket['plannedCount']} clusters {clusters or 'TBD'}"
         )
     print(f"\nwrote {root / 'portfolio.json'}")
     return 0
@@ -1106,15 +1852,29 @@ def live_queue(args: argparse.Namespace) -> int:
 def pending_apply_queue(root: Path) -> list[dict[str, Any]]:
     portfolio_data = read_json(root / "portfolio.json", {"events": []})
     states = read_json(root / "rsvp-state.json", {})
+    prefs = ensure_preferences(root)
     queue = []
-    skip_states = {"applied", "waitlisted", "accepted", "rejected", "skipped", "needs-user-answer", "needs-user-submit"}
     for event in portfolio_data.get("events", []):
         if not event.get("externalHref"):
             continue
         state = states.get(str(event.get("id")), {}).get("state", "new")
-        if state in skip_states:
+        if state in LIVE_QUEUE_SKIP_STATES:
             continue
         queue.append(event)
+    city = str(read_json(root / "latest.json", {}).get("city") or root.name.rsplit("-", 1)[0])
+    coverage = portfolio_coverage(portfolio_data.get("events", []), states, prefs, city)
+    by_bucket = {row["bucket"]: row for row in coverage["buckets"]}
+    queue.sort(
+        key=lambda event: (
+            -int(by_bucket.get(portfolio_bucket_key(event), {}).get("attemptsShortfall", 0)),
+            int(by_bucket.get(portfolio_bucket_key(event), {}).get("attemptedCount", 0)),
+            str(event.get("date") or ""),
+            SLOT_ORDER.get(str(event.get("timeSlot") or ""), 99),
+            commute_penalty(str(event.get("commuteRelation") or "unknown")),
+            int(event.get("portfolioRank") or 999),
+            -int(event.get("score") or 0),
+        )
+    )
     return queue
 
 
@@ -1130,9 +1890,13 @@ def missing_profile_fields(profile_data: dict[str, Any]) -> list[str]:
     return [field for field in FIRST_USE_PROFILE_FIELDS if not str(profile_data.get(field) or "").strip()]
 
 
+def missing_optional_profile_fields(profile_data: dict[str, Any]) -> list[str]:
+    return [field for field in OPTIONAL_FIRST_USE_PROFILE_FIELDS if not str(profile_data.get(field) or "").strip()]
+
+
 def print_profile_summary(profile_data: dict[str, Any]) -> None:
     missing = missing_profile_fields(profile_data)
-    optional_missing = [field for field in OPTIONAL_FIRST_USE_PROFILE_FIELDS if not str(profile_data.get(field) or "").strip()]
+    optional_missing = missing_optional_profile_fields(profile_data)
     print(f"profile={'ready' if not missing else 'missing ' + ', '.join(missing)}")
     if optional_missing:
         print(f"optional_missing={', '.join(optional_missing)}")
@@ -1200,8 +1964,8 @@ def write_setup_summary(root: Path, profile_data: dict[str, Any], prefs: dict[st
 
 def setup(args: argparse.Namespace) -> int:
     root = setup_root(args)
-    profile_data = ensure_profile(root)
-    prefs = ensure_preferences(root)
+    profile_data = read_json(root / "rsvp-profile.json", {})
+    prefs = read_json(root / "preferences.json", default_preferences())
     ensure_form_memory(root)
     interest_options = build_interest_options(root, args.limit)
     interactive = bool(args.interactive or (sys.stdin.isatty() and not args.no_interactive))
@@ -1226,6 +1990,7 @@ def setup(args: argparse.Namespace) -> int:
             prefs["time_windows"] = prompt_list("Time windows", prefs.get("time_windows", []))
             prefs["signup_multiplier"] = prompt_int("Signup multiplier", int(prefs.get("signup_multiplier") or 3))
             prefs["target_events_per_slot"] = prompt_int("Target events per slot", int(prefs.get("target_events_per_slot") or 1))
+            prefs["max_clusters_per_day"] = prompt_int("Max location clusters per day", int(prefs.get("max_clusters_per_day") or 2))
             prefs["rsvp_mode"] = prompt_choice("Default RSVP mode", ["manual", "assisted", "full-auto"], str(prefs.get("rsvp_mode") or "manual"))
             write_json(root / "preferences.json", prefs)
 
@@ -1328,6 +2093,21 @@ def cockpit(args: argparse.Namespace) -> int:
     else:
         print("- no pending apply targets")
 
+    if portfolio_data.get("events"):
+        city = str(latest.get("city") or normalize_city(args.city))
+        coverage = portfolio_coverage(portfolio_data.get("events", []), states, ensure_preferences(root), city)
+        gaps = [row for row in coverage["buckets"] if row["attemptsShortfall"] or row["securedShortfall"]]
+        print("\n## Coverage Gaps")
+        if gaps:
+            for row in gaps[: args.limit]:
+                clusters = ", ".join(cluster["cluster"] for cluster in row["primaryClusters"][:3])
+                print(
+                    f"- {row['bucket']}: attempts {row['attemptedCount']}/{row['recommendedAttempts']} "
+                    f"secured {row['securedCount']}/{row['targetEvents']} clusters {clusters or 'TBD'}"
+                )
+        else:
+            print("- coverage targets met for planned buckets")
+
     if args.date:
         day_events = [event for event in portfolio_data.get("events", []) if str(event.get("date")) == args.date]
         if day_events:
@@ -1351,16 +2131,23 @@ def day_plan(args: argparse.Namespace) -> int:
         raise TechWeekError(f"no portfolio events found for {args.date}; run portfolio first")
     events.sort(key=lambda e: (SLOT_ORDER.get(str(e.get("timeSlot")), 99), str(e.get("time") or ""), -int(e.get("score") or 0)))
     current_slot = None
+    previous_cluster = None
+    city = normalize_city(args.city)
     for event in events:
         slot = str(event.get("timeSlot") or "unknown")
         if slot != current_slot:
             print(f"\n## {args.date} {slot}")
             current_slot = slot
+        cluster = event_cluster(event)
+        relation = commute_relation(city, cluster, {previous_cluster} if previous_cluster else set())
         state = states.get(str(event.get("id")), {}).get("state", "target")
+        commute_note = f" commute={relation}" if previous_cluster else ""
         print(
             f"- {state}: {str(event.get('time') or '')[:5]} [{event.get('locationCluster')}] "
-            f"{event.get('name')} ({event.get('company')}) id={event.get('id')}"
+            f"{event.get('name')} ({event.get('company')}) id={event.get('id')}{commute_note}"
         )
+        if state in {"accepted", "applied", "waitlisted", "target", "shortlisted", "opened", "filled", "new"} and cluster not in {"", "TBD", "Virtual"}:
+            previous_cluster = cluster
     return 0
 
 
@@ -1383,6 +2170,15 @@ def find_event(root: Path, event_id: str) -> dict[str, Any]:
             if str(event.get("id")) == str(event_id):
                 return event
     raise TechWeekError(f"event id not found: {event_id}")
+
+
+def event_url(event: dict[str, Any], city: str) -> str:
+    return str(event.get("externalHref") or f"{DEFAULT_BASE_URL}/{normalize_city(city)}")
+
+
+def is_partiful_url(url: str) -> bool:
+    host = urllib.parse.urlparse(url).netloc.lower()
+    return host == "partiful.com" or host.endswith(".partiful.com")
 
 
 def set_rsvp_state(root: Path, event_id: str, state: str, note: str | None = None) -> None:
@@ -1444,16 +2240,283 @@ def clear_missing_field(root: Path, event_id: str, label: str | None) -> int:
 def open_event(args: argparse.Namespace) -> int:
     root = resolve_existing_root(args.city, args.year)
     event = find_event(root, args.event_id)
-    url = event.get("externalHref") or f"{DEFAULT_BASE_URL}/{args.city}"
+    url = event_url(event, args.city)
     state = "opened" if event.get("externalHref") else "needs-review"
-    set_rsvp_state(root, args.event_id, state, "opened from techweek script")
+    set_rsvp_state(root, args.event_id, state, "event URL prepared for Browser Use handoff")
     print(url)
-    if args.no_browser:
-        return 0
-    try:
-        subprocess.run(["open", url], check=False)
-    except OSError as exc:
-        print(f"could not open browser: {exc}", file=sys.stderr)
+    if args.system_browser:
+        try:
+            subprocess.run(["open", url], check=False)
+        except OSError as exc:
+            print(f"could not open system browser: {exc}", file=sys.stderr)
+    return 0
+
+
+def rsvp_context(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    event = find_event(root, args.event_id)
+    profile_data = ensure_profile(root)
+    prefs = ensure_preferences(root)
+    form_memory_data = ensure_form_memory(root)
+    states = read_json(root / "rsvp-state.json", {})
+    state_record = states.get(str(event.get("id")), {})
+    missing_required = missing_profile_fields(profile_data)
+    missing_optional = missing_optional_profile_fields(profile_data)
+    answer_sheet_path = root / "answer-sheets" / f"{event.get('id')}.md"
+    url = event_url(event, args.city)
+    event_summary = {
+        "id": str(event.get("id")),
+        "name": event.get("name"),
+        "date": event.get("date"),
+        "time": event.get("time"),
+        "timeSlot": event.get("timeSlot"),
+        "company": event.get("company"),
+        "location": event.get("location"),
+        "locationCluster": event.get("locationCluster"),
+        "externalHref": event.get("externalHref"),
+        "isPartiful": is_partiful_url(url),
+        "isInviteOnly": bool(event.get("isInviteOnly")),
+        "statusHint": event.get("statusHint"),
+    }
+    context = {
+        "city": normalize_city(args.city),
+        "stateRoot": str(root),
+        "eventUrl": url,
+        "event": event_summary,
+        "profile": {
+            "ready": not missing_required,
+            "missingRequired": missing_required,
+            "missingOptional": missing_optional,
+            "fields": {field: profile_data.get(field, "") for field in PROFILE_FIELDS},
+            "doNotStore": profile_data.get("do_not_store", []),
+            "collectionPolicy": PROFILE_COLLECTION_POLICY,
+        },
+        "preferences": {
+            "rsvpMode": prefs.get("rsvp_mode", "manual"),
+            "topics": prefs.get("topics", []),
+            "timeWindows": prefs.get("time_windows", []),
+            "preferredFormats": prefs.get("preferred_formats", []),
+        },
+        "formMemory": {
+            "labelMappings": form_memory_data.get("label_mappings") or {},
+            "reusableAnswers": form_memory_data.get("reusable_answers") or {},
+            "eventAnswers": (form_memory_data.get("event_answers") or {}).get(str(event.get("id")), {}),
+            "generatedPolicy": generated_policy(form_memory_data),
+            "doNotStore": form_memory_data.get("do_not_store", []),
+        },
+        "missingFields": state_record.get("missingFields") or [],
+        "state": state_record.get("state", "new"),
+        "answerSheetPath": str(answer_sheet_path),
+        "answerSheetExists": answer_sheet_path.exists(),
+        "safety": {
+            "defaultMode": "assisted",
+            "authorizationPhrases": AUTHORIZATION_PHRASES,
+            "stopConditions": STOP_CONDITIONS,
+            "finalSubmitPolicy": "After event-specific authorization, click scoped RSVP/list/Continue controls for that selected event until visible confirmation, waitlist, or a stop condition.",
+        },
+        "rsvpActionPolicy": {
+            "requiresEventSpecificAuthorization": True,
+            "authorizationPhrases": AUTHORIZATION_PHRASES,
+            "authorizedActionLabels": PARTIFUL_AUTHORIZED_ACTION_LABELS,
+            "clickThroughSteps": RSVP_CLICK_THROUGH_STEPS,
+            "browserTabPolicy": BROWSER_TAB_POLICY,
+            "platformPolicy": PLATFORM_POLICY,
+            "needsUserSubmitPolicy": RSVP_FINAL_STATE_GUIDANCE["needs-user-submit"],
+            "finalStateGuidance": RSVP_FINAL_STATE_GUIDANCE,
+        },
+        "answerStrategy": build_answer_strategy(form_memory_data),
+        "platformPolicy": PLATFORM_POLICY,
+        "recommendedToolSequence": TOOL_SEQUENCE,
+        "browserUse": {
+            "backend": "iab",
+            "role": "Navigate to eventUrl, inspect visible page/modal state, fill known fields, use non-sensitive visible prefilled values, avoid naive global clicks when labels repeat, and click scoped authorized RSVP/list actions after event-specific authorization.",
+        },
+        "computerUse": {
+            "role": "Optional fallback only: use for an intentionally selected desktop browser/app when Browser Use cannot complete the in-app Partiful flow; stop for unknown or sensitive fields.",
+            "macOnlyFallback": True,
+            "browserUseIsPrimary": True,
+            "codexAppMayBeBlocked": True,
+        },
+    }
+    if args.json:
+        print(json.dumps(context, indent=2, sort_keys=True))
+    else:
+        print(f"{event_summary['name']}")
+        print(f"url={url}")
+        print(f"profile={'ready' if context['profile']['ready'] else 'missing ' + ', '.join(missing_required)}")
+        print(f"state={context['state']}")
+        print(f"answer_sheet={answer_sheet_path}")
+        print("action_policy=authorized click-through until visible confirmation or stop condition")
+        print("tool_sequence=Browser Use iab -> optional Computer Use fallback -> techweek state")
+    return 0
+
+
+def answer_field_decision(
+    root: Path,
+    event: dict[str, Any],
+    label: str,
+    required: bool,
+    field_type: str,
+    record_missing: bool,
+    visible_value: str | None = None,
+    visible_source: str = "form",
+) -> dict[str, Any]:
+    event_id = str(event.get("id"))
+    normalized = normalize_form_label(label)
+    profile_data = ensure_profile(root)
+    prefs = ensure_preferences(root)
+    memory = ensure_form_memory(root)
+    policy = generated_policy(memory)
+    base: dict[str, Any] = {
+        "eventId": event_id,
+        "eventName": event.get("name"),
+        "label": label,
+        "normalizedLabel": normalized,
+        "required": required,
+        "fieldType": field_type,
+    }
+
+    if label_has_hint(normalized, SENSITIVE_LABEL_HINTS):
+        return {
+            **base,
+            "action": "stop",
+            "fieldClass": "sensitive",
+            "reason": "Sensitive or unsafe field. Do not fill, generate, store, or attempt to bypass.",
+            "stopConditions": STOP_CONDITIONS,
+        }
+
+    visible_value = str(visible_value or "").strip()
+    if visible_value:
+        mappings = memory.get("label_mappings") or {}
+        profile_key = mappings.get(normalized)
+        answer_class = generated_answer_class(normalized, profile_key)
+        return {
+            **base,
+            "action": "use_visible_value",
+            "fieldClass": "visible_prefill",
+            "source": "visible",
+            "visibleSource": visible_source,
+            "profileKey": profile_key,
+            "answerClass": answer_class,
+            "value": visible_value,
+            "shouldSave": False,
+            "recordedMissingField": False,
+            "reason": "The active Partiful form already shows a non-sensitive value; use it for this RSVP and do not save it unless the user approves.",
+            "suggestedStorage": {"type": "profile" if profile_key else "event-or-reusable-form-memory", "saveOnlyWithUserApproval": True},
+        }
+
+    event_answers = (memory.get("event_answers") or {}).get(event_id, {})
+    if normalized in event_answers and str(event_answers[normalized].get("value") or "").strip():
+        return {
+            **base,
+            "action": "fill_saved_answer",
+            "fieldClass": "saved_answer",
+            "source": "form-memory",
+            "scope": "event",
+            "value": event_answers[normalized].get("value"),
+            "record": event_answers[normalized],
+        }
+
+    reusable_answers = memory.get("reusable_answers") or {}
+    if normalized in reusable_answers and str(reusable_answers[normalized].get("value") or "").strip():
+        return {
+            **base,
+            "action": "fill_saved_answer",
+            "fieldClass": "saved_answer",
+            "source": "form-memory",
+            "scope": "reusable",
+            "value": reusable_answers[normalized].get("value"),
+            "record": reusable_answers[normalized],
+        }
+
+    mappings = memory.get("label_mappings") or {}
+    profile_key = mappings.get(normalized)
+    answer_class = generated_answer_class(normalized, profile_key)
+    if answer_class:
+        approved = answer_class in policy["approvedClasses"]
+        return {
+            **base,
+            "action": "draft_generic_answer",
+            "fieldClass": "generated_generic",
+            "answerClass": answer_class,
+            "source": "codex-generated",
+            "approvalRequired": not approved,
+            "mayAutoFillGenerated": approved,
+            "generationPolicy": policy,
+            "profileTemplate": profile_data.get(profile_key, "") if profile_key else "",
+            "draftContext": {
+                "event": {
+                    "name": event.get("name"),
+                    "company": event.get("company"),
+                    "date": event.get("date"),
+                    "time": event.get("time"),
+                    "location": event.get("location"),
+                    "statusHint": event.get("statusHint"),
+                },
+                "profile": {
+                    "company": profile_data.get("company", ""),
+                    "title": profile_data.get("title", ""),
+                    "oneLiner": profile_data.get("one_liner", ""),
+                    "whyAttending": profile_data.get("why_attending", ""),
+                    "commentTemplate": profile_data.get("comment_template", ""),
+                },
+                "preferences": {
+                    "topics": prefs.get("topics", []),
+                    "preferredFormats": prefs.get("preferred_formats", []),
+                    "timeWindows": prefs.get("time_windows", []),
+                },
+            },
+        }
+
+    if profile_key:
+        value = str(profile_data.get(profile_key) or "").strip()
+        if value:
+            return {
+                **base,
+                "action": "fill_from_profile",
+                "fieldClass": "factual_profile",
+                "source": "profile",
+                "profileKey": profile_key,
+                "value": value,
+            }
+        if required and record_missing:
+            add_missing_field(root, event_id, label, True, field_type, f"missing profile field: {profile_key}")
+        return {
+            **base,
+            "action": "ask_user",
+            "fieldClass": "missing_profile",
+            "source": "user",
+            "profileKey": profile_key,
+            "recordedMissingField": bool(required and record_missing),
+            "suggestedStorage": {"type": "profile", "profileKey": profile_key},
+        }
+
+    field_class = "factual_unknown" if label_has_hint(normalized, FACTUAL_ASK_HINTS) else "unknown"
+    if required and record_missing:
+        add_missing_field(root, event_id, label, True, field_type, "unknown required Partiful answer")
+    return {
+        **base,
+        "action": "ask_user",
+        "fieldClass": field_class,
+        "source": "user",
+        "recordedMissingField": bool(required and record_missing),
+        "suggestedStorage": {"type": "event-or-reusable-form-memory"},
+    }
+
+
+def answer_field(args: argparse.Namespace) -> int:
+    root = resolve_existing_root(args.city, args.year)
+    event = find_event(root, args.event_id)
+    decision = answer_field_decision(root, event, args.label, not args.optional, args.field_type, not args.no_record_missing, args.visible_value, args.visible_source)
+    if args.json:
+        print(json.dumps(decision, indent=2, sort_keys=True))
+    else:
+        print(f"action={decision['action']}")
+        print(f"field_class={decision['fieldClass']}")
+        if decision.get("value"):
+            print(f"value={decision['value']}")
+        if decision.get("approvalRequired") is not None:
+            print(f"approval_required={str(decision['approvalRequired']).lower()}")
     return 0
 
 
@@ -1529,7 +2592,8 @@ def form_memory(args: argparse.Namespace) -> int:
         return 0
     if command == "remember":
         label = normalize_form_label(args.label)
-        record = {"label": args.label, "value": args.value, "updatedAt": utc_now()}
+        answer_class = args.answer_class or generated_answer_class(label)
+        record = answer_record(args.label, args.value, args.source, "event" if args.event_id else "reusable", answer_class)
         if args.event_id:
             event_answers = memory.setdefault("event_answers", {})
             event_answers.setdefault(str(args.event_id), {})[label] = record
@@ -1539,6 +2603,18 @@ def form_memory(args: argparse.Namespace) -> int:
             print(f"remembered reusable answer: {label}")
         memory["updatedAt"] = utc_now()
         write_json(path, memory)
+        print(path)
+        return 0
+    if command == "approve-generated":
+        answer_class = args.answer_class
+        policy = memory.setdefault("generated_answer_policy", {"mode": "draft-first", "approved_classes": []})
+        approved = sorted({str(value) for value in policy.get("approved_classes", []) if str(value) in GENERATED_ANSWER_CLASSES} | {answer_class})
+        policy["mode"] = policy.get("mode") or "draft-first"
+        policy["approved_classes"] = approved
+        policy["updatedAt"] = utc_now()
+        memory["updatedAt"] = utc_now()
+        write_json(path, memory)
+        print(f"approved_generated={answer_class}")
         print(path)
         return 0
     if command == "lookup":
@@ -1606,7 +2682,8 @@ def missing_fields(args: argparse.Namespace) -> int:
         memory_path = root / "form-memory.json"
         memory = ensure_form_memory(root)
         label = normalize_form_label(args.label)
-        record = {"label": args.label, "value": args.value, "updatedAt": utc_now()}
+        answer_class = args.answer_class or generated_answer_class(label)
+        record = answer_record(args.label, args.value, args.source, "reusable" if args.reusable else "event", answer_class)
         if args.reusable:
             memory.setdefault("reusable_answers", {})[label] = record
             scope = "reusable"
@@ -1671,13 +2748,27 @@ def answer_sheet(args: argparse.Namespace) -> int:
     if reusable_answers:
         lines.append("- Reusable answers:")
         for record in reusable_answers.values():
-            lines.append(f"  - {record.get('label')}: {record.get('value')}")
+            metadata = ", ".join(str(value) for value in [record.get("source"), record.get("answerClass")] if value)
+            suffix = f" ({metadata})" if metadata else ""
+            lines.append(f"  - {record.get('label')}: {record.get('value')}{suffix}")
     if event_answers:
         lines.append("- Event-specific answers:")
         for record in event_answers.values():
-            lines.append(f"  - {record.get('label')}: {record.get('value')}")
+            metadata = ", ".join(str(value) for value in [record.get("source"), record.get("answerClass")] if value)
+            suffix = f" ({metadata})" if metadata else ""
+            lines.append(f"  - {record.get('label')}: {record.get('value')}{suffix}")
     if not reusable_answers and not event_answers:
         lines.append("- No saved custom form answers yet.")
+    policy = generated_policy(form_memory_data)
+    lines.extend(
+        [
+            "",
+            "## Generated Answer Policy",
+            "",
+            f"- Mode: {policy['mode']}",
+            f"- Approved classes: {format_csv_values(policy['approvedClasses']) or '[none]'}",
+        ]
+    )
     missing_fields = state_record.get("missingFields") or []
     lines.extend(["", "## Missing Form Fields", ""])
     if missing_fields:
@@ -1757,6 +2848,569 @@ def escape_ics(value: str) -> str:
     return value.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
 
 
+def local_root_for_city(city: str, year: int | None) -> Path | None:
+    city = normalize_city(city)
+    if year:
+        root = data_dir(city, year)
+        return root if root.exists() else None
+    matches = sorted(DATA_ROOT.glob(f"{city}-*"))
+    return matches[-1] if matches else None
+
+
+def local_city_summary(city: str, year: int | None) -> dict[str, Any]:
+    root = local_root_for_city(city, year)
+    if not root:
+        return {
+            "stateRoot": None,
+            "localYear": year,
+            "localSyncedAt": None,
+            "localSyncAgeSeconds": None,
+            "localEventCount": 0,
+            "localOpenLinkCount": 0,
+            "hasPortfolio": False,
+            "hasProfile": False,
+        }
+    latest = load_latest(root)
+    events = latest.get("events", [])
+    synced_at = latest.get("syncedAt")
+    age_seconds = None
+    if synced_at:
+        try:
+            synced_dt = datetime.fromisoformat(str(synced_at).replace("Z", "+00:00"))
+            age_seconds = max(0, int((datetime.now(timezone.utc) - synced_dt).total_seconds()))
+        except ValueError:
+            age_seconds = None
+    return {
+        "stateRoot": str(root),
+        "localYear": latest.get("year") or year,
+        "localSyncedAt": synced_at,
+        "localSyncAgeSeconds": age_seconds,
+        "localEventCount": len(events),
+        "localOpenLinkCount": sum(1 for event in events if event.get("externalHref")),
+        "hasPortfolio": (root / "portfolio.json").exists(),
+        "hasProfile": (root / "rsvp-profile.json").exists(),
+    }
+
+
+def city_status_row(city: str, args: argparse.Namespace) -> dict[str, Any]:
+    city = normalize_city(city)
+    ctx = Context(city, args.year, args.base_url)
+    local = local_city_summary(city, args.year)
+    row: dict[str, Any] = {
+        "city": city,
+        "calendarUrl": ctx.calendar_url,
+        "status": "pending",
+        "httpStatus": None,
+        "finalUrl": None,
+        "liveEventCount": 0,
+        "liveOpenLinkCount": 0,
+        "message": "",
+        **local,
+    }
+    if args.from_cache:
+        if row["localEventCount"]:
+            row["status"] = "launched"
+            row["message"] = "local calendar cache has events"
+        else:
+            row["status"] = "pending"
+            row["message"] = "no local calendar cache yet"
+        return row
+
+    status = fetch_status(ctx.calendar_url)
+    row["httpStatus"] = status.get("httpStatus")
+    row["finalUrl"] = status.get("finalUrl")
+    if row["httpStatus"] == 404:
+        row["status"] = "pending"
+        row["message"] = "calendar URL returned 404; treat as first-class pending city"
+        return row
+    if row["httpStatus"] != 200:
+        row["status"] = "error"
+        row["message"] = status.get("error") or f"unexpected HTTP status {row['httpStatus']}"
+        return row
+    try:
+        _ctx, _year, _now, events, _meta = fetch_calendar_events(city, args.year, args.base_url, args.first_page)
+    except Exception as exc:
+        row["status"] = "error"
+        row["message"] = f"calendar fetched but could not parse events: {exc}"
+        return row
+    row["status"] = "launched" if events else "pending"
+    row["liveEventCount"] = len(events)
+    row["liveOpenLinkCount"] = sum(1 for event in events if event.get("externalHref"))
+    row["message"] = "calendar launched and parseable" if events else "calendar returned no events"
+    return row
+
+
+def city_status(args: argparse.Namespace) -> int:
+    rows = [city_status_row(city, args) for city in expand_cities(args.city)]
+    if args.json:
+        print(json.dumps({"generatedAt": utc_now(), "cities": rows}, indent=2, sort_keys=True))
+        return 0
+    for row in rows:
+        live = f"live_events={row['liveEventCount']} open_links={row['liveOpenLinkCount']}" if row.get("liveEventCount") else f"http={row.get('httpStatus')}"
+        local = f"local_events={row['localEventCount']} local_open_links={row['localOpenLinkCount']} synced={row.get('localSyncedAt') or 'never'}"
+        print(f"{row['city']} {row['status']} {row['calendarUrl']} {live} {local}")
+        if row.get("message"):
+            print(f"  {row['message']}")
+    return 0
+
+
+def onboarding_field(field: str, profile_data: dict[str, Any], required: bool = True) -> dict[str, Any]:
+    return {
+        "key": field,
+        "label": PROFILE_FIELD_LABELS.get(field, field),
+        "required": required,
+        "currentValuePresent": bool(str(profile_data.get(field) or "").strip()),
+        "sourcePolicy": "user or clearly visible Partiful account/form value; ask before saving visible values",
+    }
+
+
+def onboarding_context(args: argparse.Namespace) -> int:
+    city = normalize_city(args.city)
+    status_args = argparse.Namespace(city=city, year=args.year, base_url=args.base_url, from_cache=args.from_cache, first_page=args.first_page)
+    status = city_status_row(city, status_args)
+    if status["status"] == "pending" and not status.get("localEventCount"):
+        output = {
+            "generatedAt": utc_now(),
+            "city": city,
+            "ready": False,
+            "cityStatus": status,
+            "userFacingSummary": f"{city} is supported, but its Tech Week calendar is pending. Do not invent events.",
+            "nextUserPrompt": "That city is supported, but the public calendar is not live yet. I can watch for it or help with New York or Boston now.",
+        }
+        if args.json:
+            print(json.dumps(output, indent=2, sort_keys=True))
+        else:
+            print(output["userFacingSummary"])
+        return 0
+
+    if args.from_cache:
+        root = resolve_existing_root(city, args.year)
+    elif args.json:
+        with contextlib.redirect_stdout(io.StringIO()):
+            root = setup_root(args)
+    else:
+        root = setup_root(args)
+    profile_data = ensure_profile(root)
+    prefs = ensure_preferences(root)
+    ensure_form_memory(root)
+    interest_options = build_interest_options(root, args.limit)
+    required_fields = [onboarding_field(field, profile_data, True) for field in FIRST_USE_PROFILE_FIELDS]
+    optional_fields = [onboarding_field(field, profile_data, False) for field in OPTIONAL_FIRST_USE_PROFILE_FIELDS]
+    missing_required = [field["key"] for field in required_fields if not field["currentValuePresent"]]
+    output = {
+        "generatedAt": utc_now(),
+        "city": city,
+        "ready": not missing_required,
+        "cityStatus": status,
+        "profileCollection": {
+            "policy": PROFILE_COLLECTION_POLICY,
+            "requiredFields": required_fields,
+            "optionalFields": optional_fields,
+            "missingRequired": missing_required,
+            "missingOptional": [field["key"] for field in optional_fields if not field["currentValuePresent"]],
+            "compactBatchPrompt": "I need your reusable RSVP basics once: name, email, phone, company, title, country, and LinkedIn. Optional: one sentence on what you want from Tech Week so I can draft harmless why-attend answers.",
+        },
+        "preferenceQuestions": {
+            "topics": {
+                "question": "What topics should I prioritize?",
+                "current": prefs.get("topics", []),
+                "suggestions": [row["value"] for row in interest_options.get("facets", [])[:20]],
+            },
+            "neighborhoods": {
+                "question": "Which neighborhoods or clusters should I prefer or avoid?",
+                "current": prefs.get("neighborhoods", []),
+                "suggestions": [row["value"] for row in interest_options.get("clusters", [])[:20]],
+            },
+            "formats": {
+                "question": "Which formats should I prioritize or avoid?",
+                "current": prefs.get("preferred_formats", []),
+                "suggestions": [row["value"] for row in interest_options.get("facets", [])[:30]],
+            },
+            "timeWindows": {
+                "question": "What start times work best?",
+                "current": prefs.get("time_windows", []),
+                "presets": {
+                    "Morning": "08:00-12:00",
+                    "Noon": "12:00-15:00",
+                    "Afternoon": "15:00-17:00",
+                    "Evening": "17:00-21:00",
+                },
+            },
+        },
+        "defaultPlan": {
+            "review": "Sync and parse the official calendar privately.",
+            "select": "Build an overlap-aware portfolio with several attempts per date/time slot and location clustering.",
+            "rsvp": "Use Browser Use iab on official Partiful pages, one active RSVP modal at a time.",
+            "forms": "Fill profile, saved, and visible prefilled values automatically; ask only for unknown required answers; draft low-stakes generic answers under policy.",
+            "state": "Record applied, waitlisted, needs-user-answer, or needs-user-submit before switching tabs.",
+        },
+        "stopConditions": STOP_CONDITIONS,
+    }
+    if args.json:
+        print(json.dumps(output, indent=2, sort_keys=True))
+    else:
+        print(f"onboarding={'ready' if output['ready'] else 'missing ' + ', '.join(missing_required)}")
+        print(output["profileCollection"]["compactBatchPrompt"])
+    return 0
+
+
+def repo_root() -> Path | None:
+    candidates = [Path.cwd(), Path(__file__).resolve()]
+    for start in candidates:
+        current = start if start.is_dir() else start.parent
+        for directory in [current, *current.parents]:
+            if (directory / "scripts" / "check.sh").exists() and (directory / "plugins" / "techwerker" / "scripts" / "techweek").exists():
+                return directory
+    return None
+
+
+def check_record(name: str, status: str, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {"name": name, "status": status, "message": message, "details": details or {}}
+
+
+def same_file_bytes(left: Path, right: Path) -> bool:
+    return left.exists() and right.exists() and left.read_bytes() == right.read_bytes()
+
+
+def script_sync_check(root: Path | None) -> dict[str, Any]:
+    if not root:
+        return check_record("script-copy-sync", "warn", "repo root not found")
+    script = root / "plugins" / "techwerker" / "scripts" / "techweek"
+    bundled = root / "plugins" / "techwerker" / "skills" / "tech-week-concierge" / "scripts" / "techweek"
+    ok = same_file_bytes(script, bundled)
+    return check_record("script-copy-sync", "pass" if ok else "fail", "repo and bundled skill scripts match" if ok else "repo and bundled skill scripts differ", {"script": str(script), "bundled": str(bundled)})
+
+
+def installed_parity_check(root: Path | None) -> dict[str, Any]:
+    if not root:
+        return check_record("installed-cache-parity", "warn", "repo root not found")
+    script = root / "plugins" / "techwerker" / "scripts" / "techweek"
+    skill = root / "plugins" / "techwerker" / "skills" / "tech-week-concierge" / "SKILL.md"
+    targets = [
+        Path.home() / ".codex" / "plugins" / "cache" / "techwerker" / "techwerker" / "0.1.0" / "scripts" / "techweek",
+        Path.home() / ".codex" / "skills" / "tech-week-concierge" / "scripts" / "techweek",
+        Path.home() / ".codex" / "skills" / "tech-week-concierge" / "SKILL.md",
+    ]
+    details = {}
+    failures = []
+    for target in targets:
+        source = skill if target.name == "SKILL.md" else script
+        if not target.exists():
+            details[str(target)] = "missing"
+            continue
+        matches = same_file_bytes(source, target)
+        details[str(target)] = "match" if matches else "differs"
+        if not matches:
+            failures.append(str(target))
+    if failures:
+        return check_record("installed-cache-parity", "fail", "installed Techwerker copies differ from repo", details)
+    if any(value == "missing" for value in details.values()):
+        return check_record("installed-cache-parity", "warn", "some installed Techwerker copies are not present", details)
+    return check_record("installed-cache-parity", "pass", "installed Techwerker copies match repo", details)
+
+
+def public_hygiene_check(root: Path | None) -> dict[str, Any]:
+    if not root:
+        return check_record("public-hygiene", "warn", "repo root not found")
+    forbidden = re.compile(r"/Users/danielgreen|gho_|Token:|password=|api[_-]?key|SECRET|PRIVATE KEY")
+    stale_submit = re.compile(r"pause before final RSVP|pause before final submission|stop before final submit|Stop before final RSVP")
+    paths = [
+        root / "README.md",
+        root / "SECURITY.md",
+        root / "plugins" / "techwerker" / ".codex-plugin" / "plugin.json",
+        root / "plugins" / "techwerker" / ".claude-plugin" / "plugin.json",
+        root / "plugins" / "techwerker" / "README.md",
+        root / "plugins" / "techwerker" / "commands" / "techweek.md",
+        root / "plugins" / "techwerker" / "commands" / "techweek-rsvp.md",
+        root / "plugins" / "techwerker" / "commands" / "techweek-setup.md",
+        root / "plugins" / "techwerker" / "references" / "partiful-rsvp-runbook.md",
+        root / "plugins" / "techwerker" / "skills" / "tech-week-concierge" / "SKILL.md",
+        root / "docs" / "demo-script.md",
+        root / "docs" / "launch-copy.md",
+        root / "docs" / "release-evidence.md",
+        root / "docs" / "ship-readiness.md",
+        root / "docs" / "demo-video" / "ASSET-MANIFEST.md",
+    ]
+    hits = []
+    for path in paths:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for idx, line in enumerate(text.splitlines(), 1):
+            if forbidden.search(line) or stale_submit.search(line):
+                hits.append({"path": str(path), "line": idx, "text": line.strip()[:160]})
+    if hits:
+        return check_record("public-hygiene", "fail", "public docs contain forbidden or stale release language", {"hits": hits})
+    return check_record("public-hygiene", "pass", "public docs avoid local paths, secrets, and stale stop-before-submit language")
+
+
+def release_artifact_check(root: Path | None) -> dict[str, Any]:
+    if not root:
+        return check_record("release-artifacts", "warn", "repo root not found")
+    readme = root / "README.md"
+    codex_manifest = root / "plugins" / "techwerker" / ".codex-plugin" / "plugin.json"
+    claude_manifest = root / "plugins" / "techwerker" / ".claude-plugin" / "plugin.json"
+    demo_gif = root / "assets" / "techwerker-demo.gif"
+    reviewer_video = root / "assets" / "techwerker-reviewer-demo.mp4"
+    evidence = root / "docs" / "release-evidence.md"
+    launch_copy = root / "docs" / "launch-copy.md"
+    ship_readiness = root / "docs" / "ship-readiness.md"
+    partiful_fixture = root / "fixtures" / "partiful-rsvp-fixture.html"
+    variant_fixture = root / "fixtures" / "partiful-rsvp-variants.html"
+    demo_design = root / "docs" / "demo-video" / "DESIGN.md"
+    demo_html = root / "docs" / "demo-video" / "index.html"
+    asset_manifest = root / "docs" / "demo-video" / "ASSET-MANIFEST.md"
+    pending_asset = root / "docs" / "demo-video" / "assets" / "elevenlabs-pending-proof.png"
+    poster_asset = root / "plugins" / "techwerker" / "assets" / "techwerker-poster.jpg"
+    fresh_acceptance = root / "scripts" / "fresh-user-acceptance.sh"
+    required = {
+        "readme": readme,
+        "codexManifest": codex_manifest,
+        "claudeManifest": claude_manifest,
+        "demoGif": demo_gif,
+        "reviewerVideo": reviewer_video,
+        "releaseEvidence": evidence,
+        "launchCopy": launch_copy,
+        "shipReadiness": ship_readiness,
+        "partifulFixture": partiful_fixture,
+        "partifulVariantFixture": variant_fixture,
+        "demoVideoDesign": demo_design,
+        "demoVideoHtml": demo_html,
+        "demoAssetManifest": asset_manifest,
+        "elevenLabsPendingAsset": pending_asset,
+        "pluginPoster": poster_asset,
+        "freshUserAcceptance": fresh_acceptance,
+    }
+    missing = [name for name, path in required.items() if not path.exists()]
+    details: dict[str, Any] = {
+        "paths": {name: str(path) for name, path in required.items()},
+        "missing": missing,
+    }
+    if demo_gif.exists():
+        details["demoGifBytes"] = demo_gif.stat().st_size
+    if reviewer_video.exists():
+        details["reviewerVideoBytes"] = reviewer_video.stat().st_size
+    evidence_text = evidence.read_text(encoding="utf-8") if evidence.exists() else ""
+    launch_text = launch_copy.read_text(encoding="utf-8") if launch_copy.exists() else ""
+    manifest_text = codex_manifest.read_text(encoding="utf-8") if codex_manifest.exists() else ""
+    readme_text = readme.read_text(encoding="utf-8") if readme.exists() else ""
+    ship_text = ship_readiness.read_text(encoding="utf-8") if ship_readiness.exists() else ""
+    fixture_text = partiful_fixture.read_text(encoding="utf-8") if partiful_fixture.exists() else ""
+    variant_text = variant_fixture.read_text(encoding="utf-8") if variant_fixture.exists() else ""
+    demo_text = demo_html.read_text(encoding="utf-8") if demo_html.exists() else ""
+    asset_manifest_text = asset_manifest.read_text(encoding="utf-8") if asset_manifest.exists() else ""
+    expectations = {
+        "codexManifestIsPublicReady": "pause before final submit" not in manifest_text and "Use Techwerker. What can you do?" in manifest_text and "techwerker-poster.jpg" in manifest_text,
+        "readmeHasNonDeveloperInstall": "non-developers using the Codex app for Mac" in readme_text and "normal language" in readme_text,
+        "readmeLinksEvidence": "docs/release-evidence.md" in readme_text,
+        "readmeLinksReviewerVideo": "assets/techwerker-reviewer-demo.mp4" in readme_text,
+        "shipReadinessHasColdReview": "Reviewer Cold-Read Test" in ship_text and "within 20 seconds" in ship_text,
+        "evidenceHasLiveProof": "Final visible state: `Pending`" in evidence_text and "do not repeat real RSVP submissions" in evidence_text,
+        "evidenceUsesElevenLabs": "Rebuild x Eleven Labs Hackathon" in evidence_text and "https://partiful.com/e/5gz90KPGpE1XoK3GZtoW" in evidence_text,
+        "evidenceHasNonClaims": "does not guarantee acceptance" in evidence_text and "does not" in evidence_text,
+        "launchUsesConversationalFlow": "What can you do?" in launch_text and "Yes, get me on the list" in launch_text,
+        "demoVideoUsesElevenLabs": "Rebuild x Eleven Labs Hackathon" in demo_text and "Pending" in demo_text,
+        "demoVideoSquareSource": 'data-width="1080"' in demo_text and 'data-height="1080"' in demo_text and "silent-first" in demo_text.lower(),
+        "assetManifestPrivacyReviewed": "Privacy review" in asset_manifest_text and "no email, phone, LinkedIn" in asset_manifest_text,
+        "fixtureHasDuplicateCta": fixture_text.count("Get on the list") >= 2,
+        "fixtureHasActiveModal": 'data-active-rsvp-modal="true"' in fixture_text,
+        "fixtureHasUnknownRequired": "What are you building?" in fixture_text and "needs-user-answer" in fixture_text,
+        "variantFixtureHasCoverage": all(
+            token in variant_text
+            for token in [
+                "duplicate-cta",
+                "already-pending",
+                "waitlist-confirmed",
+                "custom-required",
+                "visible-prefill",
+                "otp-stop",
+                "captcha-stop",
+                "payment-stop",
+                "optional-generic",
+            ]
+        ),
+    }
+    details["expectations"] = expectations
+    failures = missing + [name for name, ok in expectations.items() if not ok]
+    if demo_gif.exists() and demo_gif.stat().st_size <= 1:
+        failures.append("demoGifNonEmpty")
+    if reviewer_video.exists() and reviewer_video.stat().st_size <= 1:
+        failures.append("reviewerVideoNonEmpty")
+    if failures:
+        details["failures"] = failures
+        return check_record("release-artifacts", "fail", "public release artifacts are incomplete or stale", details)
+    return check_record("release-artifacts", "pass", "public README, demo asset, launch copy, and release evidence are present", details)
+
+
+def fresh_user_acceptance_check(root: Path | None) -> dict[str, Any]:
+    if not root:
+        return check_record("fresh-user-acceptance", "warn", "repo root not found")
+    script = root / "scripts" / "fresh-user-acceptance.sh"
+    if not script.exists():
+        return check_record("fresh-user-acceptance", "fail", "fresh-user acceptance script is missing", {"script": str(script)})
+    result = subprocess.run([str(script)], cwd=str(root), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+    details = {
+        "script": str(script),
+        "returnCode": result.returncode,
+        "stdout": result.stdout.strip().splitlines()[-5:],
+        "stderr": result.stderr.strip().splitlines()[-5:],
+    }
+    if result.returncode != 0:
+        return check_record("fresh-user-acceptance", "fail", "fresh-user acceptance failed from empty HOME", details)
+    return check_record("fresh-user-acceptance", "pass", "fresh-user setup, planning, RSVP context, and answer strategy pass from empty HOME", details)
+
+
+def portfolio_sanity_check(city: str, year: int | None) -> dict[str, Any]:
+    city = normalize_city(city)
+    root = local_root_for_city(city, year)
+    if not root or not (root / "portfolio.json").exists():
+        return check_record(f"portfolio-sanity:{city}", "warn", "no local portfolio to inspect")
+    data = read_json(root / "portfolio.json", {})
+    events = data.get("events") or []
+    coverage = (data.get("coverage") or {}).get("buckets") or []
+    strategy = data.get("strategy") or {}
+    leaks = [
+        {"id": event.get("id"), "time": event.get("time"), "bucket": event.get("portfolioBucket")}
+        for event in events
+        if not strategy.get("includeOutsideTimeWindows") and not in_time_window(str(event.get("time") or ""), ensure_preferences(root).get("time_windows", []))
+    ]
+    missing_commute = [event.get("id") for event in events if "commuteRelation" not in event or "locationZone" not in event]
+    far_exceptions = [event.get("id") for event in events if str(event.get("commuteRelation") or "").startswith("far")]
+    details = {
+        "eventCount": len(events),
+        "coverageBucketCount": len(coverage),
+        "outsideTimeWindowLeaks": leaks[:10],
+        "missingCommuteMetadata": missing_commute[:10],
+        "farCommuteExceptions": far_exceptions[:10],
+    }
+    if leaks or missing_commute or not coverage:
+        return check_record(f"portfolio-sanity:{city}", "fail", "portfolio violates time-window, coverage, or commute metadata expectations", details)
+    return check_record(f"portfolio-sanity:{city}", "pass", "portfolio has hard time-window filtering, coverage buckets, and commute metadata", details)
+
+
+def rsvp_context_sanity_check(city: str, year: int | None) -> dict[str, Any]:
+    city = normalize_city(city)
+    root = local_root_for_city(city, year)
+    if not root:
+        return check_record(f"rsvp-context-sanity:{city}", "warn", "no local state to inspect")
+    for source in ("live-queue.json", "portfolio.json", "latest.json"):
+        data = read_json(root / source, {"events": []})
+        for event in data.get("events", []):
+            url = event_url(event, city)
+            if not is_partiful_url(url):
+                continue
+            memory = ensure_form_memory(root)
+            details = {
+                "eventId": str(event.get("id")),
+                "eventUrl": url,
+                "answerStrategyMode": build_answer_strategy(memory)["generatedPolicy"]["mode"],
+                "authorizedLabels": PARTIFUL_AUTHORIZED_ACTION_LABELS,
+                "browserTabMode": BROWSER_TAB_POLICY["mode"],
+                "platformPolicy": PLATFORM_POLICY,
+            }
+            if "Mac-first" not in PLATFORM_POLICY["liveRsvp"] or "Browser Use iab" not in PLATFORM_POLICY["primaryLiveTool"]:
+                return check_record(f"rsvp-context-sanity:{city}", "fail", "RSVP context is missing Mac-first Browser Use platform policy", details)
+            return check_record(f"rsvp-context-sanity:{city}", "pass", "Partiful event has release-grade RSVP policy context", details)
+    return check_record(f"rsvp-context-sanity:{city}", "warn", "no local Partiful event found for RSVP-context inspection")
+
+
+def plain_ask_sanity_check(city: str, year: int | None) -> dict[str, Any]:
+    city = normalize_city(city)
+    sample_queries = {
+        "nyc": "find me a cool AI event on Tuesday afternoon near Flatiron",
+        "boston": "find me a cool AI event on Tuesday afternoon near Cambridge",
+        "san-francisco": "find me a cool AI event on Tuesday afternoon near SoMa",
+    }
+    parsed = parse_natural_query(city, sample_queries.get(city, "find me a cool AI event on Tuesday afternoon"))
+    details = {
+        "query": parsed["raw"],
+        "dates": parsed["dates"],
+        "timeSlots": parsed["timeSlots"],
+        "locationAnchors": parsed["locationAnchors"],
+        "nearbyClusters": parsed["nearbyClusters"],
+        "topicFilters": parsed["topicFilters"],
+    }
+    alias_failures = []
+    for alias, expected_cluster in LOCATION_CLUSTERS.get(city, {}).items():
+        alias_parsed = parse_natural_query(city, f"find me an AI event on Tuesday afternoon near {alias}")
+        if expected_cluster not in alias_parsed["locationAnchors"]:
+            alias_failures.append({"alias": alias, "expected": expected_cluster, "actual": alias_parsed["locationAnchors"]})
+        if alias_parsed["timeSlots"] != ["afternoon"]:
+            alias_failures.append({"alias": alias, "expectedTimeSlots": ["afternoon"], "actualTimeSlots": alias_parsed["timeSlots"]})
+    details["aliasCoverageCount"] = len(LOCATION_CLUSTERS.get(city, {}))
+    details["aliasFailures"] = alias_failures[:10]
+    if parsed["dates"] != ["2026-06-02"] or parsed["timeSlots"] != ["afternoon"] or "AI" not in parsed["topicFilters"]:
+        return check_record(f"plain-ask-sanity:{city}", "fail", "plain-English date/time/topic parsing is not reliable", details)
+    if alias_failures:
+        return check_record(f"plain-ask-sanity:{city}", "fail", "one or more configured neighborhood aliases did not parse correctly", details)
+    if city == "nyc" and "Chelsea/West Side" not in parsed["nearbyClusters"].get("Flatiron/NoMad", []):
+        return check_record(f"plain-ask-sanity:{city}", "fail", "NYC nearby-cluster expansion is incomplete", details)
+    return check_record(f"plain-ask-sanity:{city}", "pass", "plain-English event requests map all configured neighborhood aliases to date/time/topic/location constraints", details)
+
+
+def onboarding_sanity_check(city: str, year: int | None) -> dict[str, Any]:
+    city = normalize_city(city)
+    root = local_root_for_city(city, year)
+    if not root:
+        return check_record(f"onboarding-sanity:{city}", "warn", "no local state to inspect")
+    profile_data = ensure_profile(root)
+    prefs = ensure_preferences(root)
+    required = [onboarding_field(field, profile_data, True) for field in FIRST_USE_PROFILE_FIELDS]
+    details = {
+        "requiredFieldCount": len(required),
+        "missingRequired": [field["key"] for field in required if not field["currentValuePresent"]],
+        "timeWindows": prefs.get("time_windows", []),
+        "visiblePrefillPolicy": build_answer_strategy(read_json(root / "form-memory.json", {}))["defaults"]["visiblePrefill"],
+    }
+    if len(required) != len(FIRST_USE_PROFILE_FIELDS) or not details["timeWindows"]:
+        return check_record(f"onboarding-sanity:{city}", "fail", "first-run context is missing profile or time-window basics", details)
+    return check_record(f"onboarding-sanity:{city}", "pass", "first-run context can collect profile once and avoid visible-value retyping", details)
+
+
+def city_status_release_check(args: argparse.Namespace) -> dict[str, Any]:
+    rows = [city_status_row(city, args) for city in expand_cities(args.city)]
+    failing = [row for row in rows if row["status"] == "error"]
+    unknown = [row for row in rows if row["city"] != "san-francisco" and row["status"] == "pending"]
+    if failing or (unknown and not args.from_cache):
+        return check_record("city-status", "fail", "one or more release cities failed live/pending classification", {"cities": rows})
+    if unknown:
+        return check_record("city-status", "warn", "one or more non-SF cities have no local cache in skip-live mode", {"cities": rows})
+    return check_record("city-status", "pass", "NYC/Boston are launchable when available and San Francisco can be pending", {"cities": rows})
+
+
+def release_check(args: argparse.Namespace) -> int:
+    root = repo_root()
+    checks = [
+        script_sync_check(root),
+        city_status_release_check(args),
+        public_hygiene_check(root),
+        release_artifact_check(root),
+        fresh_user_acceptance_check(root),
+        installed_parity_check(root),
+    ]
+    for city in expand_cities(args.city):
+        checks.append(onboarding_sanity_check(city, args.year))
+        checks.append(plain_ask_sanity_check(city, args.year))
+        checks.append(portfolio_sanity_check(city, args.year))
+        checks.append(rsvp_context_sanity_check(city, args.year))
+    summary = {"pass": 0, "warn": 0, "fail": 0}
+    for check in checks:
+        summary[check["status"]] = summary.get(check["status"], 0) + 1
+    output = {
+        "generatedAt": utc_now(),
+        "ok": summary.get("fail", 0) == 0,
+        "summary": summary,
+        "checks": checks,
+    }
+    if args.json:
+        print(json.dumps(output, indent=2, sort_keys=True))
+    else:
+        for check in checks:
+            print(f"{check['status'].upper()} {check['name']}: {check['message']}")
+        print(f"summary pass={summary.get('pass', 0)} warn={summary.get('warn', 0)} fail={summary.get('fail', 0)}")
+    return 0 if output["ok"] else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="techweek")
     common = argparse.ArgumentParser(add_help=False)
@@ -1794,9 +3448,38 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser.set_defaults(func=sync)
     sub.add_parser("diff", parents=[common]).set_defaults(func=diff_events)
 
+    city_status_parser = sub.add_parser("city-status", parents=[common], help="Report public launch/pending/error status for known Tech Week city calendars.")
+    city_status_parser.add_argument("--json", action="store_true")
+    city_status_parser.add_argument("--from-cache", action="store_true", help="Do not fetch live calendars; classify from local latest.json only.")
+    city_status_parser.add_argument("--first-page", action="store_true", help="When fetching live, only parse the server-embedded first page.")
+    city_status_parser.set_defaults(func=city_status)
+
+    onboarding_context_parser = sub.add_parser("onboarding-context", parents=[common], help="Emit agent-facing first-run profile, preference, and city readiness context.")
+    onboarding_context_parser.add_argument("--json", action="store_true")
+    onboarding_context_parser.add_argument("--from-cache", action="store_true", help="Do not fetch live calendars; use existing latest.json only.")
+    onboarding_context_parser.add_argument("--sync", action="store_true", help="Refresh the city calendar before emitting context.")
+    onboarding_context_parser.add_argument("--no-sync", action="store_true", help="Do not sync if local state is missing.")
+    onboarding_context_parser.add_argument("--first-page", action="store_true", help="When syncing, only parse the server-embedded first page.")
+    onboarding_context_parser.add_argument("--limit", type=int, default=80, help="Interest options to retain.")
+    onboarding_context_parser.set_defaults(func=onboarding_context)
+
+    release_check_parser = sub.add_parser("release-check", parents=[common], help="Run the public-readiness gate without touching RSVP state.")
+    release_check_parser.add_argument("--json", action="store_true")
+    release_check_parser.add_argument("--skip-live", dest="from_cache", action="store_true", help="Do not fetch live calendars; use local fixtures/cache for city status.")
+    release_check_parser.add_argument("--first-page", action="store_true", help="When fetching live, only parse the server-embedded first page.")
+    release_check_parser.set_defaults(func=release_check)
+
     shortlist_parser = sub.add_parser("shortlist", parents=[common])
     shortlist_parser.add_argument("--limit", type=int, default=20)
     shortlist_parser.set_defaults(func=shortlist)
+
+    ask_parser = sub.add_parser("ask", parents=[common], help="Translate a plain-English event request into city/date/time/topic/location-aware matches.")
+    ask_parser.add_argument("query")
+    ask_parser.add_argument("--limit", type=int, default=5)
+    ask_parser.add_argument("--json", action="store_true")
+    ask_parser.add_argument("--open-links-only", action="store_true", default=True)
+    ask_parser.add_argument("--include-missing-links", dest="open_links_only", action="store_false")
+    ask_parser.set_defaults(func=ask_events)
 
     interests_parser = sub.add_parser("interests", parents=[common])
     interests_parser.add_argument("--limit", type=int, default=80)
@@ -1805,10 +3488,12 @@ def build_parser() -> argparse.ArgumentParser:
     portfolio_parser = sub.add_parser("portfolio", parents=[common])
     portfolio_parser.add_argument("--multiplier", type=int, help="Oversignup multiplier per intended slot.")
     portfolio_parser.add_argument("--target-per-slot", type=int, help="Intended final attended events per day/time slot.")
+    portfolio_parser.add_argument("--max-clusters-per-day", type=int, help="Maximum location clusters to plan around per day.")
     portfolio_parser.add_argument("--limit", type=int, default=80)
     portfolio_parser.add_argument("--open-links-only", action="store_true", default=True)
     portfolio_parser.add_argument("--include-missing-links", dest="open_links_only", action="store_false")
     portfolio_parser.add_argument("--include-edge-slots", action="store_true")
+    portfolio_parser.add_argument("--include-outside-time-windows", action="store_true", help="Allow events outside saved preferred time windows.")
     portfolio_parser.set_defaults(func=portfolio)
 
     queue_parser = sub.add_parser("apply-queue", parents=[common])
@@ -1830,8 +3515,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     open_parser = sub.add_parser("open", parents=[common])
     open_parser.add_argument("event_id")
-    open_parser.add_argument("--no-browser", action="store_true")
+    open_parser.add_argument("--no-browser", action="store_true", help="Backward-compatible no-op; open prints only by default.")
+    open_parser.add_argument("--system-browser", action="store_true", help="Debug only: also open the URL with the macOS system browser.")
     open_parser.set_defaults(func=open_event)
+
+    rsvp_context_parser = sub.add_parser("rsvp-context", parents=[common])
+    rsvp_context_parser.add_argument("event_id")
+    rsvp_context_parser.add_argument("--json", action="store_true")
+    rsvp_context_parser.set_defaults(func=rsvp_context)
+
+    answer_field_parser = sub.add_parser("answer-field", parents=[common])
+    answer_field_parser.add_argument("event_id")
+    answer_field_parser.add_argument("label")
+    answer_field_parser.add_argument("--json", action="store_true")
+    answer_field_parser.add_argument("--optional", action="store_true")
+    answer_field_parser.add_argument("--field-type", default="text", choices=["text", "textarea", "select", "checkbox", "radio", "url", "email", "phone", "unknown"])
+    answer_field_parser.add_argument("--visible-value", help="Non-sensitive value already visible in the active Partiful field.")
+    answer_field_parser.add_argument("--visible-source", default="form", choices=["form", "account", "previous-response"], help="Where the visible value came from.")
+    answer_field_parser.add_argument("--no-record-missing", action="store_true", help="Classify without adding needs-user-answer for unknown required fields.")
+    answer_field_parser.set_defaults(func=answer_field)
 
     state_parser = sub.add_parser("state", parents=[common])
     state_parser.add_argument("event_id")
@@ -1869,7 +3571,12 @@ def build_parser() -> argparse.ArgumentParser:
     remember_parser.add_argument("label")
     remember_parser.add_argument("value")
     remember_parser.add_argument("--event-id")
+    remember_parser.add_argument("--source", choices=ANSWER_SOURCES, default="user")
+    remember_parser.add_argument("--answer-class", choices=sorted(GENERATED_ANSWER_CLASSES))
     remember_parser.set_defaults(func=form_memory)
+    approve_generated_parser = form_memory_sub.add_parser("approve-generated")
+    approve_generated_parser.add_argument("answer_class", choices=sorted(GENERATED_ANSWER_CLASSES))
+    approve_generated_parser.set_defaults(func=form_memory)
     lookup_parser = form_memory_sub.add_parser("lookup")
     lookup_parser.add_argument("label")
     lookup_parser.add_argument("--event-id")
@@ -1896,6 +3603,8 @@ def build_parser() -> argparse.ArgumentParser:
     missing_resolve_parser.add_argument("label")
     missing_resolve_parser.add_argument("value")
     missing_resolve_parser.add_argument("--reusable", action="store_true", help="Save as a reusable answer instead of event-only.")
+    missing_resolve_parser.add_argument("--source", choices=ANSWER_SOURCES, default="user")
+    missing_resolve_parser.add_argument("--answer-class", choices=sorted(GENERATED_ANSWER_CLASSES))
     missing_resolve_parser.set_defaults(func=missing_fields)
 
     answers_parser = sub.add_parser("answers", parents=[common])

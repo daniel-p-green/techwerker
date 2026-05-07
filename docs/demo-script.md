@@ -1,12 +1,12 @@
-# Techwerker Demo Script
+# Techwerker Reviewer Walkthrough
 
-Use this for a live Codex or screen-recorded demo. Keep all profile values sanitized.
+Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, and minimal-text; let the official calendar, Partiful page, form handling, and Pending proof carry the story.
 
 Recommended recording setup:
 
-- Use Spark if available for the live RSVP run; the work is command orchestration plus visual form interaction, so speed matters more than deep code reasoning.
-- Keep Computer Use available and logged into the browser session you expect to use for Partiful.
-- Use Browser/direct parsing for the Tech Week calendar, not visual scrolling.
+- Use Codex Desktop on Mac with Browser Use in the in-app browser.
+- Use direct calendar parsing for Tech Week, not visual scrolling.
+- Keep Computer Use available only as an explicit macOS external-browser fallback.
 
 Opening frame:
 
@@ -45,23 +45,24 @@ Narration:
 ## Portfolio
 
 ```text
-/techweek New York portfolio
+/techweek Find me an ElevenLabs AI hackathon on Saturday morning near SoHo.
 ```
 
 Show:
 
-- ranked events by time slot,
-- location clusters,
-- oversignup strategy.
+- natural-language parsing,
+- official Tech Week calendar source,
+- neighborhood cluster fit,
+- the selected `Rebuild x Eleven Labs Hackathon` recommendation.
 
 Narration:
 
-> The wedge is filtering. Tech Week is waitlist-heavy, so the goal is not one perfect calendar. The goal is a good options portfolio of events worth trying for.
+> The wedge is not only filtering. Codex turns a normal sentence into date, time, topic, and neighborhood constraints, then picks a concrete official event.
 
 ## Apply Queue
 
-```bash
-techweek apply-queue --city nyc --limit 3
+```text
+/techweek New York RSVP queue
 ```
 
 Show:
@@ -82,20 +83,29 @@ For the live RSVP demo, use the narrow queue instead of the full portfolio queue
 /techweek-rsvp New York
 ```
 
-Then use Computer Use for the Partiful page:
+Then let Codex work the official Partiful page in the in-app browser:
 
-1. open the Partiful URL,
-2. inspect visible fields,
-3. fill only known non-secret fields from local profile/form memory,
-4. stop before final submission.
+1. confirm the selected event,
+2. open `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW`,
+3. inspect visible fields,
+4. fill known, saved, or visibly prefilled non-sensitive fields,
+5. ask for any unknown required factual answer,
+6. click scoped RSVP/list/Continue controls if the selected event is authorized,
+7. stop for credentials, one-time codes, payment, captchas, or ambiguous final confirmation.
 
 Narration:
 
-> This is the Codex proof point: direct calendar parsing, local state, Computer Use, and human approval working together on messy real-world knowledge work. Codex can fill the repetitive parts, and Techwerker pauses before the irreversible RSVP action.
+> This is the Codex proof point: direct calendar parsing, local state, Browser Use, and event-specific authorization working together on messy real-world knowledge work. Codex can remove the repetitive parts while still stopping for the things it should not guess or bypass.
+
+Reviewer target:
+
+- Event: `Rebuild x Eleven Labs Hackathon - #NYTechWeek`
+- Official Partiful URL: `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW`
+- Expected demo ending after approved run: visible Partiful `Pending`, with local state marked `applied` only after confirmation.
 
 ## Recording Rules
 
 - Do not show real email, phone, LinkedIn, or private profile values.
-- Do not submit an RSVP in the demo.
+- Do not submit a real RSVP unless the user explicitly approves that exact event during the walkthrough.
 - Do not show private accepted-event locations.
-- If a form asks for a custom answer, use placeholder text or skip it.
+- If a form asks for a custom factual answer, ask once and save it only with the user's chosen scope.

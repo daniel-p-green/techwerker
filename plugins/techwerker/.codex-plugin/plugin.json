@@ -1,7 +1,7 @@
 {
   "name": "techwerker",
   "version": "0.1.0",
-  "description": "Unofficial local Codex helper for first-time Tech Week setup, event filtering, signup queues, repeated RSVP fields, and RSVP state.",
+  "description": "Unofficial local Codex helper for Tech Week planning, RSVP queues, repeated Partiful fields, and local RSVP state.",
   "author": {
     "name": "Daniel Green"
   },
@@ -20,8 +20,8 @@
   "commands": "./commands/",
   "interface": {
     "displayName": "Techwerker",
-    "shortDescription": "Set up Tech Week filters and RSVP queues",
-    "longDescription": "Unofficial local Codex helper for Tech Week attendees. First-time setup asks for New York, Boston, or San Francisco, stores reusable non-secret RSVP basics such as name, email, phone, company, role, country, and LinkedIn, then captures city-specific filter preferences for topics, neighborhoods, event types, and start times. It keeps persistent state under ~/.codex/data/tech-week, builds geography-aware oversignup portfolios, tracks RSVP state, and uses assisted browser filling while pausing before final submit by default. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
+    "shortDescription": "Plan Tech Week and work RSVP queues safely",
+    "longDescription": "Unofficial local Codex helper for Tech Week attendees on Codex for Mac. Techwerker helps Codex collect reusable non-secret RSVP basics once, understand plain-English event requests, build waitlist-aware and location-aware RSVP portfolios, open official Tech Week/Partiful pages, fill repeated form fields, click scoped RSVP/list controls after event-specific authorization, and stop for credentials, one-time codes, payment, captchas, unknown factual answers, or ambiguous confirmations. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
     "developerName": "Daniel Green",
     "category": "Productivity",
     "capabilities": [
@@ -33,14 +33,16 @@
     "privacyPolicyURL": "https://github.com/daniel-p-green/techwerker/blob/main/SECURITY.md",
     "termsOfServiceURL": "https://github.com/daniel-p-green/techwerker/blob/main/LICENSE",
     "defaultPrompt": [
-      "Set up Techwerker for New York",
-      "Set up Techwerker for Boston",
-      "Show my Techwerker status",
-      "Build my New York Tech Week portfolio",
-      "Work one Techwerker RSVP target",
-      "Make a Tech Week day plan"
+      "Use Techwerker. What can you do?",
+      "Get started with New York Tech Week.",
+      "Find me a cool AI event on Tuesday afternoon near Williamsburg.",
+      "Find me an ElevenLabs AI hackathon near SoHo.",
+      "Yes, get me on the list for that one.",
+      "Make me a realistic Tech Week day plan."
     ],
-    "brandColor": "#111827",
-    "screenshots": []
+    "brandColor": "#00D8FF",
+    "screenshots": [
+      "./assets/techwerker-poster.jpg"
+    ]
   }
 }

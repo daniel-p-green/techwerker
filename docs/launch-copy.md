@@ -11,7 +11,8 @@ I made a local Codex plugin for Tech Week attendees:
 - build a narrow live RSVP queue
 - reuse RSVP form answers
 - track applied / waitlisted / accepted / skipped
-- use Computer Use for Partiful and pause before final submit
+- use Codex Desktop Browser Use for official Partiful pages after event-specific approval
+- stay honest that live RSVP automation is Mac-first today because Computer Use fallback is macOS-only
 
 Unofficial, local-first, attendee-focused.
 
@@ -39,20 +40,20 @@ Tech Week has hundreds of events, hidden locations, waitlists, and a lot of repe
 
 So I made Techwerker: Tech Week without the Werk.
 
-It is a local Codex plugin that turns the chaos into a queue.
+It is a local Codex plugin that turns the chaos into a queue. Planning works as a normal Codex plugin workflow; live RSVP automation is Mac-first today because the Computer Use fallback controls macOS desktop apps.
 
-Demo:
+Demo flow:
 
-```bash
-techweek setup --city "New York"
-techweek live-queue --city "New York" --topics AI --time-slots noon,evening --limit 3
-techweek answers --city "New York" <event-id> --write
-techweek open --city "New York" <event-id>
+```text
+What can you do?
+Get started.
+Find me an ElevenLabs AI hackathon near SoHo.
+Yes, get me on the list for that one.
 ```
 
-It fetches the live calendar, builds a narrow AI noon/evening queue, tracks RSVP state, and hands Partiful pages to Codex Computer Use for assisted form filling.
+It fetches the live calendar, builds a narrow AI noon/evening queue, tracks RSVP state, and lets Codex work the official Partiful page in the in-app browser.
 
-The important safety bit: it pauses before final submit by default.
+The important safety bit: it clicks only scoped RSVP/list controls the user authorized, and stops for credentials, codes, payment, captchas, unknown factual questions, or ambiguous confirmation.
 
 Repo:
 https://github.com/daniel-p-green/techwerker

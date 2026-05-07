@@ -1,7 +1,7 @@
 {
   "name": "techwerker",
   "version": "0.1.0",
-  "description": "Unofficial local helper for first-time Tech Week setup, event filtering, signup queues, repeated RSVP fields, and RSVP state.",
+  "description": "Unofficial local helper for Tech Week planning, RSVP queues, repeated Partiful fields, and local RSVP state.",
   "commands": "./commands/",
   "skills": "./skills/"
 }

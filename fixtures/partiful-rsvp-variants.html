@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Techwerker Partiful RSVP Variant Fixture</title>
+  </head>
+  <body>
+    <main>
+      <section data-fixture-variant="duplicate-cta" data-expected="scope-active-modal">
+        <button>Get on the list</button>
+        <button aria-hidden="true">Get on the list</button>
+        <div role="dialog" data-active-rsvp-modal="true">
+          <button data-authorized-action="continue">Continue</button>
+        </div>
+      </section>
+
+      <section data-fixture-variant="already-pending" data-expected-state="applied">
+        <h2>Selected event</h2>
+        <button aria-label="Pending">Pending</button>
+      </section>
+
+      <section data-fixture-variant="waitlist-confirmed" data-expected-state="waitlisted">
+        <h2>Selected event</h2>
+        <p>You are on the waitlist</p>
+      </section>
+
+      <section data-fixture-variant="custom-required" data-expected-state="needs-user-answer">
+        <label>
+          What are you building? *
+          <textarea required></textarea>
+        </label>
+      </section>
+
+      <section data-fixture-variant="visible-prefill" data-expected-action="use_visible_value">
+        <label>
+          Email
+          <input value="visible-prefill@example.test" data-visible-source="previous-response">
+        </label>
+      </section>
+
+      <section data-fixture-variant="otp-stop" data-expected-action="stop">
+        <label>
+          Enter OTP code
+          <input autocomplete="one-time-code">
+        </label>
+      </section>
+
+      <section data-fixture-variant="captcha-stop" data-expected-action="stop">
+        <div data-captcha="true">Captcha verification</div>
+      </section>
+
+      <section data-fixture-variant="payment-stop" data-expected-action="stop">
+        <label>
+          Card number
+          <input autocomplete="cc-number">
+        </label>
+      </section>
+
+      <section data-fixture-variant="optional-generic" data-expected-action="draft_generic_answer">
+        <label>
+          Why do you want to attend?
+          <textarea></textarea>
+        </label>
+      </section>
+    </main>
+  </body>
+</html>

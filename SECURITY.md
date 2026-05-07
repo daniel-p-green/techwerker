@@ -20,6 +20,7 @@ Do not store:
 - passwords
 - one-time codes
 - payment details
+- captcha solutions
 - sensitive private notes
 
 The default profile and form-memory templates explicitly mark those categories as `do_not_store`.
@@ -29,11 +30,19 @@ The default profile and form-memory templates explicitly mark those categories a
 Techwerker defaults to assisted mode:
 
 1. open the event page,
-2. fill known fields,
+2. fill known, saved, or visibly prefilled non-sensitive fields,
 3. ask for missing required fields,
-4. pause before final RSVP, waitlist, submit, or "Going" actions.
+4. click scoped RSVP, waitlist, Continue, submit, or "Going" actions only after event-specific authorization.
 
-Do not use final auto-submit unless you explicitly authorize it for a specific run.
+Live RSVP automation is Mac-first today: Browser Use in the Codex Desktop in-app browser is the primary path, and Computer Use is only a macOS desktop fallback for explicitly selected external-browser debugging. Planning, local state, and answer-memory helpers remain ordinary Codex plugin behavior.
+
+Phrases like "get me on the list", "sign me up", or "click RSVP" for a selected event authorize Techwerker to complete that event's normal RSVP/list flow.
+
+Visible Partiful account values or previous responses may be used for the current active form when they are non-sensitive, but should not be saved as reusable memory without user approval.
+
+Generated answers are limited to low-stakes motivation/comment prompts and default to draft-first. Techwerker must not invent factual personal data such as phone numbers, email addresses, dietary restrictions, accessibility needs, credentials, payment details, or one-time codes.
+
+Even with authorization, Techwerker should stop for credentials, one-time codes, payment details, captchas, unknown required fields, or a final confirmation that does not clearly belong to the selected event.
 
 ## Reporting Issues
 
