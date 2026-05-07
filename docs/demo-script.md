@@ -1,6 +1,6 @@
 # Techwerker Reviewer Walkthrough
 
-Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, and minimal-text; let the official calendar, Partiful page, multi-step form handling, Pending proof, and immediate cleanup carry the story.
+Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, and minimal-text; let the official calendar, Partiful page, multi-step form handling, and Pending proof carry the story. Keep cleanup in release evidence instead of the public cut.
 
 Recommended recording setup:
 

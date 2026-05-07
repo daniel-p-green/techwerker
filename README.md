@@ -81,17 +81,17 @@ Codex may notice visible account details or previous Partiful responses in the a
 
 ![Techwerker demo](assets/techwerker-demo.gif)
 
-Actual frames from the live reviewer demo:
+Actual frames from the hybrid reviewer demo:
 
-| Multi-step Partiful form | User-provided facts reused |
+| Plain-English request | Official calendar |
 | --- | --- |
-| ![Official Partiful host-question step for Camp AI](assets/readme/02-ask.jpg) | ![Age and sponsor preference fields filled from user-provided answers](assets/readme/03-calendar.jpg) |
+| ![Codex request for a cool AI event near Midtown](assets/readme/02-ask.jpg) | ![Official New York Tech Week calendar inside Codex](assets/readme/03-calendar.jpg) |
 
-| Visible Pending proof | Removed immediately after proof |
+| Official Partiful | Live Pending proof |
 | --- | --- |
-| ![Visible Pending state on the official Camp AI Partiful page](assets/readme/04-partiful.jpg) | ![Official Camp AI Partiful page returned to Get on the list after removal](assets/readme/06-pending.jpg) |
+| ![Official Camp AI Partiful host-question form](assets/readme/04-partiful.jpg) | ![Visible Pending state on the official Camp AI Partiful page](assets/readme/06-pending.jpg) |
 
-The square X/Twitter demo artifact is [assets/techwerker-reviewer-demo.mp4](assets/techwerker-reviewer-demo.mp4). It uses the official `Camp AI: Agents at Work` Partiful page, proves a multi-step host-question flow reached visible `Pending`, and then shows the RSVP being removed immediately after the recording proof.
+The square X/Twitter demo artifact is [assets/techwerker-reviewer-demo.mp4](assets/techwerker-reviewer-demo.mp4). It combines the polished overview with a trimmed live `Camp AI: Agents at Work` Partiful proof that reaches visible `Pending`. The immediate cleanup/removal is documented in [docs/release-evidence.md](docs/release-evidence.md), but not included in the shareable cut.
 
 Example:
 

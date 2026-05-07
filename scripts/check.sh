@@ -739,6 +739,8 @@ test -x docs/demo-video/check.sh
 grep -q 'accepted $command output after timeout' docs/demo-video/check.sh
 test -s docs/demo-video/assets/elevenlabs-event-crop.png
 test -s docs/demo-video/assets/elevenlabs-pending-proof.png
+test -s docs/demo-video/assets/camp-ai-event-crop.png
+test -s docs/demo-video/assets/camp-ai-pending-proof.png
 test -s plugins/techwerker/assets/techwerker-poster.jpg
 scripts/fresh-user-acceptance.sh | grep -q 'fresh-user-acceptance=pass'
 if git grep -nE 'use Computer Use first|paused before submit|submit_policy=pause before final submit' -- scripts/render-demo-gif.sh docs/demo-video README.md docs plugins/techwerker ':!plugins/techwerker/scripts' ':!plugins/techwerker/skills/tech-week-concierge/scripts' >/tmp/techwerker-check-demo-stale.txt 2>/dev/null; then

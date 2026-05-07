@@ -17,7 +17,7 @@ Techwerker is ready to share as a **public beta / open-source Codex workflow dem
 - Demo video is square, silent-first, and privacy-reviewed.
 - Installed plugin cache matches the repo copy.
 - One real, explicitly authorized Partiful proof exists and is not repeated as a routine test.
-- The fresh Camp AI proof shows a multi-step Partiful form, visible `Pending`, and immediate removal/cancellation after the recording proof.
+- The fresh Camp AI proof shows a multi-step Partiful form and visible `Pending`; the immediate removal/cancellation is documented in release evidence but edited out of the public cut.
 
 ## Non-Negotiable Safety Stops
 
@@ -34,6 +34,6 @@ Show the square demo without sound. A reviewer should be able to say, within 20 
 1. This helps Codex find a Tech Week event from plain English.
 2. It uses the official Tech Week and Partiful path.
 3. It fills repeated form fields but stops for facts it does not know.
-4. It reached a visible pending/request state after authorization and cleaned it up immediately after proof.
+4. It reached a visible pending/request state after authorization, with cleanup documented separately.
 
 If that does not happen, revise the demo before posting.

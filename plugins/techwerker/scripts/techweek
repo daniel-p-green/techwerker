@@ -3198,6 +3198,8 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
     demo_html = root / "docs" / "demo-video" / "index.html"
     demo_check = root / "docs" / "demo-video" / "check.sh"
     asset_manifest = root / "docs" / "demo-video" / "ASSET-MANIFEST.md"
+    camp_event_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-event-crop.png"
+    camp_pending_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-pending-proof.png"
     pending_asset = root / "docs" / "demo-video" / "assets" / "elevenlabs-pending-proof.png"
     poster_asset = root / "plugins" / "techwerker" / "assets" / "techwerker-poster.jpg"
     fresh_acceptance = root / "scripts" / "fresh-user-acceptance.sh"
@@ -3221,6 +3223,8 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "demoVideoHtml": demo_html,
         "demoVideoCheck": demo_check,
         "demoAssetManifest": asset_manifest,
+        "campAiEventAsset": camp_event_asset,
+        "campAiPendingAsset": camp_pending_asset,
         "elevenLabsPendingAsset": pending_asset,
         "pluginPoster": poster_asset,
         "freshUserAcceptance": fresh_acceptance,
