@@ -6,7 +6,7 @@ Techwerker is a local Codex plugin for Tech Week attendees. It helps Codex revie
 
 ## New To Codex? Start Here
 
-Codex is an AI assistant app for your Mac. You can chat with it, and it can also work with files, tools, and an in-app browser when you allow it.
+Codex is an AI assistant app for your Mac. You can chat with it, and it can also work with files, tools, and browser-control plugins when you allow it.
 
 Techwerker is an add-on for Codex. After you install it, you do not need to learn command lines or event IDs. You just talk to Codex like this:
 
@@ -21,7 +21,7 @@ Here is what happens behind the scenes:
 1. Codex asks for your city and basic RSVP details once.
 2. Techwerker reads the official Tech Week calendar.
 3. Codex recommends events that match your interests, time, and neighborhood.
-4. When you approve an event, Codex opens the official Partiful page in its in-app browser.
+4. When you approve an event, Codex opens the official Partiful page in its in-app browser, or in Chrome if you have enabled Codex's Chrome plugin and want to use your existing signed-in browser state.
 5. Codex fills repeated fields it already knows, like your name, email, company, title, and LinkedIn.
 6. If the form asks something new, Codex pauses and asks you.
 7. After you say yes for that event, Codex clicks the right RSVP, waitlist, or Continue buttons.
@@ -50,7 +50,7 @@ It does not guarantee event acceptance or bypass host rules. It gives Codex a sa
 
 ## Compatibility
 
-Techwerker's calendar planning and local RSVP state helpers are ordinary Codex plugin workflows. The live Partiful RSVP flow is Mac-first today: it relies on Codex Desktop's in-app Browser Use tab for official Partiful pages, visible form filling, and scoped click-through, with Computer Use available only as a macOS desktop fallback for explicit external-browser debugging. Non-Mac users can still use the planning and local-state helpers, but this release does not promise desktop form-control fallback outside macOS.
+Techwerker's calendar planning and local RSVP state helpers are ordinary Codex plugin workflows. The proved live Partiful RSVP path is Mac-first today: it relies on Codex Desktop's in-app Browser Use tab for official Partiful pages, visible form filling, and scoped click-through. If Codex's Chrome plugin is installed and enabled, Chrome can be an optional path for users who want Codex to use their existing Chrome tabs, cookies, and login state. Computer Use remains only a macOS desktop fallback for explicit external-browser debugging. Non-Mac users can still use the planning and local-state helpers, but live RSVP control depends on which Codex browser-control tools are available in their environment.
 
 ## Why Use It
 
@@ -134,6 +134,7 @@ Expected prompts later:
 
 - Codex may ask for your city and basic RSVP details once.
 - Codex may ask to use the in-app browser for official Tech Week or Partiful pages.
+- If you enable Codex's Chrome plugin, Codex may ask to use your signed-in Chrome browser instead. Use this when you want existing Partiful login state or open tabs; browser pages may contain sensitive information, so stay attentive.
 - Partiful may ask you to log in or enter a one-time code. Techwerker stops for that; you handle the login/code yourself.
 - You should not need to run commands, copy event IDs, or paste the same RSVP fields into every form.
 

@@ -6,15 +6,15 @@ version: 0.1.0
 
 # Techwerker
 
-Use this skill to manage Tech Week as a fill-once, Codex-operated RSVP workflow. The CLI is the private engine; the user-facing experience should stay conversational. Do not ask the user to run commands, copy event IDs, open links, or manually fill forms when the in-app Browser Use flow can do it.
+Use this skill to manage Tech Week as a fill-once, Codex-operated RSVP workflow. The CLI is the private engine; the user-facing experience should stay conversational. Do not ask the user to run commands, copy event IDs, open links, or manually fill forms when Codex browser-control tools can do it.
 
 First principle: Techwerker is a planning and RSVP operator, not just a form filler. The promise is that Codex can review the calendar, select a realistic portfolio, RSVP to chosen events, and complete tedious repeated forms with minimal user rote work. Because Tech Week events often have waitlists, low acceptance rates, overlapping times, and scattered locations, build enough high-quality options per date/time slot while keeping each day geographically realistic. The goal is optionality that can collapse into an actual schedule.
 
-Platform principle: planning, local state, answer memory, and portfolio generation are normal Codex plugin behavior. Live RSVP automation is Mac-first today because the primary path is Codex Desktop Browser Use `iab`, and Computer Use is only a macOS desktop fallback for explicit external-browser debugging.
+Platform principle: planning, local state, answer memory, and portfolio generation are normal Codex plugin behavior. The proved live RSVP path is Mac-first today because the primary path is Codex Desktop Browser Use `iab`. If the Codex Chrome plugin is installed/enabled, Chrome is an optional signed-in-browser path for users who want their existing Chrome tabs, cookies, and login state. Computer Use is only a macOS desktop fallback for explicit external-browser debugging.
 
 The workflow is:
 
-1. If the user asks "what can you do?", explain capabilities plainly: fill once, rank events, build an RSVP queue, fill repetitive Tech Week/Partiful forms with Codex's in-app Browser Use, remember non-secret answers, and track RSVP state.
+1. If the user asks "what can you do?", explain capabilities plainly: fill once, rank events, build an RSVP queue, fill repetitive Tech Week/Partiful forms with Codex's browser-control tools, remember non-secret answers, and track RSVP state.
 2. If the user wants to get started, ask for the city using the calendar's labels: New York, Boston, or San Francisco. If San Francisco has not launched yet, treat it as pending instead of inventing events.
 3. Run `techweek onboarding-context --city <city> --json` privately, then collect only the missing non-secret profile and preference fields in one compact chat batch.
 4. Sync the live Tech Week calendar privately when needed.
@@ -23,7 +23,7 @@ The workflow is:
 7. For plain-English requests such as "find me a cool AI event on Tuesday afternoon near Williamsburg" or "near SoHo", run `techweek ask --city <city> "<request>" --json` privately. Use the parsed date/time/topic/location constraints, nearby cluster expansion, and commute metadata to answer in normal language. Do not expose internal event ids unless debugging.
 8. Present a short curated set of recommended events in normal language. Account for waitlist risk, overlaps, and location/neighborhood fit. Do not expose internal event ids unless debugging.
 9. When the user says "yes", "get on the list", "sign me up", or equivalent for a specific recommendation, treat that as authorization to attempt the RSVP/list join for that event.
-10. Use Browser Use `iab` for calendar/link inspection, official Partiful navigation, visible form filling, and scoped click-through. Use Computer Use only as an optional macOS external-desktop fallback when the user is explicitly debugging that path.
+10. Use Browser Use `iab` for the proved calendar/link inspection, official Partiful navigation, visible form filling, and scoped click-through path. If the Chrome plugin is installed/enabled and the user wants existing signed-in Chrome state, Chrome may be used with the same active-tab and safety rules. Use Computer Use only as an optional macOS external-desktop fallback when the user is explicitly debugging that path.
 11. Collapse accepted, waitlisted, and backup events into a practical day plan.
 
 ## CLI
@@ -100,7 +100,7 @@ Use the simplified slash command surface:
 
 - `/techweek-setup` for first-time city, profile, and preference setup.
 - `/techweek` for status, sync, portfolio planning, interests, and day plans.
-- `/techweek-rsvp` for one live official Partiful target with Browser Use `iab`; Computer Use is only an optional macOS external-desktop fallback.
+- `/techweek-rsvp` for one live official Partiful target with Browser Use `iab`, or optional Chrome plugin control when installed/enabled and selected; Computer Use is only an optional macOS external-desktop fallback.
 
 For release or debugging work, use `techweek city-status --city all` and `techweek release-check --city all` privately. These are diagnostics, not normal user-facing instructions.
 
@@ -116,9 +116,9 @@ Do not store Partiful credentials, one-time codes, payment details, or passwords
 
 Use `https://www.tech-week.com/` as the public main site, `https://tech-week.com/calendar` as the calendar root, and city pages such as `https://tech-week.com/calendar/nyc` and `https://tech-week.com/calendar/boston`. Use direct HTTP/calendar parsing whenever possible. The visual calendar lazy-loads, but the CLI can fetch the structured event data faster than clicking filters or scrolling.
 
-Use Browser Use with the in-app `iab` backend for Tech Week calendar inspection, event-page navigation, visible-state checks, in-app form filling, and scoped RSVP/list click-through. Use Computer Use only as an optional macOS fallback for desktop browsers/apps it is allowed to control when the user is explicitly debugging an external-browser path. If Computer Use cannot control the Codex app, continue in the in-app browser with Browser Use's visual/browser APIs.
+Use Browser Use with the in-app `iab` backend for the proved Tech Week calendar inspection, event-page navigation, visible-state checks, in-app form filling, and scoped RSVP/list click-through path. If the Codex Chrome plugin is installed/enabled and the user wants existing Chrome tabs, cookies, or login state, use Chrome as an optional signed-in-browser path with the same one-active-tab, scoped-click, and safety-stop rules. Use Computer Use only as an optional macOS fallback for desktop browsers/apps it is allowed to control when the user is explicitly debugging an external-browser path. If Computer Use cannot control the Codex app, continue with Browser Use `iab` or Chrome plugin control, whichever is the selected browser surface.
 
-Match the user's natural manual workflow with a controlled tab queue. It is fine to open several candidate Partiful event pages in Browser Use tabs for inspection and comparison, but only one tab should be the active RSVP target at a time. Use plain event URLs for background staging tabs, add `?rsvp=true` or open the modal only for the selected active event, confirm the active tab URL/title matches the selected event before filling or clicking, then record state before switching to another tab.
+Match the user's natural manual workflow with a controlled tab queue. It is fine to open several candidate Partiful event pages in Browser Use tabs, or Chrome tabs when intentionally using the Chrome plugin, for inspection and comparison, but only one tab should be the active RSVP target at a time. Use plain event URLs for background staging tabs, add `?rsvp=true` or open the modal only for the selected active event, confirm the active tab URL/title matches the selected event before filling or clicking, then record state before switching to another tab.
 
 For live RSVP runs, prefer:
 
@@ -134,10 +134,10 @@ For RSVP sessions:
 2. Run `techweek answers --city <city> <event-id> --write`.
 3. Run `techweek rsvp-context --city <city> <event-id> --json` and use its `eventUrl`, profile readiness, form memory, missing fields, `rsvpActionPolicy`, safety policy, and recommended tool sequence.
 4. If the profile is missing required fields, collect the missing non-secret RSVP basics in chat before opening the form. Use visible browser/account values only as suggestions, and ask before saving or using them.
-5. Navigate the in-app Browser Use tab to `eventUrl`. Do not rely on `techweek open` to launch a browser; it prints and marks state only by default.
+5. Navigate the selected Codex-controlled browser surface to `eventUrl`: Browser Use `iab` by default, or Chrome plugin control when installed/enabled and intentionally selected. Do not rely on `techweek open` to launch a browser; it prints and marks state only by default.
 6. Inspect visible labels and controls on the official Partiful page. If Partiful repeats labels such as "Get on the list", scope to the visible selected event/modal instead of clicking a global text match.
 7. For each visible field label, run `techweek answer-field --city <city> <event-id> "<visible label>" --json` privately and follow the returned action. If the active Partiful field already has a visible non-sensitive value, pass `--visible-value` and `--visible-source account|previous-response|form`.
-8. Fill `fill_from_profile` and `fill_saved_answer` values with Browser Use in the in-app browser. Leave or use `use_visible_value` fields as-is for the current form and do not ask the user to retype them. Use Computer Use only after an explicit switch to a macOS desktop browser/app for fallback debugging.
+8. Fill `fill_from_profile` and `fill_saved_answer` values with the selected Codex-controlled browser surface. Leave or use `use_visible_value` fields as-is for the current form and do not ask the user to retype them. Use Computer Use only after an explicit switch to a macOS desktop browser/app for fallback debugging.
 9. For `draft_generic_answer`, generate a concise event-specific answer from the returned event/profile/preference context. If `approvalRequired` is true, ask before using it; if false, fill it.
 10. For `ask_user`, ask only for that answer and save it with `missing-fields resolve` as event-only by default or reusable if the user says it should apply broadly.
 11. For `stop`, pause immediately. Do not fill, generate, or store credentials, one-time codes, payment details, captchas, or sensitive private data.

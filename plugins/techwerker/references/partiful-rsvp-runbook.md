@@ -1,6 +1,6 @@
 # Partiful RSVP Runbook
 
-Use assisted mode by default. Use Browser Use `iab` for official event-page navigation, visible-state inspection, in-app browser form filling, controlled candidate tabs, and scoped click-through. Live RSVP automation is Mac-first today: Computer Use is only a macOS desktop fallback for explicit external-browser debugging, while planning/local state remain normal Codex plugin behavior.
+Use assisted mode by default. Use Browser Use `iab` for the proved official event-page navigation, visible-state inspection, in-app browser form filling, controlled candidate tabs, and scoped click-through path. If the Codex Chrome plugin is installed/enabled and the user wants existing signed-in Chrome state, Chrome is an optional path with the same active-tab, scoped-click, and safety-stop rules. Live RSVP automation is Mac-first in the proved path today: Computer Use is only a macOS desktop fallback for explicit external-browser debugging, while planning/local state remain normal Codex plugin behavior.
 
 Tech Week planning should be overlap-aware and location-aware before any RSVP work starts. Because waitlists and low acceptance rates are common, target several strong RSVP attempts per date/time slot, but keep each day clustered around a small number of realistic neighborhoods. The goal is optionality without creating a day that only works if the user teleports.
 
@@ -11,7 +11,7 @@ Use tabs the way a human would stage work, with stricter execution rules: it is 
 1. Confirm the event URL comes from Tech Week `externalHref`.
 2. Write the answer sheet with `techweek answers --city <city> <event-id> --write`.
 3. Load `techweek rsvp-context --city <city> <event-id> --json`.
-4. Navigate Browser Use `iab` to `eventUrl` and inspect the current visible state.
+4. Navigate Browser Use `iab`, or Chrome plugin control when installed/enabled and intentionally selected, to `eventUrl` and inspect the current visible state.
 5. Treat repeated labels such as multiple "Get on the list" buttons as ambiguous. Scope to the visible selected-event modal/card or switch to a visual action instead of clicking a global text match.
 6. Inspect visible labels and required fields once the Partiful modal is open.
 7. For each visible field, run `techweek answer-field --city <city> <event-id> "<visible label>" --json`. If the field is already visibly filled by Partiful account data or previous responses, pass `--visible-value "<visible value>" --visible-source account|previous-response|form`.
@@ -26,7 +26,7 @@ Use tabs the way a human would stage work, with stricter execution rules: it is 
 
 Stop immediately for credentials, one-time codes, payment details, captchas, unknown required fields, Partiful errors/no-progress states, or a final confirmation that does not clearly belong to the selected event.
 
-Use Browser Use for Tech Week calendar spot checks and in-app browser work, but keep the CLI/local state as the primary calendar engine. Do not keep fighting DOM/accessibility refs inside Partiful modals; switch to visual Browser Use actions first.
+Use Browser Use for Tech Week calendar spot checks and in-app browser work, but keep the CLI/local state as the primary calendar engine. Use the Chrome plugin only when installed/enabled and useful for existing Chrome login state or tabs. Do not keep fighting DOM/accessibility refs inside Partiful modals; switch to visual actions in the selected browser surface first.
 
 Field mapping defaults:
 

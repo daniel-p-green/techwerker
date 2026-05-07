@@ -12,7 +12,7 @@ Tech Week without the Werk.
 
 I built Techwerker: a local Codex plugin that plans Tech Week, finds realistic event options, reuses RSVP basics, and works Partiful signup flows after you approve an event.
 
-Mac-first beta. Unofficial.
+Mac-first beta. Optional Chrome path when enabled. Unofficial.
 
 https://github.com/daniel-p-green/techwerker
 
@@ -69,7 +69,7 @@ It stops for login codes, payment, captchas, unknown required fields, or ambiguo
 
 This is a Mac-first public beta / open-source Codex workflow demo.
 
-Planning and local state are normal Codex plugin behavior. Live Partiful form work uses Codex Desktop's in-app browser, with desktop fallback only where Codex can safely control it.
+Planning and local state are normal Codex plugin behavior. The proved live Partiful form path uses Codex Desktop's in-app browser. Codex's Chrome plugin can be an optional path for existing signed-in Chrome state when enabled, with desktop fallback only where Codex can safely control it.
 
 Repo:
 https://github.com/daniel-p-green/techwerker
@@ -96,9 +96,9 @@ Techwerker turns that into a Codex-native workflow:
 
 This is not a guaranteed signup bot. It does not bypass host rules, solve captchas, store credentials, handle payment, or invent factual personal data. It stops for login codes, payment, captchas, unknown required fields, and ambiguous confirmations.
 
-The more interesting point to me is that Codex can now operate a messy, real-world workflow end to end: not just writing code, but reviewing live information, maintaining local state, using an in-app browser, remembering approved answers, and reducing rote work while keeping the user in control.
+The more interesting point to me is that Codex can now operate a messy, real-world workflow end to end: not just writing code, but reviewing live information, maintaining local state, using browser-control tools, remembering approved answers, and reducing rote work while keeping the user in control.
 
-Mac-first public beta. Unofficial, local-first, open source.
+Mac-first public beta. Optional Chrome path when enabled. Unofficial, local-first, open source.
 
 Repo:
 https://github.com/daniel-p-green/techwerker
@@ -111,7 +111,7 @@ It is a local Codex plugin that helps attendees plan Tech Week, find realistic e
 
 It is not a guaranteed signup bot. It stops for login codes, payment, captchas, unknown required fields, and ambiguous confirmations.
 
-Mac-first public beta. Unofficial, local-first, open source.
+Mac-first public beta. Optional Chrome path when enabled. Unofficial, local-first, open source.
 
 https://github.com/daniel-p-green/techwerker
 

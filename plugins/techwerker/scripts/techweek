@@ -33,7 +33,8 @@ TOOL_SEQUENCE = [
     "techweek rsvp-context --city <city> <event-id> --json",
     "techweek answer-field --city <city> <event-id> <visible-label> --json, passing --visible-value when Partiful already filled a non-sensitive response",
     "Browser Use iab: navigate to eventUrl, inspect visible labels/buttons, fill known fields, and click scoped authorized RSVP/list controls",
-    "Optional Computer Use fallback: only for an intentionally selected desktop browser/app when Browser Use cannot complete the in-app flow",
+    "Optional Chrome plugin path: when installed/enabled and the user wants existing signed-in Chrome state, use Chrome with the same scoped active-tab and safety rules",
+    "Optional Computer Use fallback: only for an intentionally selected desktop browser/app when Browser Use or Chrome cannot complete the flow",
     "Authorized RSVP loop: re-inspect after each Continue/RSVP/list click until visible confirmation, waitlist, or stop condition",
     "techweek state --city <city> <event-id> applied|waitlisted|needs-user-answer|needs-user-submit|cancelled",
 ]
@@ -78,17 +79,18 @@ RSVP_CLICK_THROUGH_STEPS = [
 BROWSER_TAB_POLICY = {
     "mode": "controlled-tab-queue",
     "calendarSource": "Use CLI/local state as the primary Tech Week calendar engine; use the visual calendar only for spot checks.",
-    "staging": "It is okay to open several candidate Partiful event pages in Browser Use tabs for inspection and comparison.",
+    "staging": "It is okay to open several candidate Partiful event pages in Browser Use tabs, or Chrome plugin tabs when explicitly using Chrome, for inspection and comparison.",
     "activation": "Only one tab is the active RSVP target at a time. Before filling or clicking, confirm the active tab URL/event title matches the selected event id.",
     "modalRule": "Prefer plain event URLs for background staging tabs. Add ?rsvp=true or open the RSVP modal only for the active event tab.",
     "completion": "After each event reaches confirmation, waitlist, needs-user-answer, or a stop condition, record state before switching tabs.",
 }
 PLATFORM_POLICY = {
     "planning": "Calendar planning, local state, profile memory, and portfolio generation are ordinary Codex plugin behavior.",
-    "liveRsvp": "Mac-first today: official Partiful form work uses Codex Desktop with Browser Use iab, and Computer Use is only a macOS desktop fallback when the in-app browser cannot complete the flow.",
+    "liveRsvp": "Mac-first proved path today: official Partiful form work uses Codex Desktop with Browser Use iab. If the Codex Chrome plugin is installed/enabled, Chrome is an optional signed-in-browser path for users who want their existing Chrome tabs and login state. Computer Use remains only a macOS desktop fallback when Browser Use or Chrome cannot complete the flow.",
     "primaryLiveTool": "Browser Use iab",
+    "optionalLiveTool": "Chrome plugin for existing signed-in Chrome state when installed/enabled and explicitly selected.",
     "fallbackLiveTool": "Computer Use on macOS only for intentionally selected desktop-browser fallback/debugging.",
-    "nonMacExpectation": "Non-Mac users can still use planning and local state helpers, but live desktop form-control fallback is not promised until Codex Computer Use is available for that environment.",
+    "nonMacExpectation": "Non-Mac users can still use planning and local state helpers. Live RSVP control depends on the Codex browser-control tools available in their environment; desktop Computer Use fallback is not promised outside macOS.",
 }
 RSVP_FINAL_STATE_GUIDANCE = {
     "applied": "Use when Partiful visibly confirms RSVP, going, requested, applied, or on-list status for the selected event.",
@@ -2360,8 +2362,13 @@ def rsvp_context(args: argparse.Namespace) -> int:
             "backend": "iab",
             "role": "Navigate to eventUrl, inspect visible page/modal state, fill known fields, use non-sensitive visible prefilled values, avoid naive global clicks when labels repeat, and click scoped authorized RSVP/list actions after event-specific authorization.",
         },
+        "chrome": {
+            "role": "Optional signed-in-browser path when the Codex Chrome plugin is installed/enabled and the user explicitly wants existing Chrome tabs, cookies, or login state. Use the same one-active-tab, scoped-click, and safety-stop rules as Browser Use.",
+            "requiresInstalledPlugin": True,
+            "browserUseRemainsProvedPath": True,
+        },
         "computerUse": {
-            "role": "Optional fallback only: use for an intentionally selected desktop browser/app when Browser Use cannot complete the in-app Partiful flow; stop for unknown or sensitive fields.",
+            "role": "Optional fallback only: use for an intentionally selected desktop browser/app when Browser Use or Chrome cannot complete the Partiful flow; stop for unknown or sensitive fields.",
             "macOnlyFallback": True,
             "browserUseIsPrimary": True,
             "codexAppMayBeBlocked": True,
@@ -2376,7 +2383,7 @@ def rsvp_context(args: argparse.Namespace) -> int:
         print(f"state={context['state']}")
         print(f"answer_sheet={answer_sheet_path}")
         print("action_policy=authorized click-through until visible confirmation or stop condition")
-        print("tool_sequence=Browser Use iab -> optional Computer Use fallback -> techweek state")
+        print("tool_sequence=Browser Use iab -> optional Chrome plugin -> optional Computer Use fallback -> techweek state")
     return 0
 
 
@@ -3267,6 +3274,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "strategyConfidenceCoversLoopholes": "Loopholes And Fixes" in strategy_text and "We are not claiming 100% universal RSVP completion" in strategy_text,
         "strategyConfidenceCoversLiveSiteRisk": "Tech Week city page changes" in strategy_text and "Partiful duplicate buttons" in strategy_text,
         "strategyConfidenceCoversBrowserRisk": "Browser Use routes to an external browser" in strategy_text and "Computer Use cannot control Codex itself" in strategy_text,
+        "strategyConfidenceCoversChromeRisk": "Chrome plugin exposes broad signed-in browser state" in strategy_text and "selected-event authorization" in strategy_text,
         "strategyConfidenceCoversSafetyStops": "Login, OTP, captcha, or payment appears" in strategy_text and "unknown factual required fields" in strategy_text,
         "evidenceHasLiveProof": "Final visible state: `Pending`" in evidence_text and "do not repeat real RSVP submissions" in evidence_text and "then `cancelled`" in evidence_text,
         "evidenceUsesCampAI": "Camp AI: Agents at Work" in evidence_text and "https://partiful.com/e/Fp5STyPH0McEt0awlWFD" in evidence_text,
@@ -3379,8 +3387,8 @@ def rsvp_context_sanity_check(city: str, year: int | None) -> dict[str, Any]:
                 "browserTabMode": BROWSER_TAB_POLICY["mode"],
                 "platformPolicy": PLATFORM_POLICY,
             }
-            if "Mac-first" not in PLATFORM_POLICY["liveRsvp"] or "Browser Use iab" not in PLATFORM_POLICY["primaryLiveTool"]:
-                return check_record(f"rsvp-context-sanity:{city}", "fail", "RSVP context is missing Mac-first Browser Use platform policy", details)
+            if "Mac-first" not in PLATFORM_POLICY["liveRsvp"] or "Browser Use iab" not in PLATFORM_POLICY["primaryLiveTool"] or "Chrome plugin" not in PLATFORM_POLICY.get("optionalLiveTool", ""):
+                return check_record(f"rsvp-context-sanity:{city}", "fail", "RSVP context is missing Mac-first Browser Use plus optional Chrome platform policy", details)
             return check_record(f"rsvp-context-sanity:{city}", "pass", "Partiful event has release-grade RSVP policy context", details)
     return check_record(f"rsvp-context-sanity:{city}", "warn", "no local Partiful event found for RSVP-context inspection")
 

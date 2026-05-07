@@ -8,8 +8,9 @@ Use this as the compact reviewer proof packet for the public beta / open-source 
 - Repository gate: `./scripts/check.sh` and `git diff --check` pass.
 - Confidence gate: `docs/strategy-confidence.md` names the known live-site, browser, auth, safety, demo, and overclaim loopholes, and ties each to a fix or explicit non-claim.
 - City behavior: New York and Boston are treated as launched when parseable; San Francisco is first-class pending when its public calendar is unavailable.
-- Browser path: Codex Desktop Browser Use is the primary live path for official Tech Week and Partiful pages.
-- Platform path: live RSVP automation is Mac-first today; Computer Use is only a macOS desktop fallback, while planning and local state remain general Codex plugin behavior.
+- Browser path: Codex Desktop Browser Use is the proved primary live path for official Tech Week and Partiful pages.
+- Optional Chrome path: when the Codex Chrome plugin is installed/enabled, Chrome can be used as a signed-in-browser path with the same selected-event authorization and safety stops.
+- Platform path: live RSVP automation is Mac-first in the proved path today; Computer Use is only a macOS desktop fallback, while planning and local state remain general Codex plugin behavior.
 - Fixture path: `fixtures/partiful-rsvp-fixture.html` covers duplicate Partiful CTAs, one active RSVP modal, safe visible prefill, a required unknown factual field, and scoped Continue behavior for repeatable Browser Use/Computer Use smoke tests.
 - Variant fixture path: `fixtures/partiful-rsvp-variants.html` covers already-pending, waitlist, custom required, visible prefill, OTP, captcha, payment, and optional generic-answer cases.
 - Fresh-user path: `scripts/fresh-user-acceptance.sh` proves install, empty local state, setup readiness, plain-English planning, RSVP context, and answer-field classification from a temporary home directory.

@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "Techwerker",
     "shortDescription": "Plan Tech Week and work RSVP queues safely",
-    "longDescription": "Unofficial local Codex helper for Tech Week attendees on Codex for Mac. Techwerker helps Codex collect reusable non-secret RSVP basics once, understand plain-English event requests, build waitlist-aware and location-aware RSVP portfolios, open official Tech Week/Partiful pages, fill repeated form fields, click scoped RSVP/list controls after event-specific authorization, and stop for credentials, one-time codes, payment, captchas, unknown factual answers, or ambiguous confirmations. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
+    "longDescription": "Unofficial local Codex helper for Tech Week attendees on Codex for Mac. Techwerker helps Codex collect reusable non-secret RSVP basics once, understand plain-English event requests, build waitlist-aware and location-aware RSVP portfolios, open official Tech Week/Partiful pages in Codex's in-app browser or optional Chrome plugin path when enabled, fill repeated form fields, click scoped RSVP/list controls after event-specific authorization, and stop for credentials, one-time codes, payment, captchas, unknown factual answers, or ambiguous confirmations. Not affiliated with Tech Week, a16z, Partiful, or event hosts.",
     "developerName": "Daniel Green",
     "category": "Productivity",
     "capabilities": [

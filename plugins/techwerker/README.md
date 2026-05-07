@@ -15,7 +15,7 @@ Plain-English version for people new to Codex:
 5. Codex asks for your city and basic RSVP details once.
 6. You ask for events in normal language, like "Tuesday afternoon near SoHo."
 7. Codex uses Techwerker to read the official Tech Week calendar and recommend realistic options.
-8. When you approve one, Codex opens the official Partiful page in its in-app browser.
+8. When you approve one, Codex opens the official Partiful page in its in-app browser, or in Chrome if you enabled Codex's Chrome plugin and want existing signed-in browser state.
 9. Codex fills repeated fields it already knows, asks when it sees a new required question, and clicks the scoped RSVP/list buttons you authorized.
 10. Techwerker tracks the result locally so Codex can keep working through the queue.
 
@@ -61,9 +61,9 @@ The CLI and event ids are private implementation details for Codex to use behind
 
 New York and Boston are launched when their public calendar pages are parseable. San Francisco is supported as a first-class pending city; if `https://tech-week.com/calendar/san-francisco` still returns 404, the helper reports pending status instead of inventing events.
 
-Default RSVP mode is assisted: build a narrow live queue when speed matters, generate an RSVP context packet, navigate the official Partiful page with Browser Use `iab`, fill known/saved/visible prefilled fields in the in-app browser, then click scoped RSVP/list/Continue controls for the selected event after authorization.
+Default RSVP mode is assisted: build a narrow live queue when speed matters, generate an RSVP context packet, navigate the official Partiful page with Browser Use `iab`, or the optional Codex Chrome plugin when the user wants existing signed-in Chrome state, fill known/saved/visible prefilled fields, then click scoped RSVP/list/Continue controls for the selected event after authorization.
 
-Calendar planning and local state helpers are ordinary Codex plugin behavior. Live Partiful RSVP filling is Mac-first today because it depends on Codex Desktop's in-app Browser Use tab, with Computer Use available only as a macOS desktop fallback for explicit external-browser debugging. Non-Mac users can still use planning, profile memory, portfolios, and RSVP state, but this release does not promise desktop form-control fallback outside macOS.
+Calendar planning and local state helpers are ordinary Codex plugin behavior. The proved live Partiful RSVP path is Mac-first today because it depends on Codex Desktop's in-app Browser Use tab. The Codex Chrome plugin can be an optional signed-in-browser path when installed/enabled. Computer Use remains only a macOS desktop fallback for explicit external-browser debugging. Non-Mac users can still use planning, profile memory, portfolios, and RSVP state, but live RSVP control depends on which Codex browser-control tools are available in their environment.
 
 The public surface is intentionally practical: first-time signup setup, calendar triage, overlap-aware oversignup portfolio management, neighborhood-aware day planning, repeated identity-entry relief, multi-step Partiful host-question handling, and safer Partiful handoff. It does not store credentials, and it only completes RSVP/list actions after event-specific authorization such as "get me on the list" or "click RSVP."
 

@@ -4,8 +4,9 @@ Use this for a live Codex walkthrough or screen recording. Keep all profile valu
 
 Recommended recording setup:
 
-- Use Codex Desktop on Mac with Browser Use in the in-app browser.
-- Use Browser Use for the visible official Tech Week/Partiful work. Use Recordly or CleanShot X only for the screen capture layer; keep the final social cut square, silent-first, and readable without zooming.
+- Use Codex Desktop on Mac with Browser Use in the in-app browser for the proved recording path.
+- Optional alternate take: if the Codex Chrome plugin is installed/enabled, record the same flow in Chrome to show Codex using existing signed-in browser state. Do not redo the current shareable cut just to add this.
+- Use Browser Use or the explicitly selected Chrome plugin path for the visible official Tech Week/Partiful work. Use Recordly or CleanShot X only for the screen capture layer; keep the final social cut square, silent-first, and readable without zooming.
 - Use direct calendar parsing for Tech Week, not visual scrolling.
 - Keep Computer Use available for desktop capture controls and only as an explicit macOS external-browser fallback.
 
@@ -99,7 +100,7 @@ For the live RSVP demo, use the narrow queue instead of the full portfolio queue
 /techweek-rsvp New York
 ```
 
-Then let Codex work the official Partiful page in the in-app browser:
+Then let Codex work the official Partiful page in the selected browser surface:
 
 1. confirm the selected event,
 2. open `https://partiful.com/e/Fp5STyPH0McEt0awlWFD`,
@@ -112,7 +113,7 @@ Then let Codex work the official Partiful page in the in-app browser:
 
 Narration:
 
-> This is the Codex proof point: direct calendar parsing, local state, Browser Use, and event-specific authorization working together on messy real-world knowledge work. Codex can remove the repetitive parts while still stopping for the things it should not guess or bypass.
+> This is the Codex proof point: direct calendar parsing, local state, browser control, and event-specific authorization working together on messy real-world knowledge work. Codex can remove the repetitive parts while still stopping for the things it should not guess or bypass.
 
 Reviewer target:
 

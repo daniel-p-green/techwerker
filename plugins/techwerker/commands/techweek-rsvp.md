@@ -7,7 +7,7 @@ Work one Tech Week RSVP target quickly and safely. Techwerker takes the work out
 
 Default to assisted mode. Never submit, RSVP, join waitlist, or click a final confirmation button unless the user explicitly authorizes final submission for this run or this specific event. Phrases like "get on the list", "sign me up", "join this one", or "yes, do it" for a selected event count as authorization to complete that RSVP/list action unless credentials, one-time codes, payment, captcha, unknown required fields, Partiful site errors/no-progress states, or ambiguous final confirmation block the flow.
 
-Live RSVP automation is Mac-first today. Browser Use `iab` is the primary official Partiful path; Computer Use is only a macOS desktop fallback for explicit external-browser debugging.
+Live RSVP automation is Mac-first in the proved path today. Browser Use `iab` is the primary official Partiful path. The Codex Chrome plugin is an optional path when installed/enabled and the user wants existing signed-in Chrome state. Computer Use is only a macOS desktop fallback for explicit external-browser debugging.
 
 Default live-run filters are AI plus Noon and Evening, Partiful-only, limit 10. If the user gives different topics, time slots, or limit, use those.
 
@@ -34,9 +34,9 @@ techweek rsvp-context --city <city> <event-id> --json
 ```
 
 6. If `profile.ready` is false, collect the missing non-secret RSVP basics in chat before opening the form. Use visible browser/account values only as suggestions, and ask before saving or using them.
-7. Navigate Browser Use with the in-app `iab` backend to `eventUrl` from the context packet. Use Browser Use for inspection, visible-state checks, in-app browser filling, tab management, and scoped click-through.
-8. Mirror the useful part of a manual workflow: open several candidate Partiful event pages in Browser Use tabs for inspection if helpful, but keep only one active RSVP modal. Use plain event URLs for staging tabs, add `?rsvp=true` or open the modal only for the selected active event, and confirm the active tab URL/title matches the selected event before filling or clicking.
-9. Treat Partiful as visual/modal-heavy by default. Stay in Browser Use `iab`; use Computer Use only as an explicit macOS external-desktop fallback when debugging that path.
+7. Navigate the selected Codex-controlled browser surface to `eventUrl` from the context packet: Browser Use `iab` by default, or Chrome plugin control when installed/enabled and intentionally selected. Use it for inspection, visible-state checks, filling, tab management, and scoped click-through.
+8. Mirror the useful part of a manual workflow: open several candidate Partiful event pages in Browser Use tabs, or Chrome tabs when using the Chrome plugin, for inspection if helpful, but keep only one active RSVP modal. Use plain event URLs for staging tabs, add `?rsvp=true` or open the modal only for the selected active event, and confirm the active tab URL/title matches the selected event before filling or clicking.
+9. Treat Partiful as visual/modal-heavy by default. Stay in Browser Use `iab` or the explicitly selected Chrome plugin surface; use Computer Use only as an explicit macOS external-desktop fallback when debugging that path.
 10. If Browser Use sees repeated controls such as multiple "Get on the list" buttons, do not use a naive global locator. Scope to the visible card/modal or switch to a visual Browser Use action.
 11. For every visible field label, classify it privately. If Partiful already filled a non-sensitive value from account details or previous responses, include that visible value so Codex can use it without making the user retype it:
 
@@ -87,7 +87,7 @@ techweek missing-fields --city <city> add <event-id> "What are you building?"
 techweek missing-fields --city <city> resolve <event-id> "What are you building?" "Reusable non-secret answer" --reusable
 ```
 
-Use Browser Use for the official Tech Week calendar, direct Partiful event-page navigation, controlled candidate tabs, visible-state inspection, in-app browser filling, and scoped click-through. Do not keep fighting brittle refs if the Partiful modal is visual-only, authenticated, slow, duplicate-button-heavy, or modal-heavy; switch to Browser Use visual actions first. Use Computer Use only as an explicit macOS external-desktop fallback.
+Use Browser Use for the official Tech Week calendar, direct Partiful event-page navigation, controlled candidate tabs, visible-state inspection, in-app browser filling, and scoped click-through. If the Chrome plugin is installed/enabled and the user wants existing signed-in Chrome state, use Chrome with the same controlled-tab and safety rules. Do not keep fighting brittle refs if the Partiful modal is visual-only, authenticated, slow, duplicate-button-heavy, or modal-heavy; switch to the selected browser surface's visual actions first. Use Computer Use only as an explicit macOS external-desktop fallback.
 
 Work one active RSVP modal at a time, even if multiple candidate event tabs are open. Do not load or print the full portfolio queue during a live RSVP run. Do not expose internal ids in the user-facing answer unless diagnosing a failure.
 

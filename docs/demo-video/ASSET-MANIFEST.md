@@ -40,4 +40,4 @@ This manifest exists because the demo uses screenshots from an authenticated loc
 ## Release Rule
 
 Do not publish new generated screenshots, GIFs, or videos until this manifest is updated and the asset is checked for accidental personal data.
-Use Browser Use or a controlled browser viewport for fresh official-site capture, then use HyperFrames only for pacing, captions, crops, and reviewer-safe packaging.
+Use Browser Use, the optional Codex Chrome plugin path when installed/enabled, or another controlled browser viewport for fresh official-site capture, then use HyperFrames only for pacing, captions, crops, and reviewer-safe packaging.

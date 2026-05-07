@@ -34,7 +34,9 @@ Techwerker defaults to assisted mode:
 3. ask for missing required fields,
 4. click scoped RSVP, waitlist, Continue, submit, or "Going" actions only after event-specific authorization.
 
-Live RSVP automation is Mac-first today: Browser Use in the Codex Desktop in-app browser is the primary path, and Computer Use is only a macOS desktop fallback for explicitly selected external-browser debugging. Planning, local state, and answer-memory helpers remain ordinary Codex plugin behavior.
+Live RSVP automation is Mac-first in the proved path today: Browser Use in the Codex Desktop in-app browser is the primary path. If the Codex Chrome plugin is installed/enabled, Chrome can be an optional path for users who want Codex to use existing Chrome tabs, cookies, and login state. Computer Use is only a macOS desktop fallback for explicitly selected external-browser debugging. Planning, local state, and answer-memory helpers remain ordinary Codex plugin behavior.
+
+Chrome access can expose signed-in page content and browser state. Use it only when that is helpful for the RSVP flow, keep the same selected-event authorization boundary, and stop for credentials, one-time codes, payment details, captchas, unknown required factual fields, or ambiguous confirmations.
 
 Phrases like "get me on the list", "sign me up", or "click RSVP" for a selected event authorize Techwerker to complete that event's normal RSVP/list flow.
 

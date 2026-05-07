@@ -6,7 +6,7 @@ Techwerker is ready to share as a **public beta / open-source Codex workflow dem
 
 - Audience: discerning reviewers, early adopters, and Codex users comfortable with a local workflow.
 - Promise: plan Tech Week, build a realistic RSVP queue, reuse non-secret form basics, and let Codex work official Partiful flows after event-specific authorization.
-- Constraint: live RSVP form work is Mac-first today because Browser Use in Codex Desktop is the primary path and Computer Use is a macOS fallback.
+- Constraint: the proved live RSVP form path is Mac-first today because Browser Use in Codex Desktop is the primary path and Computer Use is a macOS fallback. The Codex Chrome plugin can be an optional signed-in-browser path when installed/enabled.
 - Confidence boundary: [strategy-confidence.md](strategy-confidence.md) lists the known loopholes, fixes, gates, and non-claims. The release is shippable only inside that bounded promise.
 
 ## Evidence Required Before Broad Sharing

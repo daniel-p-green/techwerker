@@ -10,7 +10,7 @@ We can be 100% confident in this bounded strategy when the release gates pass:
 - Techwerker collects non-secret RSVP basics once and reuses them locally.
 - Techwerker answers plain-English city/date/time/topic/neighborhood requests with configured location awareness.
 - Techwerker builds waitlist-aware, overlap-aware, location-aware RSVP portfolios.
-- Techwerker uses Codex Desktop Browser Use as the primary official Partiful path.
+- Techwerker uses Codex Desktop Browser Use as the proved primary official Partiful path, with the Codex Chrome plugin as an optional signed-in-browser path when installed/enabled.
 - Techwerker clicks RSVP/list/Continue controls only after event-specific authorization and visible event confirmation.
 - Techwerker stops for credentials, one-time codes, payment, captchas, unknown factual required fields, ambiguous confirmations, or unavailable city calendars.
 
@@ -33,7 +33,8 @@ We are not claiming 100% universal RSVP completion. Partiful, Tech Week, host po
 | Low-stakes motivation answers become unsafe auto-fill. | Generated generic answers are draft-first unless a class is approved. | `answerStrategy`, release-check RSVP sanity |
 | Login, OTP, captcha, or payment appears. | Stop immediately and require the user/site to handle it. | `STOP_CONDITIONS`, variant fixture coverage |
 | User authorization is ambiguous. | Only selected-event phrases such as "get me on the list" authorize click-through; otherwise use `needs-user-submit`. | `rsvpActionPolicy`, docs checks |
-| Browser Use routes to an external browser or cannot control the current surface. | Keep Browser Use in-app browser as primary; inspect plugin/skill routing if it drifts; use Computer Use only as macOS fallback for an intentionally selected external browser/debug path. | Skill/runbook wording, Mac-first docs, installed-cache parity |
+| Browser Use routes to an external browser or cannot control the current surface. | Keep Browser Use in-app browser as the proved primary path; inspect plugin/skill routing if it drifts; use Chrome plugin as an optional signed-in-browser path when installed/enabled; use Computer Use only as macOS fallback for an intentionally selected external browser/debug path. | Skill/runbook wording, Mac-first docs, installed-cache parity |
+| Chrome plugin exposes broad signed-in browser state. | Treat Chrome as optional and user-selected; use the same selected-event authorization, scoped active-tab checks, and sensitive-data stops as Browser Use. | README, SECURITY, `platformPolicy` |
 | Computer Use cannot control Codex itself. | Do not depend on Computer Use to drive Codex app internals; use it for desktop capture controls or explicit external-browser fallback only. | Demo script and platform policy |
 | Demo asset leaks personal data or private event info. | Maintain reviewed cropped assets, no private profile values, and a release asset manifest. | `ASSET-MANIFEST.md`, release artifact gate |
 | Branding looks official or too close to the Tech Week mark. | Use `Techwerker` as a distinct, unofficial wordmark and keep "not affiliated" language visible in public assets. | README disclaimer, ship-readiness brand boundary, demo disclaimer |

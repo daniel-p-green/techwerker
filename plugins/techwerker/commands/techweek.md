@@ -3,9 +3,9 @@ description: Explain Techwerker, recommend Tech Week events, refresh status, or 
 argument-hint: [city] [portfolio|day YYYY-MM-DD|interests]
 ---
 
-Use this as the main Techwerker command after setup. Techwerker takes the work out of Tech Week: the user gives profile and preference information once, then Codex uses the local state and in-app Browser Use to find events and handle repetitive RSVP forms.
+Use this as the main Techwerker command after setup. Techwerker takes the work out of Tech Week: the user gives profile and preference information once, then Codex uses the local state and Codex browser-control tools to find events and handle repetitive RSVP forms.
 
-Keep the platform promise clear when relevant: planning and local state work as normal Codex plugin behavior, while live RSVP automation is Mac-first today because Computer Use fallback is macOS-only.
+Keep the platform promise clear when relevant: planning and local state work as normal Codex plugin behavior. The proved live RSVP path uses Browser Use `iab`; Chrome can be an optional signed-in-browser path when the Codex Chrome plugin is installed/enabled; Computer Use fallback is macOS-only.
 
 If the user asks "what can you do?", "how does this work?", or similar, do not print commands. Explain:
 
@@ -82,4 +82,4 @@ techweek preferences --city <city> show
 
 Summarize only the useful next action: profile gaps, interesting event clusters, pending RSVP queue, accepted/waitlisted state, or the next `/techweek-rsvp` target.
 
-For actual RSVP work, use `/techweek-rsvp` behavior: build a narrow live queue, write the answer sheet, run `techweek rsvp-context --json`, classify visible fields with `techweek answer-field --json`, pass `--visible-value` for non-sensitive Partiful prefilled values, navigate the official Partiful page with Browser Use `iab`, fill modal-heavy and multi-step Partiful pages in the in-app browser, draft safe generic answers only under the answer strategy, click scoped RSVP/list/Continue controls after event-specific authorization, and stop for credentials, one-time codes, payment, captchas, unknown required fields, Partiful site errors/no-progress states, or a final confirmation that does not clearly belong to the selected event.
+For actual RSVP work, use `/techweek-rsvp` behavior: build a narrow live queue, write the answer sheet, run `techweek rsvp-context --json`, classify visible fields with `techweek answer-field --json`, pass `--visible-value` for non-sensitive Partiful prefilled values, navigate the official Partiful page with Browser Use `iab` by default or Chrome plugin control when installed/enabled and selected, fill modal-heavy and multi-step Partiful pages, draft safe generic answers only under the answer strategy, click scoped RSVP/list/Continue controls after event-specific authorization, and stop for credentials, one-time codes, payment, captchas, unknown required fields, Partiful site errors/no-progress states, or a final confirmation that does not clearly belong to the selected event.

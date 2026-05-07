@@ -383,6 +383,7 @@ sequence = "\n".join(data["recommendedToolSequence"])
 assert "rsvp-context" in sequence
 assert "answer-field" in sequence
 assert "Browser Use iab" in sequence
+assert "Chrome plugin" in sequence
 assert "Computer Use" in sequence
 assert "Authorized RSVP loop" in sequence
 assert "captcha" in data["safety"]["stopConditions"]
@@ -400,8 +401,9 @@ assert any("host-question step" in step for step in policy["clickThroughSteps"])
 assert any("Something went wrong" in step for step in policy["clickThroughSteps"])
 assert policy["browserTabPolicy"]["mode"] == "controlled-tab-queue"
 assert "active RSVP target" in policy["browserTabPolicy"]["activation"]
-assert "Mac-first today" in data["platformPolicy"]["liveRsvp"]
+assert "Mac-first" in data["platformPolicy"]["liveRsvp"]
 assert data["platformPolicy"]["primaryLiveTool"] == "Browser Use iab"
+assert "Chrome plugin" in data["platformPolicy"]["optionalLiveTool"]
 assert "macOS only" in data["platformPolicy"]["fallbackLiveTool"]
 assert policy["platformPolicy"] == data["platformPolicy"]
 strategy = data["answerStrategy"]
@@ -711,6 +713,7 @@ grep -q 'multiple host-question steps' docs/strategy-confidence.md
 grep -q 'no-progress' docs/strategy-confidence.md
 grep -Fq '21+' docs/strategy-confidence.md
 grep -q 'Browser Use routes to an external browser' docs/strategy-confidence.md
+grep -q 'Chrome plugin exposes broad signed-in browser state' docs/strategy-confidence.md
 grep -q 'Computer Use cannot control Codex itself' docs/strategy-confidence.md
 grep -q 'unknown factual required fields' docs/strategy-confidence.md
 grep -q 'Privacy review' docs/demo-video/ASSET-MANIFEST.md
