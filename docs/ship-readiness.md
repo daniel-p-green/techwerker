@@ -14,7 +14,7 @@ Techwerker is ready to share as a **public beta / open-source Codex workflow dem
 - Deterministic repo gate passes: `./scripts/check.sh`.
 - Release gate passes: `techweek release-check --city all --json` with zero failures and only expected San Francisco pending warnings.
 - Fresh-user acceptance passes from an empty `HOME`.
-- Demo video is square, silent-first, and privacy-reviewed.
+- Demo video is square, silent-first, privacy-reviewed, and live-first rather than a static screenshot montage.
 - Installed plugin cache matches the repo copy.
 - One real, explicitly authorized Partiful proof exists and is not repeated as a routine test.
 - The fresh Camp AI proof shows a multi-step Partiful form and visible `Pending`; the immediate removal/cancellation is documented in release evidence but edited out of the public cut.
@@ -29,7 +29,7 @@ Use `Techwerker` as the product name and keep the visual identity clearly unoffi
 
 ## Reviewer Cold-Read Test
 
-Show the square demo without sound. A reviewer should be able to say, within 20 seconds:
+Show the square demo without sound. A reviewer should be able to say, within 10 seconds:
 
 1. This helps Codex find a Tech Week event from plain English.
 2. It uses the official Tech Week and Partiful path.

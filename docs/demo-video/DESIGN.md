@@ -2,7 +2,7 @@
 
 ## Style Prompt
 
-Make a square X/Twitter feed demo that feels native to the Tech Week 2026 site: black canvas, hard white borders, all-caps grotesk typography, pixel-grid/dither texture, and loud city-card accents in cyan, green, yellow, and magenta. The pace should feel like a sharp launch teaser, not a slide deck. Use very little text, large proof moments, official calendar/Partiful imagery, and short captions that can be understood on mute.
+Make a square X/Twitter feed demo that feels native to the Tech Week 2026 site: black canvas, hard white borders, all-caps grotesk typography, pixel-grid/dither texture, and loud city-card accents in cyan, green, yellow, and magenta. The pace should feel like a sharp live proof, not a slide deck. Use the real Partiful screen recording as the spine, with very little text and short captions that can be understood on mute.
 
 ## Colors
 
@@ -25,7 +25,7 @@ Make a square X/Twitter feed demo that feels native to the Tech Week 2026 site: 
 
 ## Motion
 
-- 32-40 seconds total.
+- 12-18 seconds total.
 - Hard cuts, quick vertical slides, and small scale punches.
 - Keep text sparse: no paragraphs, no tiny terminal text.
 - Use color blocks and proof badges for rhythm.
@@ -33,6 +33,7 @@ Make a square X/Twitter feed demo that feels native to the Tech Week 2026 site: 
 ## What NOT to Do
 
 - Do not use the prior light slide-deck style.
+- Do not lead with a fake product slide, logo tile, or static screenshot montage.
 - Do not use landscape or vertical as the primary X feed cut; primary render is `1080x1080`.
 - Do not over-explain implementation details.
 - Do not show private profile values.

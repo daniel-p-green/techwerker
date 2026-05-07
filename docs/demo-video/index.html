@@ -26,418 +26,227 @@
         width: 1080px;
         height: 1080px;
         overflow: hidden;
-        background:
-          linear-gradient(135deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-          radial-gradient(circle at 84% 18%, rgba(0, 216, 255, 0.28), transparent 30%),
-          radial-gradient(circle at 18% 84%, rgba(255, 53, 255, 0.22), transparent 24%),
-          #030303;
-        background-size: 12px 12px, auto, auto, auto;
+        background: #030303;
       }
 
-      #root::before {
-        content: "";
+      .live-video {
         position: absolute;
         inset: 0;
-        opacity: 0.2;
-        background-image: radial-gradient(circle, #ffffff 1px, transparent 1px);
-        background-size: 8px 8px;
-        mix-blend-mode: screen;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.08) contrast(1.06);
+      }
+
+      .shade {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.42), transparent 20%, transparent 72%, rgba(0, 0, 0, 0.54)),
+          linear-gradient(to right, rgba(0, 0, 0, 0.2), transparent 34%, transparent 78%, rgba(0, 0, 0, 0.18));
         pointer-events: none;
       }
 
-      .scene {
+      .label {
         position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 22px;
-        padding: 48px;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-      .row {
-        display: flex;
-        gap: 12px;
-      }
-
-      .top {
+        left: 36px;
+        top: 34px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }
-
-      .logo {
-        display: grid;
-        place-items: center;
-        width: 84px;
-        height: 84px;
-        border: 3px solid #ffffff;
-        background: #030303;
-        font-size: 17px;
-        font-weight: 1000;
-        line-height: 0.9;
-        text-align: center;
-        text-transform: uppercase;
-      }
-
-      .tag {
-        border: 3px solid #ffffff;
-        padding: 12px 16px;
-        background: #030303;
-        color: var(--accent);
-        font-size: 24px;
-        font-weight: 1000;
-        text-transform: uppercase;
-      }
-
-      h1,
-      h2 {
-        font-weight: 1000;
-        letter-spacing: 0;
-        line-height: 0.9;
-        text-transform: uppercase;
-      }
-
-      h1 {
-        font-size: 96px;
-      }
-
-      h2 {
-        font-size: 72px;
-      }
-
-      .micro {
-        color: #d6d6d6;
-        font-size: 34px;
-        font-weight: 900;
-        line-height: 1.1;
-        text-transform: uppercase;
-      }
-
-      .panel {
-        overflow: hidden;
-        border: 3px solid #ffffff;
-        background: #080808;
-        box-shadow: 0 0 0 6px rgba(0, 216, 255, 0.24);
-      }
-
-      .browser-bar {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border-bottom: 3px solid #ffffff;
-        padding: 14px 16px;
-        background: #ffffff;
-        color: #030303;
-        font-family: "JetBrains Mono", Consolas, monospace;
-        font-size: 19px;
-        font-weight: 900;
-      }
-
-      .url {
-        flex: 1;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-
-      .shot {
-        display: block;
-        width: 100%;
-        object-fit: cover;
-      }
-
-      .calendar-shot {
-        height: 610px;
-        object-position: top center;
-      }
-
-      .event-shot {
-        height: 650px;
-        object-position: top center;
-      }
-
-      .city-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-
-      .tile {
-        display: flex;
-        align-items: center;
-        min-height: 158px;
-        border: 3px solid #ffffff;
-        padding: 22px;
-        background: #030303;
-        color: var(--accent);
-        font-size: 58px;
-        font-weight: 1000;
-        line-height: 0.9;
-        text-transform: uppercase;
-      }
-
-      .chat {
-        border: 3px solid #ffffff;
-        padding: 26px;
-        background: #ffffff;
-        color: #030303;
-      }
-
-      .chat small {
-        display: block;
-        margin-bottom: 12px;
-        color: #555555;
-        font-size: 20px;
-        font-weight: 1000;
-        text-transform: uppercase;
-      }
-
-      .chat strong {
-        display: block;
-        font-size: 50px;
-        line-height: 1.02;
-        text-transform: uppercase;
-      }
-
-      .recommend {
-        border-left: 12px solid #00d8ff;
-        padding: 22px 24px;
-        background: #101010;
-        color: #ffffff;
-        font-size: 44px;
-        font-weight: 1000;
-        line-height: 1.03;
-        text-transform: uppercase;
-      }
-
-      .chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .chip {
-        border: 2px solid #ffffff;
-        padding: 10px 12px;
-        color: var(--accent);
-        background: #030303;
-        font-family: "JetBrains Mono", Consolas, monospace;
-        font-size: 24px;
-        font-weight: 900;
-        text-transform: uppercase;
-      }
-
-      .form-grid {
-        display: grid;
-        gap: 10px;
-      }
-
-      .field {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 3px solid #ffffff;
-        padding: 20px;
-        background: #101010;
-        font-size: 32px;
-        font-weight: 1000;
-        text-transform: uppercase;
-      }
-
-      .field span {
-        color: var(--accent);
-      }
-
-      .proof {
-        display: grid;
-        place-items: center;
-        min-height: 520px;
-        border: 3px solid #ffffff;
-        background:
-          radial-gradient(circle, rgba(87, 168, 255, 0.45), transparent 58%),
-          #101010;
-      }
-
-      .proof img {
-        width: 250px;
-        height: 250px;
-        object-fit: contain;
-      }
-
-      .pending {
-        margin-top: 20px;
-        color: #57a8ff;
-        font-size: 96px;
-        font-weight: 1000;
-        text-align: center;
-        text-transform: uppercase;
-      }
-
-      .state-line {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         gap: 14px;
         border: 3px solid #ffffff;
-        padding: 18px 20px;
-        background: #030303;
+        padding: 14px 18px;
+        background: rgba(3, 3, 3, 0.88);
         color: #ffffff;
-        font-family: "JetBrains Mono", Consolas, monospace;
-        font-size: 23px;
-        font-weight: 900;
+        font-size: 32px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 1;
         text-transform: uppercase;
+        opacity: 0;
       }
 
-      .state-line b {
+      .label b {
         color: var(--accent);
-        font-family: Inter, "Arial Black", "Helvetica Neue", Arial, sans-serif;
-        font-size: 36px;
       }
 
-      .footer {
+      .proof-badge {
         position: absolute;
-        left: 48px;
-        right: 48px;
-        bottom: 42px;
-        display: flex;
-        justify-content: space-between;
-        color: #cfcfcf;
+        right: 34px;
+        top: 34px;
+        border: 2px solid #ffffff;
+        padding: 10px 14px;
+        background: rgba(3, 3, 3, 0.8);
+        color: #b9b9b9;
         font-family: "JetBrains Mono", Consolas, monospace;
         font-size: 18px;
         font-weight: 900;
         text-transform: uppercase;
       }
 
-      .accent-cyan {
+      .event-badge {
+        position: absolute;
+        left: 36px;
+        bottom: 34px;
+        max-width: 640px;
+        border: 3px solid #ffffff;
+        padding: 16px 18px;
+        background: rgba(3, 3, 3, 0.86);
+        color: #ffffff;
+        font-size: 30px;
+        font-weight: 1000;
+        line-height: 1.02;
+        text-transform: uppercase;
+      }
+
+      .event-badge span {
+        display: block;
+        margin-top: 7px;
+        color: #00d8ff;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .end-card {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 28px;
+        padding: 72px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+          radial-gradient(circle at 83% 18%, rgba(0, 216, 255, 0.24), transparent 28%),
+          radial-gradient(circle at 20% 82%, rgba(255, 53, 255, 0.2), transparent 24%),
+          #030303;
+        background-size: 14px 14px, auto, auto, auto;
+        opacity: 0;
+      }
+
+      .end-card h1 {
+        color: #ffffff;
+        font-size: 96px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 0.9;
+        text-transform: uppercase;
+      }
+
+      .end-card p {
+        max-width: 760px;
+        color: #d8d8d8;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.12;
+        text-transform: uppercase;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .chip {
+        border: 3px solid #ffffff;
+        padding: 12px 16px;
+        background: #030303;
+        color: var(--accent);
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .micro {
+        position: absolute;
+        left: 72px;
+        right: 72px;
+        bottom: 48px;
+        display: flex;
+        justify-content: space-between;
+        color: #b9b9b9;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 17px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .cyan {
         --accent: #00d8ff;
       }
 
-      .accent-green {
+      .green {
         --accent: #7cff00;
       }
 
-      .accent-yellow {
+      .yellow {
         --accent: #fff200;
       }
 
-      .accent-magenta {
+      .magenta {
         --accent: #ff35ff;
       }
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="36" data-width="1080" data-height="1080">
-      <section class="scene" id="scene-1">
-        <div class="top">
-          <div class="logo">Tech<br />Week</div>
-          <div class="tag accent-cyan">Techwerker</div>
-        </div>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="13" data-width="1080" data-height="1080">
+      <video
+        id="live"
+        class="live-video"
+        data-start="0"
+        data-duration="10"
+        data-track-index="0"
+        src="assets/camp-ai-live-proof.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <div class="shade"></div>
+      <div class="proof-badge">Actual screen recording</div>
+
+      <div id="label-1" class="label cyan"><b>Official</b> Partiful form</div>
+      <div id="label-2" class="label yellow"><b>Host questions</b> handled</div>
+      <div id="label-3" class="label green"><b>Continue</b> clicked</div>
+      <div id="label-4" class="label cyan"><b>Pending</b> visible</div>
+
+      <div class="event-badge">
+        Camp AI: Agents at Work
+        <span>Official Tech Week / Partiful flow</span>
+      </div>
+
+      <section class="end-card" id="end-card">
         <h1>Tech Week,<br />without<br />the werk.</h1>
-        <div class="city-grid">
-          <div class="tile accent-green">Plan</div>
-          <div class="tile accent-cyan">Rank</div>
-          <div class="tile accent-yellow">Fill</div>
-          <div class="tile accent-magenta">RSVP</div>
-        </div>
-        <div class="footer"><span>Unofficial Codex demo</span><span>Not affiliated</span></div>
-      </section>
-
-      <section class="scene" id="scene-2">
-        <div class="chat">
-          <small>Ask Codex</small>
-          <strong>Find me a cool AI event Wednesday near Midtown.</strong>
-        </div>
-        <div class="recommend">Camp AI: Agents at Work</div>
+        <p>Codex plans the queue, fills repeated fields, and works the official RSVP flow after you approve the event.</p>
         <div class="chips">
-          <div class="chip accent-cyan">Official calendar</div>
-          <div class="chip accent-green">Midtown</div>
-          <div class="chip accent-yellow">Wednesday</div>
-          <div class="chip accent-magenta">AI</div>
+          <div class="chip cyan">Official pages</div>
+          <div class="chip green">Authorized clicks</div>
+          <div class="chip yellow">Stops safely</div>
         </div>
-      </section>
-
-      <section class="scene" id="scene-3">
-        <div class="panel">
-          <div class="browser-bar"><span>Codex</span><span class="url">tech-week.com/calendar/nyc</span></div>
-          <img class="shot calendar-shot" src="assets/calendar-nyc.png" alt="Tech Week NYC calendar" />
-        </div>
-        <h2>Real calendar.<br />Real filters.</h2>
-      </section>
-
-      <section class="scene" id="scene-4">
-        <div class="panel">
-          <div class="browser-bar"><span>Codex</span><span class="url">partiful.com/e/Fp5STy...</span></div>
-          <img class="shot event-shot" src="assets/camp-ai-event-crop.png" alt="Official Camp AI Partiful page" />
-        </div>
-        <div class="micro">Official Partiful. One active RSVP.</div>
-      </section>
-
-      <section class="scene" id="scene-5">
-        <h2>Repeated fields<br />handled.</h2>
-        <div class="form-grid">
-          <div class="field accent-cyan">Email <span>saved</span></div>
-          <div class="field accent-green">LinkedIn <span>saved</span></div>
-          <div class="field accent-yellow">Role + company <span>saved</span></div>
-          <div class="field accent-magenta">21+ <span>user fact</span></div>
-        </div>
-      </section>
-
-      <section class="scene" id="scene-6">
-        <div class="tag accent-green">Authorized</div>
-        <h2>Get me<br />on the list.</h2>
-        <div class="state-line accent-yellow"><span>Codex clicks scoped CTA</span><b>Continue</b></div>
-        <div class="proof">
-          <div>
-            <img src="assets/camp-ai-pending-proof.png" alt="Camp AI Partiful pending proof" />
-            <div class="pending">Pending</div>
-          </div>
-        </div>
-        <div class="state-line accent-green"><span>Local state</span><b>Applied</b></div>
-      </section>
-
-      <section class="scene" id="scene-7">
-        <h2>Not magic.<br />Less rote work.</h2>
-        <div class="chips">
-          <div class="chip accent-green">Plans</div>
-          <div class="chip accent-cyan">Works queue</div>
-          <div class="chip accent-yellow">Authorized clicks</div>
-          <div class="chip accent-magenta">Stops safely</div>
-        </div>
-        <div class="micro">Unofficial. Not affiliated. Mac-first live RSVP today.</div>
+        <div class="micro"><span>Unofficial Codex demo</span><span>Not affiliated</span></div>
       </section>
     </div>
 
     <script>
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
-      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6", "#scene-7"];
 
-      scenes.forEach((scene) => gsap.set(scene, { autoAlpha: 0, y: 46, scale: 0.985 }));
-
-      function show(scene, start, duration) {
-        tl.to(scene, { autoAlpha: 1, y: 0, scale: 1, duration: 0.32, ease: "power3.out" }, start);
-        tl.to(scene, { autoAlpha: 0, y: -42, scale: 1.01, duration: 0.22, ease: "power2.in" }, start + duration - 0.25);
+      function flashLabel(selector, start, duration) {
+        tl.fromTo(selector, { autoAlpha: 0, y: -20 }, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power3.out" }, start);
+        tl.to(selector, { autoAlpha: 0, y: -16, duration: 0.18, ease: "power2.in" }, start + duration);
       }
 
-      show("#scene-1", 0, 4.8);
-      show("#scene-2", 4.8, 5.2);
-      show("#scene-3", 10, 5);
-      show("#scene-4", 15, 5);
-      show("#scene-5", 20, 5);
-      show("#scene-6", 25, 5.5);
-      show("#scene-7", 30.5, 5.5);
+      flashLabel("#label-1", 0.2, 2.2);
+      flashLabel("#label-2", 2.8, 2.2);
+      flashLabel("#label-3", 5.25, 1.8);
+      flashLabel("#label-4", 7.35, 2.1);
 
-      tl.from("#scene-1 .tile", { autoAlpha: 0, y: 34, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 1.1);
-      tl.from("#scene-2 .chip", { autoAlpha: 0, x: -28, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 6.4);
-      tl.from("#scene-3 .panel", { autoAlpha: 0, scale: 0.94, duration: 0.3, ease: "power3.out" }, 10.4);
-      tl.from("#scene-4 .panel", { autoAlpha: 0, y: 34, duration: 0.3, ease: "power3.out" }, 15.4);
-      tl.from("#scene-5 .field", { autoAlpha: 0, x: 36, stagger: 0.08, duration: 0.24, ease: "power3.out" }, 21.3);
-      tl.from("#scene-6 .proof", { autoAlpha: 0, scale: 0.9, duration: 0.34, ease: "power3.out" }, 26.6);
-      tl.from("#scene-7 .chip", { autoAlpha: 0, y: 28, stagger: 0.06, duration: 0.24, ease: "power3.out" }, 32.2);
+      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 10);
+      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 10.2);
+      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 10.42);
+      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 10.72);
 
       window.__timelines["main"] = tl;
     </script>

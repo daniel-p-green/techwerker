@@ -158,19 +158,6 @@ DEMO_PROFILE = {
 }
 DEMO_PROFILES = {
     "justin": DEMO_PROFILE,
-    "daniel": {
-        "display_name": "Daniel Green",
-        "email": "dg@gmail.com",
-        "phone": "123-456-7891",
-        "company": "The AI Enablement Company",
-        "title": "AI Enablement Lead",
-        "country": "United States",
-        "linkedin": "linkedin.com/in/danielpgreen",
-        "website": "",
-        "one_liner": "I help teams adopt practical AI workflows.",
-        "why_attending": "Connect with builders working on practical AI tools and workflow automation.",
-        "comment_template": "Excited to join and meet builders working on practical AI tools and workflow automation.",
-    },
 }
 DEMO_PREFERENCES = {
     "topics": ["AI", "agents", "consumer AI", "hackathons"],
@@ -3148,7 +3135,7 @@ def installed_parity_check(root: Path | None) -> dict[str, Any]:
 def public_hygiene_check(root: Path | None) -> dict[str, Any]:
     if not root:
         return check_record("public-hygiene", "warn", "repo root not found")
-    forbidden = re.compile(r"/Users/danielgreen|gho_|Token:|password=|api[_-]?key|SECRET|PRIVATE KEY")
+    forbidden = re.compile(r"/Users/danielgreen|dg@gmail|danielpgreen|gho_|Token:|password=|api[_-]?key|SECRET|PRIVATE KEY")
     stale_submit = re.compile(r"pause before final RSVP|pause before final submission|stop before final submit|Stop before final RSVP")
     paths = [
         root / "README.md",
@@ -3205,6 +3192,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
     demo_html = root / "docs" / "demo-video" / "index.html"
     demo_check = root / "docs" / "demo-video" / "check.sh"
     asset_manifest = root / "docs" / "demo-video" / "ASSET-MANIFEST.md"
+    camp_live_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-live-proof.mp4"
     camp_event_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-event-crop.png"
     camp_pending_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-pending-proof.png"
     pending_asset = root / "docs" / "demo-video" / "assets" / "elevenlabs-pending-proof.png"
@@ -3230,6 +3218,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "demoVideoHtml": demo_html,
         "demoVideoCheck": demo_check,
         "demoAssetManifest": asset_manifest,
+        "campAiLiveAsset": camp_live_asset,
         "campAiEventAsset": camp_event_asset,
         "campAiPendingAsset": camp_pending_asset,
         "elevenLabsPendingAsset": pending_asset,
@@ -3268,7 +3257,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "readmeLinksEvidence": "docs/release-evidence.md" in readme_text,
         "readmeLinksReviewerVideo": "assets/techwerker-reviewer-demo.mp4" in readme_text,
         "readmeUsesActualDemoScreenshots": all(f"assets/readme/{path.name}" in readme_text for path in readme_screenshots),
-        "shipReadinessHasColdReview": "Reviewer Cold-Read Test" in ship_text and "within 20 seconds" in ship_text,
+        "shipReadinessHasColdReview": "Reviewer Cold-Read Test" in ship_text and ("within 10 seconds" in ship_text or "within 20 seconds" in ship_text),
         "shipReadinessLinksStrategyConfidence": "strategy-confidence.md" in ship_text,
         "shipReadinessHasBrandBoundary": "Brand Boundary" in ship_text and "should not mimic the official Tech Week mark" in ship_text,
         "strategyConfidenceCoversLoopholes": "Loopholes And Fixes" in strategy_text and "We are not claiming 100% universal RSVP completion" in strategy_text,
@@ -3282,6 +3271,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "evidenceHasNonClaims": "does not guarantee acceptance" in evidence_text and "does not" in evidence_text,
         "launchUsesConversationalFlow": "What can you do?" in launch_text and "Yes, get me on the list" in launch_text,
         "demoVideoUsesCampAI": "Camp AI: Agents at Work" in demo_text and "Pending" in demo_text,
+        "demoVideoIsLiveFirst": "Actual screen recording" in demo_text and "camp-ai-live-proof.mp4" in demo_text and "TWKR" not in demo_text,
         "demoVideoHasUnofficialDisclaimer": "Unofficial Codex demo" in demo_text and "Not affiliated" in demo_text,
         "demoVideoSquareSource": 'data-width="1080"' in demo_text and 'data-height="1080"' in demo_text and "Not affiliated" in demo_text,
         "demoCheckPreventsToolHang": "accepted $command output after timeout" in demo_check_text and "No console errors" in demo_check_text and "0 layout issues" in demo_check_text,

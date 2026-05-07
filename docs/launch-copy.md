@@ -117,11 +117,11 @@ https://github.com/daniel-p-green/techwerker
 
 ## Video Caption
 
-Techwerker turns a plain-English Codex request into a Tech Week recommendation, official Partiful RSVP flow, repeated-field handling, authorized click-through, and local state update.
+Live proof: Techwerker lets Codex work an official Partiful RSVP flow, handle host questions, click the authorized Continue path, and reach visible Pending without making the user retype rote fields.
 
 ## Alt Text
 
-Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video shows a polished Codex workflow overview, an official Camp AI Partiful signup, multi-step host questions, user-provided facts reused, an authorized Continue action, and visible Pending status. The RSVP cleanup happened after proof and is documented separately.
+Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video is a live-first screen recording of the official Camp AI Partiful signup flow, showing multi-step host questions, user-provided facts reused, an authorized Continue action, response recorded, and visible Pending status. The RSVP cleanup happened after proof and is documented separately.
 
 ## First Reply / Comment
 

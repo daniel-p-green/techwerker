@@ -453,10 +453,10 @@ for label, profile_key, value in checks:
     assert data["profileKey"] == profile_key, (label, data)
     assert data["value"] == value, (label, data)
 PY
-HOME="$tmp_home" plugins/techwerker/scripts/techweek demo-reset --city nyc --no-sync --keep-state --persona daniel | grep -q 'profile=demo Daniel Green'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek demo-reset --city nyc --no-sync --keep-state --persona justin | grep -q 'profile=demo Justin Buildman'
 HOME="$tmp_home" plugins/techwerker/scripts/techweek profile --city nyc missing | grep -q 'profile=ready'
-HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "Phone number" --json >"$tmp_home/daniel-phone-field.json"
-python3 - "$tmp_home/daniel-phone-field.json" <<'PY'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "Phone number" --json >"$tmp_home/demo-phone-field.json"
+python3 - "$tmp_home/demo-phone-field.json" <<'PY'
 import json
 import sys
 
@@ -464,7 +464,7 @@ with open(sys.argv[1], encoding="utf-8") as f:
     data = json.load(f)
 
 assert data["action"] == "fill_from_profile"
-assert data["value"] == "123-456-7891"
+assert data["value"] == "123-456-7981"
 assert data["profileKey"] == "phone"
 PY
 HOME="$tmp_home" plugins/techwerker/scripts/techweek form-memory --city nyc remember "What are you building?" "Reusable build answer" >/dev/null
@@ -567,7 +567,7 @@ assert data["fieldClass"] == "factual_unknown"
 assert data["recordedMissingField"] is True
 assert state["2"]["state"] == "needs-user-answer"
 PY
-HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "What is your full name for building security?" --visible-value "Daniel Green" --visible-source previous-response --json --no-record-missing >"$answer_path"
+HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "What is your full name for building security?" --visible-value "Justin Buildman" --visible-source previous-response --json --no-record-missing >"$answer_path"
 python3 - "$answer_path" "$tmp_home/.codex/data/tech-week/nyc-2026/rsvp-state.json" <<'PY'
 import json
 import sys
@@ -698,6 +698,9 @@ for variant in duplicate-cta already-pending waitlist-confirmed custom-required 
   grep -q "data-fixture-variant=\"$variant\"" fixtures/partiful-rsvp-variants.html
 done
 grep -q 'Camp AI: Agents at Work' docs/release-evidence.md docs/demo-script.md docs/demo-video/index.html README.md
+grep -q 'Actual screen recording' docs/demo-video/index.html
+grep -q 'camp-ai-live-proof.mp4' docs/demo-video/index.html docs/demo-video/ASSET-MANIFEST.md
+! grep -q 'TWKR' docs/demo-video/index.html
 grep -q 'https://partiful.com/e/Fp5STyPH0McEt0awlWFD' docs/release-evidence.md docs/demo-script.md
 grep -q 'Rebuild x Eleven Labs Hackathon' docs/release-evidence.md
 grep -q 'https://partiful.com/e/5gz90KPGpE1XoK3GZtoW' docs/release-evidence.md
@@ -753,7 +756,7 @@ if git grep -nE 'use Computer Use first|paused before submit|submit_policy=pause
 fi
 
 echo "== public hygiene grep =="
-if git grep -nE '/Users/danielgreen|gho_|Token:|password=|api[_-]?key|SECRET|PRIVATE KEY' -- README.md SECURITY.md docs plugins/techwerker ':!scripts/check.sh' ':!plugins/techwerker/scripts' ':!plugins/techwerker/skills/tech-week-concierge/scripts' >/tmp/techwerker-check-grep.txt 2>/dev/null; then
+if git grep -nE '/Users/danielgreen|dg@gmail|danielpgreen|gho_|Token:|password=|api[_-]?key|SECRET|PRIVATE KEY' -- README.md SECURITY.md docs plugins/techwerker ':!scripts/check.sh' ':!plugins/techwerker/scripts' ':!plugins/techwerker/skills/tech-week-concierge/scripts' >/tmp/techwerker-check-grep.txt 2>/dev/null; then
   cat /tmp/techwerker-check-grep.txt
   echo "public hygiene grep failed" >&2
   exit 1

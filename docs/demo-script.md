@@ -1,6 +1,6 @@
 # Techwerker Reviewer Walkthrough
 
-Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, and minimal-text; let the official calendar, Partiful page, multi-step form handling, and Pending proof carry the story. Keep cleanup in release evidence instead of the public cut.
+Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, live-first, and minimal-text; let the official Partiful page, multi-step form handling, and Pending proof carry the story. Keep cleanup in release evidence instead of the public cut.
 
 Recommended recording setup:
 
@@ -12,7 +12,7 @@ Recommended recording setup:
 
 Opening frame:
 
-Show the four readable verbs: Plan, Rank, Fill, RSVP. Keep the unofficial/not-affiliated disclaimer visible.
+Start on the actual browser proof. Avoid logo tiles, fake product cards, and static screenshot montages. Keep the unofficial/not-affiliated disclaimer in the final card or a small corner label.
 
 ## Setup
 
@@ -25,17 +25,17 @@ Use a clean or disposable profile state when recording:
 Private prep command for this recording:
 
 ```bash
-techweek demo-reset --city nyc --persona daniel --keep-state
+techweek demo-reset --city nyc --keep-state
 ```
 
 Sample visible profile:
 
-- Name: Daniel Green
-- Email: dg@gmail.com
-- Phone: 123-456-7891
-- Company: The AI Enablement Company
-- Title: AI Enablement Lead
-- LinkedIn: linkedin.com/in/danielpgreen
+- Name: Justin Buildman
+- Email: justin@demo.example
+- Phone: 123-456-7981
+- Company: Buildman Labs
+- Title: Founder
+- LinkedIn: linkedin.com/in/justin-buildman
 
 Narration:
 
@@ -127,7 +127,7 @@ For a no-blur public recording, fill the sample profile values above and stop be
 ## Recording Rules
 
 - Do not show real email, phone, LinkedIn, or private profile values.
-- Use the Daniel sample profile for public recording if contact fields need to be visible.
+- Use the Justin Buildman sample profile for public recording if contact fields need to be visible.
 - Do not submit a real RSVP unless the user explicitly approves that exact event during the walkthrough.
 - Do not show private accepted-event locations.
 - If a form asks for a custom factual answer, ask once and save it only with the user's chosen scope.
