@@ -6,6 +6,19 @@ Unofficial local Codex helper for managing dense Tech Week calendars, signup que
 
 Techwerker turns Tech Week chaos into a fill-once workflow: review dense calendars, select higher-signal events, build an overlap-aware RSVP portfolio, keep days location-aware, reuse non-secret attendee details locally, complete tedious repeated form fields, and hand repetitive RSVP/list work to Codex after the user authorizes a selected event. It helps plan and work the RSVP queue safely; it does not guarantee acceptance or bypass host rules.
 
+Plain-English version for people new to Codex:
+
+1. Install and enable the Techwerker plugin in the Codex app for Mac.
+2. Tell Codex: "Use Techwerker. Get started."
+3. Codex asks for your city and basic RSVP details once.
+4. You ask for events in normal language, like "Tuesday afternoon near SoHo."
+5. Codex uses Techwerker to read the official Tech Week calendar and recommend realistic options.
+6. When you approve one, Codex opens the official Partiful page in its in-app browser.
+7. Codex fills repeated fields it already knows, asks when it sees a new required question, and clicks the scoped RSVP/list buttons you authorized.
+8. Techwerker tracks the result locally so Codex can keep working through the queue.
+
+Techwerker is there to reduce repetitive signup work. It still stops for logins, one-time codes, payment, captchas, unknown required factual questions, or anything that does not clearly belong to the selected event.
+
 Users can ask in plain English, such as "find me a cool AI event on Tuesday afternoon near Williamsburg" or "near SoHo." Techwerker maps that to Tech Week dates, time slots, topics, city neighborhood clusters, and nearby commute-aware alternatives before recommending events.
 
 Techwerker is a utility for attendees. It is not affiliated with, endorsed by, or sponsored by Tech Week, a16z, Partiful, or any event host.

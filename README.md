@@ -4,6 +4,31 @@
 
 Techwerker is a local Codex plugin for Tech Week attendees. It helps Codex review dense Tech Week calendars, select a realistic RSVP portfolio, open official Partiful pages, complete tedious repeated forms, and work the RSVP queue safely.
 
+## New To Codex? Start Here
+
+Codex is an AI assistant app for your Mac. You can chat with it, and it can also work with files, tools, and an in-app browser when you allow it.
+
+Techwerker is an add-on for Codex. After you install it, you do not need to learn command lines or event IDs. You just talk to Codex like this:
+
+```text
+Use Techwerker. Get started.
+Find me a cool AI event on Tuesday afternoon near Williamsburg.
+Yes, get me on the list for that one.
+```
+
+Here is what happens behind the scenes:
+
+1. Codex asks for your city and basic RSVP details once.
+2. Techwerker reads the official Tech Week calendar.
+3. Codex recommends events that match your interests, time, and neighborhood.
+4. When you approve an event, Codex opens the official Partiful page in its in-app browser.
+5. Codex fills repeated fields it already knows, like your name, email, company, title, and LinkedIn.
+6. If the form asks something new, Codex pauses and asks you.
+7. After you say yes for that event, Codex clicks the right RSVP, waitlist, or Continue buttons.
+8. Techwerker records what happened locally so you can keep working through the queue.
+
+It is meant to remove rote signup work, not to secretly submit things without you. It stops for logins, one-time codes, payment, captchas, or required questions it cannot answer safely.
+
 You tell it what you care about once. Then you can ask for things like:
 
 ```text
