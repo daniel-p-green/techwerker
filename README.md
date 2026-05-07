@@ -101,12 +101,33 @@ Reviewer proof lives in [docs/release-evidence.md](docs/release-evidence.md): th
 
 For non-developers using the Codex app for Mac, the intended flow is:
 
-1. Install the `Techwerker` plugin from this GitHub repo using Codex's plugin install flow.
-2. Enable the plugin in Codex if it is not enabled automatically.
-3. Open the in-app browser when Codex needs to work official Tech Week or Partiful pages.
-4. Ask Codex in normal language. You should not need to run commands or copy event IDs.
+1. Open **Codex for Mac**.
+2. Open **Settings**.
+3. Open **Plugins**.
+4. Choose **Add marketplace**, **Install from GitHub**, or the equivalent plugin-install button in your Codex build.
+5. Paste this repo URL:
 
-If you are comfortable with Terminal, the install command is:
+```text
+https://github.com/daniel-p-green/techwerker
+```
+
+6. Approve installing/enabling the `Techwerker` plugin when Codex asks.
+7. Start a new Codex chat and type:
+
+```text
+Use Techwerker. What can you do?
+```
+
+You know it is working when Codex explains that Techwerker can plan Tech Week, remember your non-secret RSVP basics, recommend events, and work official Partiful RSVP pages after you authorize a selected event.
+
+Expected prompts later:
+
+- Codex may ask for your city and basic RSVP details once.
+- Codex may ask to use the in-app browser for official Tech Week or Partiful pages.
+- Partiful may ask you to log in or enter a one-time code. Techwerker stops for that; you handle the login/code yourself.
+- You should not need to run commands, copy event IDs, or paste the same RSVP fields into every form.
+
+If your Codex build does not yet show a GitHub plugin install button, the reliable fallback is to paste this one command into Terminal:
 
 ```bash
 codex plugin marketplace add daniel-p-green/techwerker

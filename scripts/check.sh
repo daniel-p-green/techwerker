@@ -20,6 +20,11 @@ cmp -s plugins/techwerker/scripts/techweek plugins/techwerker/skills/tech-week-c
 echo "== cli smoke =="
 plugins/techwerker/scripts/techweek --help >/dev/null
 grep -q 'DEFAULT_BASE_URL = "https://tech-week.com/calendar"' plugins/techwerker/scripts/techweek
+grep -q '"rsvp_mode": "assisted"' plugins/techwerker/scripts/techweek
+if grep -q 'full-auto' plugins/techwerker/scripts/techweek plugins/techwerker/skills/tech-week-concierge/scripts/techweek; then
+  echo "unsupported full-auto RSVP mode found" >&2
+  exit 1
+fi
 
 echo "== slash command surface =="
 expected_commands="techweek-rsvp.md

@@ -8,14 +8,16 @@ Techwerker turns Tech Week chaos into a fill-once workflow: review dense calenda
 
 Plain-English version for people new to Codex:
 
-1. Install and enable the Techwerker plugin in the Codex app for Mac.
-2. Tell Codex: "Use Techwerker. Get started."
-3. Codex asks for your city and basic RSVP details once.
-4. You ask for events in normal language, like "Tuesday afternoon near SoHo."
-5. Codex uses Techwerker to read the official Tech Week calendar and recommend realistic options.
-6. When you approve one, Codex opens the official Partiful page in its in-app browser.
-7. Codex fills repeated fields it already knows, asks when it sees a new required question, and clicks the scoped RSVP/list buttons you authorized.
-8. Techwerker tracks the result locally so Codex can keep working through the queue.
+1. Open Codex for Mac, then open Settings -> Plugins.
+2. Choose the plugin install button, paste `https://github.com/daniel-p-green/techwerker`, and approve enabling Techwerker.
+3. Tell Codex: "Use Techwerker. What can you do?"
+4. Codex should explain that Techwerker can plan Tech Week, remember non-secret RSVP basics, recommend events, and work official Partiful pages after you authorize a selected event.
+5. Codex asks for your city and basic RSVP details once.
+6. You ask for events in normal language, like "Tuesday afternoon near SoHo."
+7. Codex uses Techwerker to read the official Tech Week calendar and recommend realistic options.
+8. When you approve one, Codex opens the official Partiful page in its in-app browser.
+9. Codex fills repeated fields it already knows, asks when it sees a new required question, and clicks the scoped RSVP/list buttons you authorized.
+10. Techwerker tracks the result locally so Codex can keep working through the queue.
 
 Techwerker is there to reduce repetitive signup work. It still stops for logins, one-time codes, payment, captchas, unknown required factual questions, or anything that does not clearly belong to the selected event.
 

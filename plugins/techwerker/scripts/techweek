@@ -970,7 +970,7 @@ def default_preferences() -> dict[str, Any]:
         "cluster_first": True,
         "max_clusters_per_day": 2,
         "avoid_clusters": [],
-        "rsvp_mode": "manual",
+        "rsvp_mode": "assisted",
     }
 
 
@@ -1991,7 +1991,7 @@ def setup(args: argparse.Namespace) -> int:
             prefs["signup_multiplier"] = prompt_int("Signup multiplier", int(prefs.get("signup_multiplier") or 3))
             prefs["target_events_per_slot"] = prompt_int("Target events per slot", int(prefs.get("target_events_per_slot") or 1))
             prefs["max_clusters_per_day"] = prompt_int("Max location clusters per day", int(prefs.get("max_clusters_per_day") or 2))
-            prefs["rsvp_mode"] = prompt_choice("Default RSVP mode", ["manual", "assisted", "full-auto"], str(prefs.get("rsvp_mode") or "manual"))
+            prefs["rsvp_mode"] = prompt_choice("Default RSVP mode", ["manual", "assisted"], str(prefs.get("rsvp_mode") or "assisted"))
             write_json(root / "preferences.json", prefs)
 
     summary_path = write_setup_summary(root, profile_data, prefs, interest_options)
@@ -2292,7 +2292,7 @@ def rsvp_context(args: argparse.Namespace) -> int:
             "collectionPolicy": PROFILE_COLLECTION_POLICY,
         },
         "preferences": {
-            "rsvpMode": prefs.get("rsvp_mode", "manual"),
+            "rsvpMode": prefs.get("rsvp_mode", "assisted"),
             "topics": prefs.get("topics", []),
             "timeWindows": prefs.get("time_windows", []),
             "preferredFormats": prefs.get("preferred_formats", []),
@@ -3201,7 +3201,8 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
     asset_manifest_text = asset_manifest.read_text(encoding="utf-8") if asset_manifest.exists() else ""
     expectations = {
         "codexManifestIsPublicReady": "pause before final submit" not in manifest_text and "Use Techwerker. What can you do?" in manifest_text and "techwerker-poster.jpg" in manifest_text,
-        "readmeHasNonDeveloperInstall": "non-developers using the Codex app for Mac" in readme_text and "normal language" in readme_text,
+        "readmeHasNonDeveloperInstall": "non-developers using the Codex app for Mac" in readme_text and "You should not need to run commands" in readme_text,
+        "readmeHasExactMacInstallPath": "Open **Codex for Mac**" in readme_text and "Open **Settings**" in readme_text and "Open **Plugins**" in readme_text and "https://github.com/daniel-p-green/techwerker" in readme_text,
         "readmeLinksEvidence": "docs/release-evidence.md" in readme_text,
         "readmeLinksReviewerVideo": "assets/techwerker-reviewer-demo.mp4" in readme_text,
         "shipReadinessHasColdReview": "Reviewer Cold-Read Test" in ship_text and "within 20 seconds" in ship_text,
@@ -3210,7 +3211,8 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "evidenceHasNonClaims": "does not guarantee acceptance" in evidence_text and "does not" in evidence_text,
         "launchUsesConversationalFlow": "What can you do?" in launch_text and "Yes, get me on the list" in launch_text,
         "demoVideoUsesElevenLabs": "Rebuild x Eleven Labs Hackathon" in demo_text and "Pending" in demo_text,
-        "demoVideoSquareSource": 'data-width="1080"' in demo_text and 'data-height="1080"' in demo_text and "silent-first" in demo_text.lower(),
+        "demoVideoHasUnofficialDisclaimer": "Unofficial Codex demo" in demo_text and "Not affiliated" in demo_text,
+        "demoVideoSquareSource": 'data-width="1080"' in demo_text and 'data-height="1080"' in demo_text and "Not affiliated" in demo_text,
         "assetManifestPrivacyReviewed": "Privacy review" in asset_manifest_text and "no email, phone, LinkedIn" in asset_manifest_text,
         "fixtureHasDuplicateCta": fixture_text.count("Get on the list") >= 2,
         "fixtureHasActiveModal": 'data-active-rsvp-modal="true"' in fixture_text,
