@@ -35,7 +35,7 @@ TOOL_SEQUENCE = [
     "Browser Use iab: navigate to eventUrl, inspect visible labels/buttons, fill known fields, and click scoped authorized RSVP/list controls",
     "Optional Computer Use fallback: only for an intentionally selected desktop browser/app when Browser Use cannot complete the in-app flow",
     "Authorized RSVP loop: re-inspect after each Continue/RSVP/list click until visible confirmation, waitlist, or stop condition",
-    "techweek state --city <city> <event-id> applied|waitlisted|needs-user-answer|needs-user-submit",
+    "techweek state --city <city> <event-id> applied|waitlisted|needs-user-answer|needs-user-submit|cancelled",
 ]
 STOP_CONDITIONS = [
     "credentials",
@@ -44,6 +44,7 @@ STOP_CONDITIONS = [
     "captcha",
     "unknown required field",
     "ambiguous final confirmation",
+    "Partiful error or repeated no-progress click state",
 ]
 AUTHORIZATION_PHRASES = [
     "get me on the list",
@@ -70,6 +71,8 @@ RSVP_CLICK_THROUGH_STEPS = [
     "Fill only known non-secret profile, form-memory, or answer-sheet fields.",
     "Click one unique or scoped authorized Partiful action label at a time.",
     "Re-inspect after every click and continue only while the next action is still for the selected event.",
+    "If a new host-question step appears after Continue, classify each new label with answer-field before clicking again.",
+    "If Partiful shows an error such as 'Something went wrong' or the same CTA repeats without visible progress, stop and record the exact state.",
     "Stop for any safety stop condition or unknown required field.",
 ]
 BROWSER_TAB_POLICY = {
@@ -92,6 +95,7 @@ RSVP_FINAL_STATE_GUIDANCE = {
     "waitlisted": "Use when Partiful visibly confirms waitlist/list status for the selected event.",
     "needs-user-answer": "Use when a required visible field has no profile, form-memory, answer-sheet, or user-provided value.",
     "needs-user-submit": "Use only when the form is filled but the user has not authorized the RSVP/list action for this selected event.",
+    "cancelled": "Use when a previously submitted demo or RSVP was visibly removed/cancelled after explicit user authorization.",
 }
 RSVP_STATES = [
     "new",
@@ -105,6 +109,7 @@ RSVP_STATES = [
     "waitlisted",
     "accepted",
     "backup",
+    "cancelled",
     "rejected",
     "skipped",
     "needs-review",
@@ -113,6 +118,7 @@ LIVE_QUEUE_SKIP_STATES = {
     "applied",
     "waitlisted",
     "accepted",
+    "cancelled",
     "rejected",
     "skipped",
     "needs-user-answer",
@@ -121,7 +127,7 @@ LIVE_QUEUE_SKIP_STATES = {
 SECURED_STATES = {"accepted", "applied"}
 ATTEMPTED_STATES = {"accepted", "applied", "waitlisted"}
 BLOCKED_STATES = {"needs-user-answer", "needs-user-submit"}
-DONE_OR_BLOCKED_STATES = ATTEMPTED_STATES | BLOCKED_STATES | {"rejected", "skipped"}
+DONE_OR_BLOCKED_STATES = ATTEMPTED_STATES | BLOCKED_STATES | {"cancelled", "rejected", "skipped"}
 CITY_ALIASES = {
     "new york": "nyc",
     "new-york": "nyc",
@@ -147,6 +153,22 @@ DEMO_PROFILE = {
     "one_liner": "I build practical AI workflow tools for founders and operators.",
     "why_attending": "Connect with builders working on AI, product, and founder workflows.",
     "comment_template": "Excited to join and meet builders working on AI, product, and founder workflows.",
+}
+DEMO_PROFILES = {
+    "justin": DEMO_PROFILE,
+    "daniel": {
+        "display_name": "Daniel Green",
+        "email": "dg@gmail.com",
+        "phone": "123-456-7891",
+        "company": "The AI Enablement Company",
+        "title": "AI Enablement Lead",
+        "country": "United States",
+        "linkedin": "linkedin.com/in/danielpgreen",
+        "website": "",
+        "one_liner": "I help teams adopt practical AI workflows.",
+        "why_attending": "Connect with builders working on practical AI tools and workflow automation.",
+        "comment_template": "Excited to join and meet builders working on practical AI tools and workflow automation.",
+    },
 }
 DEMO_PREFERENCES = {
     "topics": ["AI", "agents", "consumer AI", "hackathons"],
@@ -516,6 +538,11 @@ FACTUAL_ASK_HINTS = [
     "allergies",
     "accessibility",
     "accommodation",
+    "age",
+    "21",
+    "older",
+    "certify",
+    "attest",
     "what are you building",
     "what do you build",
     "what is your startup",
@@ -2018,7 +2045,8 @@ def demo_reset(args: argparse.Namespace) -> int:
     prefs = ensure_preferences(root)
     ensure_form_memory(root)
 
-    profile_data.update(DEMO_PROFILE)
+    demo_profile = DEMO_PROFILES[args.persona]
+    profile_data.update(demo_profile)
     prefs.update(DEMO_PREFERENCES)
     write_json(root / "rsvp-profile.json", profile_data)
     write_json(root / "preferences.json", prefs)
@@ -2035,7 +2063,8 @@ def demo_reset(args: argparse.Namespace) -> int:
     interest_options = build_interest_options(root, args.limit)
     summary_path = write_setup_summary(root, profile_data, prefs, interest_options)
     print(f"demo_root={root}")
-    print("profile=demo Justin Buildman")
+    print(f"profile=demo {demo_profile['display_name']}")
+    print(f"persona={args.persona}")
     print(f"preferences={root / 'preferences.json'}")
     print(f"profile_path={root / 'rsvp-profile.json'}")
     print(f"summary={summary_path}")
@@ -3042,7 +3071,7 @@ def onboarding_context(args: argparse.Namespace) -> int:
             "select": "Build an overlap-aware portfolio with several attempts per date/time slot and location clustering.",
             "rsvp": "Use Browser Use iab on official Partiful pages, one active RSVP modal at a time.",
             "forms": "Fill profile, saved, and visible prefilled values automatically; ask only for unknown required answers; draft low-stakes generic answers under policy.",
-            "state": "Record applied, waitlisted, needs-user-answer, or needs-user-submit before switching tabs.",
+            "state": "Record applied, waitlisted, cancelled, needs-user-answer, or needs-user-submit before switching tabs.",
         },
         "stopConditions": STOP_CONDITIONS,
     }
@@ -3129,6 +3158,7 @@ def public_hygiene_check(root: Path | None) -> dict[str, Any]:
         root / "docs" / "launch-copy.md",
         root / "docs" / "release-evidence.md",
         root / "docs" / "ship-readiness.md",
+        root / "docs" / "strategy-confidence.md",
         root / "docs" / "demo-video" / "ASSET-MANIFEST.md",
     ]
     hits = []
@@ -3152,13 +3182,21 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
     claude_manifest = root / "plugins" / "techwerker" / ".claude-plugin" / "plugin.json"
     demo_gif = root / "assets" / "techwerker-demo.gif"
     reviewer_video = root / "assets" / "techwerker-reviewer-demo.mp4"
+    readme_screenshots = [
+        root / "assets" / "readme" / "02-ask.jpg",
+        root / "assets" / "readme" / "03-calendar.jpg",
+        root / "assets" / "readme" / "04-partiful.jpg",
+        root / "assets" / "readme" / "06-pending.jpg",
+    ]
     evidence = root / "docs" / "release-evidence.md"
     launch_copy = root / "docs" / "launch-copy.md"
     ship_readiness = root / "docs" / "ship-readiness.md"
+    strategy_confidence = root / "docs" / "strategy-confidence.md"
     partiful_fixture = root / "fixtures" / "partiful-rsvp-fixture.html"
     variant_fixture = root / "fixtures" / "partiful-rsvp-variants.html"
     demo_design = root / "docs" / "demo-video" / "DESIGN.md"
     demo_html = root / "docs" / "demo-video" / "index.html"
+    demo_check = root / "docs" / "demo-video" / "check.sh"
     asset_manifest = root / "docs" / "demo-video" / "ASSET-MANIFEST.md"
     pending_asset = root / "docs" / "demo-video" / "assets" / "elevenlabs-pending-proof.png"
     poster_asset = root / "plugins" / "techwerker" / "assets" / "techwerker-poster.jpg"
@@ -3169,13 +3207,19 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "claudeManifest": claude_manifest,
         "demoGif": demo_gif,
         "reviewerVideo": reviewer_video,
+        "readmeAskScreenshot": readme_screenshots[0],
+        "readmeCalendarScreenshot": readme_screenshots[1],
+        "readmePartifulScreenshot": readme_screenshots[2],
+        "readmePendingScreenshot": readme_screenshots[3],
         "releaseEvidence": evidence,
         "launchCopy": launch_copy,
         "shipReadiness": ship_readiness,
+        "strategyConfidence": strategy_confidence,
         "partifulFixture": partiful_fixture,
         "partifulVariantFixture": variant_fixture,
         "demoVideoDesign": demo_design,
         "demoVideoHtml": demo_html,
+        "demoVideoCheck": demo_check,
         "demoAssetManifest": asset_manifest,
         "elevenLabsPendingAsset": pending_asset,
         "pluginPoster": poster_asset,
@@ -3190,14 +3234,21 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         details["demoGifBytes"] = demo_gif.stat().st_size
     if reviewer_video.exists():
         details["reviewerVideoBytes"] = reviewer_video.stat().st_size
+    details["readmeScreenshotBytes"] = {
+        path.name: path.stat().st_size
+        for path in readme_screenshots
+        if path.exists()
+    }
     evidence_text = evidence.read_text(encoding="utf-8") if evidence.exists() else ""
     launch_text = launch_copy.read_text(encoding="utf-8") if launch_copy.exists() else ""
     manifest_text = codex_manifest.read_text(encoding="utf-8") if codex_manifest.exists() else ""
     readme_text = readme.read_text(encoding="utf-8") if readme.exists() else ""
     ship_text = ship_readiness.read_text(encoding="utf-8") if ship_readiness.exists() else ""
+    strategy_text = strategy_confidence.read_text(encoding="utf-8") if strategy_confidence.exists() else ""
     fixture_text = partiful_fixture.read_text(encoding="utf-8") if partiful_fixture.exists() else ""
     variant_text = variant_fixture.read_text(encoding="utf-8") if variant_fixture.exists() else ""
     demo_text = demo_html.read_text(encoding="utf-8") if demo_html.exists() else ""
+    demo_check_text = demo_check.read_text(encoding="utf-8") if demo_check.exists() else ""
     asset_manifest_text = asset_manifest.read_text(encoding="utf-8") if asset_manifest.exists() else ""
     expectations = {
         "codexManifestIsPublicReady": "pause before final submit" not in manifest_text and "Use Techwerker. What can you do?" in manifest_text and "techwerker-poster.jpg" in manifest_text,
@@ -3205,15 +3256,26 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "readmeHasExactMacInstallPath": "Open **Codex for Mac**" in readme_text and "Open **Settings**" in readme_text and "Open **Plugins**" in readme_text and "https://github.com/daniel-p-green/techwerker" in readme_text,
         "readmeLinksEvidence": "docs/release-evidence.md" in readme_text,
         "readmeLinksReviewerVideo": "assets/techwerker-reviewer-demo.mp4" in readme_text,
+        "readmeUsesActualDemoScreenshots": all(f"assets/readme/{path.name}" in readme_text for path in readme_screenshots),
         "shipReadinessHasColdReview": "Reviewer Cold-Read Test" in ship_text and "within 20 seconds" in ship_text,
-        "evidenceHasLiveProof": "Final visible state: `Pending`" in evidence_text and "do not repeat real RSVP submissions" in evidence_text,
-        "evidenceUsesElevenLabs": "Rebuild x Eleven Labs Hackathon" in evidence_text and "https://partiful.com/e/5gz90KPGpE1XoK3GZtoW" in evidence_text,
+        "shipReadinessLinksStrategyConfidence": "strategy-confidence.md" in ship_text,
+        "shipReadinessHasBrandBoundary": "Brand Boundary" in ship_text and "should not mimic the official Tech Week mark" in ship_text,
+        "strategyConfidenceCoversLoopholes": "Loopholes And Fixes" in strategy_text and "We are not claiming 100% universal RSVP completion" in strategy_text,
+        "strategyConfidenceCoversLiveSiteRisk": "Tech Week city page changes" in strategy_text and "Partiful duplicate buttons" in strategy_text,
+        "strategyConfidenceCoversBrowserRisk": "Browser Use routes to an external browser" in strategy_text and "Computer Use cannot control Codex itself" in strategy_text,
+        "strategyConfidenceCoversSafetyStops": "Login, OTP, captcha, or payment appears" in strategy_text and "unknown factual required fields" in strategy_text,
+        "evidenceHasLiveProof": "Final visible state: `Pending`" in evidence_text and "do not repeat real RSVP submissions" in evidence_text and "then `cancelled`" in evidence_text,
+        "evidenceUsesCampAI": "Camp AI: Agents at Work" in evidence_text and "https://partiful.com/e/Fp5STyPH0McEt0awlWFD" in evidence_text,
+        "evidenceKeepsElevenLabsHistory": "Rebuild x Eleven Labs Hackathon" in evidence_text and "https://partiful.com/e/5gz90KPGpE1XoK3GZtoW" in evidence_text,
         "evidenceHasNonClaims": "does not guarantee acceptance" in evidence_text and "does not" in evidence_text,
         "launchUsesConversationalFlow": "What can you do?" in launch_text and "Yes, get me on the list" in launch_text,
-        "demoVideoUsesElevenLabs": "Rebuild x Eleven Labs Hackathon" in demo_text and "Pending" in demo_text,
+        "demoVideoUsesCampAI": "Camp AI: Agents at Work" in demo_text and "Pending" in demo_text,
         "demoVideoHasUnofficialDisclaimer": "Unofficial Codex demo" in demo_text and "Not affiliated" in demo_text,
         "demoVideoSquareSource": 'data-width="1080"' in demo_text and 'data-height="1080"' in demo_text and "Not affiliated" in demo_text,
-        "assetManifestPrivacyReviewed": "Privacy review" in asset_manifest_text and "no email, phone, LinkedIn" in asset_manifest_text,
+        "demoCheckPreventsToolHang": "accepted $command output after timeout" in demo_check_text and "No console errors" in demo_check_text and "0 layout issues" in demo_check_text,
+        "assetManifestPrivacyReviewed": "Privacy review" in asset_manifest_text and "no real email, phone, LinkedIn" in asset_manifest_text,
+        "assetManifestCoversCampAI": "Camp AI: Agents at Work" in asset_manifest_text,
+        "assetManifestCoversReadmeScreenshots": "assets/readme/02-ask.jpg" in asset_manifest_text and "reviewed MP4" in asset_manifest_text,
         "fixtureHasDuplicateCta": fixture_text.count("Get on the list") >= 2,
         "fixtureHasActiveModal": 'data-active-rsvp-modal="true"' in fixture_text,
         "fixtureHasUnknownRequired": "What are you building?" in fixture_text and "needs-user-answer" in fixture_text,
@@ -3238,6 +3300,9 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         failures.append("demoGifNonEmpty")
     if reviewer_video.exists() and reviewer_video.stat().st_size <= 1:
         failures.append("reviewerVideoNonEmpty")
+    for path in readme_screenshots:
+        if path.exists() and path.stat().st_size <= 1:
+            failures.append(f"{path.name}NonEmpty")
     if failures:
         details["failures"] = failures
         return check_record("release-artifacts", "fail", "public release artifacts are incomplete or stale", details)
@@ -3437,6 +3502,7 @@ def build_parser() -> argparse.ArgumentParser:
     demo_reset_parser.add_argument("--no-sync", action="store_true", help="Do not sync if local state is missing.")
     demo_reset_parser.add_argument("--first-page", action="store_true", help="When syncing, only parse the server-embedded first page.")
     demo_reset_parser.add_argument("--keep-state", action="store_true", help="Keep RSVP queue/state files instead of clearing them.")
+    demo_reset_parser.add_argument("--persona", choices=sorted(DEMO_PROFILES), default="justin", help="Safe sample profile to seed for recording prep.")
     demo_reset_parser.add_argument("--limit", type=int, default=80, help="Interest options to retain.")
     demo_reset_parser.set_defaults(func=demo_reset)
 

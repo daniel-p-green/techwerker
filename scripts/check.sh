@@ -394,7 +394,10 @@ assert "click RSVP" in policy["authorizationPhrases"]
 assert "RSVP" in policy["authorizedActionLabels"]
 assert "Continue" in policy["authorizedActionLabels"]
 assert "needs-user-submit" in policy["finalStateGuidance"]
+assert "cancelled" in policy["finalStateGuidance"]
 assert "user has not authorized" in policy["needsUserSubmitPolicy"]
+assert any("host-question step" in step for step in policy["clickThroughSteps"])
+assert any("Something went wrong" in step for step in policy["clickThroughSteps"])
 assert policy["browserTabPolicy"]["mode"] == "controlled-tab-queue"
 assert "active RSVP target" in policy["browserTabPolicy"]["activation"]
 assert "Mac-first today" in data["platformPolicy"]["liveRsvp"]
@@ -409,6 +412,7 @@ assert "visiblePrefill" in strategy["fieldClasses"]
 assert "visiblePrefill" in strategy["defaults"]
 assert "motivation" in strategy["fieldClasses"]["generatedGeneric"]
 assert "password" in strategy["fieldClasses"]["sensitiveStop"]
+assert "21" in strategy["fieldClasses"]["factualUnknown"]
 PY
 answer_path="$tmp_home/answer-field.json"
 HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "Email" --json >"$answer_path"
@@ -446,6 +450,20 @@ for label, profile_key, value in checks:
     assert data["action"] == "fill_from_profile", (label, data)
     assert data["profileKey"] == profile_key, (label, data)
     assert data["value"] == value, (label, data)
+PY
+HOME="$tmp_home" plugins/techwerker/scripts/techweek demo-reset --city nyc --no-sync --keep-state --persona daniel | grep -q 'profile=demo Daniel Green'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek profile --city nyc missing | grep -q 'profile=ready'
+HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "Phone number" --json >"$tmp_home/daniel-phone-field.json"
+python3 - "$tmp_home/daniel-phone-field.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    data = json.load(f)
+
+assert data["action"] == "fill_from_profile"
+assert data["value"] == "123-456-7891"
+assert data["profileKey"] == "phone"
 PY
 HOME="$tmp_home" plugins/techwerker/scripts/techweek form-memory --city nyc remember "What are you building?" "Reusable build answer" >/dev/null
 HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "What are you building?" --json >"$answer_path"
@@ -531,6 +549,22 @@ with open(sys.argv[1], encoding="utf-8") as f:
 assert data["action"] == "stop"
 assert data["fieldClass"] == "sensitive"
 PY
+HOME="$tmp_home" plugins/techwerker/scripts/techweek missing-fields --city nyc clear 2 >/dev/null
+HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "I certify that I am 21 years of age or older" --json >"$answer_path"
+python3 - "$answer_path" "$tmp_home/.codex/data/tech-week/nyc-2026/rsvp-state.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    data = json.load(f)
+with open(sys.argv[2], encoding="utf-8") as f:
+    state = json.load(f)
+
+assert data["action"] == "ask_user"
+assert data["fieldClass"] == "factual_unknown"
+assert data["recordedMissingField"] is True
+assert state["2"]["state"] == "needs-user-answer"
+PY
 HOME="$tmp_home" plugins/techwerker/scripts/techweek answer-field --city nyc 2 "What is your full name for building security?" --visible-value "Daniel Green" --visible-source previous-response --json --no-record-missing >"$answer_path"
 python3 - "$answer_path" "$tmp_home/.codex/data/tech-week/nyc-2026/rsvp-state.json" <<'PY'
 import json
@@ -609,13 +643,24 @@ assert artifact_details["expectations"]["codexManifestIsPublicReady"] is True
 assert artifact_details["expectations"]["readmeHasNonDeveloperInstall"] is True
 assert artifact_details["expectations"]["readmeLinksEvidence"] is True
 assert artifact_details["expectations"]["readmeLinksReviewerVideo"] is True
+assert artifact_details["expectations"]["readmeUsesActualDemoScreenshots"] is True
 assert artifact_details["expectations"]["shipReadinessHasColdReview"] is True
+assert artifact_details["expectations"]["shipReadinessLinksStrategyConfidence"] is True
+assert artifact_details["expectations"]["shipReadinessHasBrandBoundary"] is True
+assert artifact_details["expectations"]["strategyConfidenceCoversLoopholes"] is True
+assert artifact_details["expectations"]["strategyConfidenceCoversLiveSiteRisk"] is True
+assert artifact_details["expectations"]["strategyConfidenceCoversBrowserRisk"] is True
+assert artifact_details["expectations"]["strategyConfidenceCoversSafetyStops"] is True
 assert artifact_details["expectations"]["evidenceHasLiveProof"] is True
-assert artifact_details["expectations"]["evidenceUsesElevenLabs"] is True
+assert artifact_details["expectations"]["evidenceUsesCampAI"] is True
+assert artifact_details["expectations"]["evidenceKeepsElevenLabsHistory"] is True
 assert artifact_details["expectations"]["launchUsesConversationalFlow"] is True
-assert artifact_details["expectations"]["demoVideoUsesElevenLabs"] is True
+assert artifact_details["expectations"]["demoVideoUsesCampAI"] is True
 assert artifact_details["expectations"]["demoVideoSquareSource"] is True
+assert artifact_details["expectations"]["demoCheckPreventsToolHang"] is True
 assert artifact_details["expectations"]["assetManifestPrivacyReviewed"] is True
+assert artifact_details["expectations"]["assetManifestCoversCampAI"] is True
+assert artifact_details["expectations"]["assetManifestCoversReadmeScreenshots"] is True
 assert artifact_details["expectations"]["fixtureHasDuplicateCta"] is True
 assert artifact_details["expectations"]["fixtureHasActiveModal"] is True
 assert artifact_details["expectations"]["fixtureHasUnknownRequired"] is True
@@ -650,12 +695,26 @@ grep -q 'needs-user-answer' fixtures/partiful-rsvp-fixture.html
 for variant in duplicate-cta already-pending waitlist-confirmed custom-required visible-prefill otp-stop captcha-stop payment-stop optional-generic; do
   grep -q "data-fixture-variant=\"$variant\"" fixtures/partiful-rsvp-variants.html
 done
-grep -q 'Rebuild x Eleven Labs Hackathon' docs/release-evidence.md docs/demo-script.md docs/demo-video/index.html
-grep -q 'https://partiful.com/e/5gz90KPGpE1XoK3GZtoW' docs/release-evidence.md docs/demo-video/index.html README.md
+grep -q 'Camp AI: Agents at Work' docs/release-evidence.md docs/demo-script.md docs/demo-video/index.html README.md
+grep -q 'https://partiful.com/e/Fp5STyPH0McEt0awlWFD' docs/release-evidence.md docs/demo-script.md
+grep -q 'Rebuild x Eleven Labs Hackathon' docs/release-evidence.md
+grep -q 'https://partiful.com/e/5gz90KPGpE1XoK3GZtoW' docs/release-evidence.md
 grep -q 'Final visible state: `Pending`' docs/release-evidence.md
+grep -q 'then `cancelled`' docs/release-evidence.md
 grep -q 'do not repeat real RSVP submissions' docs/release-evidence.md
 grep -q 'Reviewer Cold-Read Test' docs/ship-readiness.md
+grep -q 'Brand Boundary' docs/ship-readiness.md
+grep -q 'Loopholes And Fixes' docs/strategy-confidence.md
+grep -q 'not claiming 100% universal RSVP completion' docs/strategy-confidence.md
+grep -q 'Partiful duplicate buttons' docs/strategy-confidence.md
+grep -q 'multiple host-question steps' docs/strategy-confidence.md
+grep -q 'no-progress' docs/strategy-confidence.md
+grep -Fq '21+' docs/strategy-confidence.md
+grep -q 'Browser Use routes to an external browser' docs/strategy-confidence.md
+grep -q 'Computer Use cannot control Codex itself' docs/strategy-confidence.md
+grep -q 'unknown factual required fields' docs/strategy-confidence.md
 grep -q 'Privacy review' docs/demo-video/ASSET-MANIFEST.md
+grep -q 'Camp AI: Agents at Work' docs/demo-video/ASSET-MANIFEST.md
 git grep -q 'What can you do?' docs/launch-copy.md
 git grep -q 'non-developers using the Codex app for Mac' README.md
 git grep -q 'techwerker-poster.jpg' plugins/techwerker/.codex-plugin/plugin.json
@@ -666,9 +725,18 @@ if git grep -n 'pause before final submit' plugins/techwerker/.codex-plugin/plug
 fi
 test -s assets/techwerker-demo.gif
 test -s assets/techwerker-reviewer-demo.mp4
+test -s assets/readme/02-ask.jpg
+test -s assets/readme/03-calendar.jpg
+test -s assets/readme/04-partiful.jpg
+test -s assets/readme/06-pending.jpg
+grep -q 'assets/readme/02-ask.jpg' README.md
+grep -q 'assets/readme/06-pending.jpg' README.md
+grep -q 'assets/readme/02-ask.jpg' docs/demo-video/ASSET-MANIFEST.md
 ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0:s=x assets/techwerker-reviewer-demo.mp4 | grep -q '^1080x1080$'
 test -s docs/demo-video/DESIGN.md
 test -s docs/demo-video/index.html
+test -x docs/demo-video/check.sh
+grep -q 'accepted $command output after timeout' docs/demo-video/check.sh
 test -s docs/demo-video/assets/elevenlabs-event-crop.png
 test -s docs/demo-video/assets/elevenlabs-pending-proof.png
 test -s plugins/techwerker/assets/techwerker-poster.jpg

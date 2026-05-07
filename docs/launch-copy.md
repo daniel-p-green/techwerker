@@ -1,59 +1,128 @@
 # Launch Copy
 
-## Variant 1: Concise Utility
+Use the square demo video for social posts:
 
-Techwerker: Tech Week without the Werk.
+- Primary video: `assets/techwerker-reviewer-demo.mp4`
+- GIF preview: `assets/techwerker-demo.gif`
+- Repo: `https://github.com/daniel-p-green/techwerker`
 
-I made a local Codex plugin for Tech Week attendees:
-
-- sync the calendar
-- find higher-signal events
-- build a narrow live RSVP queue
-- reuse RSVP form answers
-- track applied / waitlisted / accepted / skipped
-- use Codex Desktop Browser Use for official Partiful pages after event-specific approval
-- stay honest that live RSVP automation is Mac-first today because Computer Use fallback is macOS-only
-
-Unofficial, local-first, attendee-focused.
-
-https://github.com/daniel-p-green/techwerker
-
-## Variant 2: Witty Tagline
+## X / Twitter
 
 Tech Week without the Werk.
 
-Techwerker is a Codex helper for the actual attendee workflow:
+I built Techwerker: a local Codex plugin that plans Tech Week, finds realistic event options, reuses RSVP basics, and works Partiful signup flows after you approve an event.
 
-1. sort through hundreds of events
-2. oversignup because waitlists are real
-3. stop retyping the same RSVP fields
-4. work one Partiful target at a time
-5. decide later when acceptances land
-
-Not affiliated with Tech Week, a16z, Partiful, or hosts. Just a local helper.
+Mac-first beta. Unofficial.
 
 https://github.com/daniel-p-green/techwerker
 
-## Variant 3: Demo-First Thread
+## X / Twitter Thread
 
-Tech Week has hundreds of events, hidden locations, waitlists, and a lot of repeated RSVP forms.
+1.
 
-So I made Techwerker: Tech Week without the Werk.
+Tech Week is amazing, but the attendee workflow is rough:
 
-It is a local Codex plugin that turns the chaos into a queue. Planning works as a normal Codex plugin workflow; live RSVP automation is Mac-first today because the Computer Use fallback controls macOS desktop apps.
+- too many events to scan
+- waitlists everywhere
+- repeated Partiful forms
+- hidden locations until accepted
+- too many tabs to track
 
-Demo flow:
+So I built Techwerker: Tech Week without the Werk.
+
+2.
+
+It is a local Codex plugin.
+
+You can ask:
 
 ```text
 What can you do?
 Get started.
-Find me an ElevenLabs AI hackathon near SoHo.
+Find me a cool AI event on Wednesday evening near Midtown.
 Yes, get me on the list for that one.
 ```
 
-It fetches the live calendar, builds a narrow AI noon/evening queue, tracks RSVP state, and lets Codex work the official Partiful page in the in-app browser.
+Codex handles the queue instead of making you copy links and retype the same fields.
 
-The important safety bit: it clicks only scoped RSVP/list controls the user authorized, and stops for credentials, codes, payment, captchas, unknown factual questions, or ambiguous confirmation.
+3.
+
+Techwerker reads the official Tech Week calendar, understands plain-English time/topic/neighborhood requests, and builds a waitlist-aware RSVP portfolio.
+
+The goal is not one perfect event. It is enough good options to survive waitlists and overlaps.
+
+4.
+
+For RSVP forms, it reuses non-secret basics you gave once: name, email, company, title, LinkedIn, etc.
+
+If Partiful asks something new, Codex pauses and asks. You can save the answer event-only or reusable for similar future fields.
+
+5.
+
+Safety boundary:
+
+Techwerker does not guarantee acceptance, bypass host rules, store credentials, solve captchas, or invent factual personal data.
+
+It stops for login codes, payment, captchas, unknown required fields, or ambiguous confirmations.
+
+6.
+
+This is a Mac-first public beta / open-source Codex workflow demo.
+
+Planning and local state are normal Codex plugin behavior. Live Partiful form work uses Codex Desktop's in-app browser, with desktop fallback only where Codex can safely control it.
 
 Repo:
 https://github.com/daniel-p-green/techwerker
+
+## LinkedIn
+
+I built a local Codex plugin for Tech Week attendees: Techwerker.
+
+Tagline: Tech Week without the Werk.
+
+The problem is simple: Tech Week has a lot of high-signal events, but the attendee workflow is full of repeated scanning, waitlists, Partiful forms, overlapping times, hidden locations, and too many tabs.
+
+Techwerker turns that into a Codex-native workflow:
+
+- collect non-secret RSVP basics once
+- read the official Tech Week calendar
+- understand requests like "find me a cool AI event on Wednesday evening near Midtown"
+- recommend events with time, topic, and neighborhood awareness
+- build a realistic oversignup queue because waitlists are real
+- reuse saved RSVP fields on official Partiful pages
+- ask once when a form needs a new factual answer
+- click scoped RSVP/list controls only after the user approves the selected event
+- track the result locally
+
+This is not a guaranteed signup bot. It does not bypass host rules, solve captchas, store credentials, handle payment, or invent factual personal data. It stops for login codes, payment, captchas, unknown required fields, and ambiguous confirmations.
+
+The more interesting point to me is that Codex can now operate a messy, real-world workflow end to end: not just writing code, but reviewing live information, maintaining local state, using an in-app browser, remembering approved answers, and reducing rote work while keeping the user in control.
+
+Mac-first public beta. Unofficial, local-first, open source.
+
+Repo:
+https://github.com/daniel-p-green/techwerker
+
+## Short LinkedIn Version
+
+I built Techwerker: Tech Week without the Werk.
+
+It is a local Codex plugin that helps attendees plan Tech Week, find realistic events, build a waitlist-aware RSVP queue, reuse non-secret Partiful form fields, and work official signup pages after the user approves a selected event.
+
+It is not a guaranteed signup bot. It stops for login codes, payment, captchas, unknown required fields, and ambiguous confirmations.
+
+Mac-first public beta. Unofficial, local-first, open source.
+
+https://github.com/daniel-p-green/techwerker
+
+## Video Caption
+
+Techwerker turns a plain-English Codex request into a Tech Week recommendation, official Partiful RSVP flow, repeated-field handling, authorized click-through, and local state update.
+
+## Alt Text
+
+Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video shows an official Camp AI Partiful signup, multi-step host questions, user-provided facts reused, an authorized Continue action, visible Pending status, immediate RSVP removal after proof, and local state updated from Applied to Cancelled.
+
+## First Reply / Comment
+
+Important caveat: Techwerker is a public beta and an unofficial local helper. It plans and works the RSVP queue safely; it does not guarantee acceptance or bypass event-host rules.

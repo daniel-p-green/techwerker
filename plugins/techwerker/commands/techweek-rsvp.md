@@ -5,7 +5,7 @@ argument-hint: [city] [topics/time slots] [--allow-submit only if explicitly req
 
 Work one Tech Week RSVP target quickly and safely. Techwerker takes the work out of Tech Week: the user should not have to copy links, provide event ids, run commands, or fill repetitive fields.
 
-Default to assisted mode. Never submit, RSVP, join waitlist, or click a final confirmation button unless the user explicitly authorizes final submission for this run or this specific event. Phrases like "get on the list", "sign me up", "join this one", or "yes, do it" for a selected event count as authorization to complete that RSVP/list action unless credentials, one-time codes, payment, captcha, unknown required fields, or ambiguous final confirmation block the flow.
+Default to assisted mode. Never submit, RSVP, join waitlist, or click a final confirmation button unless the user explicitly authorizes final submission for this run or this specific event. Phrases like "get on the list", "sign me up", "join this one", or "yes, do it" for a selected event count as authorization to complete that RSVP/list action unless credentials, one-time codes, payment, captcha, unknown required fields, Partiful site errors/no-progress states, or ambiguous final confirmation block the flow.
 
 Live RSVP automation is Mac-first today. Browser Use `iab` is the primary official Partiful path; Computer Use is only a macOS desktop fallback for explicit external-browser debugging.
 
@@ -54,13 +54,16 @@ techweek state --city <city> <event-id> needs-user-answer --note "missing requir
 
 13. Save user-approved custom answers with `missing-fields resolve` or `form-memory remember`. Use event-only by default; use reusable only when the user says the answer should apply across events. Use `form-memory approve-generated motivation` only when the user approves future generated answers for that class.
 14. When all required fields are filled, use the context packet's `rsvpActionPolicy`. If the user authorized this selected event, do not stop at a filled form. Click the next unique or scoped Partiful action such as "Get on the list", "RSVP", "Join waitlist", "Continue", "Submit", or "Going" only when it clearly belongs to the selected event.
-15. Re-inspect the visible page after every click. Continue the RSVP/list flow until Partiful visibly confirms applied/on-list/waitlist status or a stop condition appears.
-16. Record state before switching away from the active event tab.
-17. Mark final state privately from the visible result:
+15. Re-inspect the visible page after every click. If a new host-question step appears after Continue, classify every new field before clicking again. Legal/factual attestations such as 21+ questions require user-provided or saved answers.
+16. Stop if Partiful shows `Something went wrong`, a network/backend error, or the same CTA repeats without visible progress.
+17. Continue the RSVP/list flow until Partiful visibly confirms applied/on-list/waitlist status or a stop condition appears.
+18. Record state before switching away from the active event tab.
+19. Mark final state privately from the visible result:
 
 ```bash
 techweek state --city <city> <event-id> applied --note "visible Partiful confirmation"
 techweek state --city <city> <event-id> waitlisted --note "visible Partiful waitlist/list confirmation"
+techweek state --city <city> <event-id> cancelled --note "visible Partiful removal after explicit user authorization"
 ```
 
 Use `needs-user-submit` only when the form is filled but the user has not authorized the RSVP/list action for this selected event.
@@ -94,4 +97,5 @@ Stop and ask the user only for:
 - payment details,
 - captchas,
 - an unknown required custom answer,
+- Partiful site errors or repeated no-progress click states,
 - a final confirmation that does not clearly belong to the selected event or absent authorization for the RSVP/list action.

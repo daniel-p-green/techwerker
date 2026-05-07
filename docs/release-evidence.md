@@ -6,6 +6,7 @@ Use this as the compact reviewer proof packet for the public beta / open-source 
 
 - Deterministic gate: `techweek release-check --city all --json` returns zero failures.
 - Repository gate: `./scripts/check.sh` and `git diff --check` pass.
+- Confidence gate: `docs/strategy-confidence.md` names the known live-site, browser, auth, safety, demo, and overclaim loopholes, and ties each to a fix or explicit non-claim.
 - City behavior: New York and Boston are treated as launched when parseable; San Francisco is first-class pending when its public calendar is unavailable.
 - Browser path: Codex Desktop Browser Use is the primary live path for official Tech Week and Partiful pages.
 - Platform path: live RSVP automation is Mac-first today; Computer Use is only a macOS desktop fallback, while planning and local state remain general Codex plugin behavior.
@@ -16,19 +17,22 @@ Use this as the compact reviewer proof packet for the public beta / open-source 
 
 ## Live Proof
 
-On May 6, 2026, Codex started from the official New York calendar at `https://tech-week.com/calendar/nyc`, selected the ElevenLabs demo target, opened its official Partiful RSVP flow, filled known profile fields, stopped for a required factual allergy answer, continued only after the user supplied it, clicked the authorized scoped Continue path, and reached a visible Partiful `Pending` state.
+On May 7, 2026, Codex used the official `Camp AI: Agents at Work` Partiful flow as the fresh reviewer demo target. The flow handled a multi-step host-question form, filled user-provided sample fields, used the user-provided 21+ answer, clicked the scoped authorized Continue path, reached visible Partiful `Pending`, and then removed the RSVP immediately after the proof with explicit user authorization.
 
 Proof event:
 
-- Event: `Rebuild x Eleven Labs Hackathon - #NYTechWeek`
-- Official Partiful URL: `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW`
+- Event: `Camp AI: Agents at Work`
+- Official Partiful URL: `https://partiful.com/e/Fp5STyPH0McEt0awlWFD`
 - Official calendar source: `https://tech-week.com/calendar/nyc`
-- Date/time: Saturday, June 6, 2026, 9:00 AM-9:00 PM
-- Location signal: Chinatown / SoHo-LES cluster
+- Date/time: Wednesday, June 3, 2026, 5:30 PM-8:30 PM
+- Location signal: Midtown / New York public Partiful page signal
 - Final visible state: `Pending`
-- Local state transition: event marked `applied` only after visible pending confirmation
-- Form behavior proven: email, LinkedIn, company, and role were filled from user-provided profile data; the required allergy field stopped until the user supplied the answer.
+- Cleanup state: Partiful `Remove me` plus confirmation returned the page to `Get on the list`
+- Local state transition: event marked `applied` only after visible pending confirmation, then `cancelled` after visible removal
+- Form behavior proven: multi-step host questions; email, LinkedIn, company, role, 21+ attestation, and sponsor/demo preferences were filled from user-provided or event-specific answers. The flow did not require credentials, one-time codes, captcha, or payment.
 - Re-run policy: do not repeat real RSVP submissions as routine tests; use fixture and non-mutating live checks unless the user explicitly approves a selected real event.
+
+Earlier proof: on May 6, 2026, Codex also reached visible `Pending` on `Rebuild x Eleven Labs Hackathon - #NYTechWeek` at `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW` after stopping for and receiving the user's required allergy answer. That remains historical evidence, but the launch demo should use the Camp AI recording because it shows the stronger multi-step Partiful path and immediate cleanup.
 
 ## Reviewer Walkthrough
 

@@ -81,18 +81,28 @@ Codex may notice visible account details or previous Partiful responses in the a
 
 ![Techwerker demo](assets/techwerker-demo.gif)
 
-The square X/Twitter demo artifact is [assets/techwerker-reviewer-demo.mp4](assets/techwerker-reviewer-demo.mp4). It uses the official NYC calendar and the `Rebuild x Eleven Labs Hackathon` Partiful page: `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW`.
+Actual frames from the live reviewer demo:
+
+| Multi-step Partiful form | User-provided facts reused |
+| --- | --- |
+| ![Official Partiful host-question step for Camp AI](assets/readme/02-ask.jpg) | ![Age and sponsor preference fields filled from user-provided answers](assets/readme/03-calendar.jpg) |
+
+| Visible Pending proof | Removed immediately after proof |
+| --- | --- |
+| ![Visible Pending state on the official Camp AI Partiful page](assets/readme/04-partiful.jpg) | ![Official Camp AI Partiful page returned to Get on the list after removal](assets/readme/06-pending.jpg) |
+
+The square X/Twitter demo artifact is [assets/techwerker-reviewer-demo.mp4](assets/techwerker-reviewer-demo.mp4). It uses the official `Camp AI: Agents at Work` Partiful page, proves a multi-step host-question flow reached visible `Pending`, and then shows the RSVP being removed immediately after the recording proof.
 
 Example:
 
 ```text
-You: Find me an ElevenLabs AI hackathon near SoHo.
+You: Find me a cool AI event on Wednesday evening near Midtown.
 
-Techwerker: Best match: Rebuild x Eleven Labs Hackathon on Saturday in Chinatown / SoHo-LES.
+Techwerker: Best match: Camp AI: Agents at Work on Wednesday evening in Midtown.
 
 You: Yes, get me on the list.
 
-Techwerker: I’ll open the official Partiful page, fill the RSVP fields I know, click through the scoped RSVP/list flow for that event, and stop if it needs a login code or an unknown factual answer.
+Techwerker: I’ll open the official Partiful page, fill the RSVP fields I know, work through each host-question step, click the scoped RSVP/list flow for that event, and stop if it needs a login code, site error, or unknown factual answer.
 ```
 
 Reviewer proof lives in [docs/release-evidence.md](docs/release-evidence.md): the current deterministic gates, live Partiful proof, and the exact non-claims that keep the public beta honest.

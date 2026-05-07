@@ -20,9 +20,11 @@ Use tabs the way a human would stage work, with stricter execution rules: it is 
 10. Offer to save reusable answers only when they should apply broadly; save event-only answers by default. Generated answer classes such as `motivation` require explicit approval before future auto-fill.
 11. If the user said "get me on the list", "sign me up", "click RSVP", or equivalent for the selected event, continue past filled fields and click the next unique or scoped "Get on the list", "RSVP", "Join waitlist", "Continue", "Submit", "Going", or equivalent action.
 12. Re-inspect after every click. Continue only while the next visible action still belongs to the selected event and no stop condition appears.
-13. Mark `applied` for visible RSVP/request/on-list confirmation, `waitlisted` for visible waitlist/list confirmation, and `needs-user-submit` only when the user has not authorized the selected event action.
+13. If a new host-question step appears after Continue, classify every new field before clicking again. Treat legal/factual attestations such as 21+ questions as user-provided facts, not generated text.
+14. If Partiful shows `Something went wrong`, a network/backend error, or the same CTA repeats without visible progress, stop and record the exact state instead of pressing again.
+15. Mark `applied` for visible RSVP/request/on-list confirmation, `waitlisted` for visible waitlist/list confirmation, `cancelled` when a previously submitted demo or RSVP is visibly removed after explicit user authorization, and `needs-user-submit` only when the user has not authorized the selected event action.
 
-Stop immediately for credentials, one-time codes, payment details, captchas, unknown required fields, or a final confirmation that does not clearly belong to the selected event.
+Stop immediately for credentials, one-time codes, payment details, captchas, unknown required fields, Partiful errors/no-progress states, or a final confirmation that does not clearly belong to the selected event.
 
 Use Browser Use for Tech Week calendar spot checks and in-app browser work, but keep the CLI/local state as the primary calendar engine. Do not keep fighting DOM/accessibility refs inside Partiful modals; switch to visual Browser Use actions first.
 

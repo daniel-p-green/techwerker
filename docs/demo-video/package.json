@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "npx --yes hyperframes@0.5.3 preview",
-    "check": "npx --yes hyperframes@0.5.3 lint && npx --yes hyperframes@0.5.3 validate && npx --yes hyperframes@0.5.3 inspect",
+    "check": "./check.sh",
     "render": "npx --yes hyperframes@0.5.3 render",
     "publish": "npx --yes hyperframes@0.5.3 publish"
   }

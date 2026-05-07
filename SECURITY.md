@@ -40,9 +40,9 @@ Phrases like "get me on the list", "sign me up", or "click RSVP" for a selected 
 
 Visible Partiful account values or previous responses may be used for the current active form when they are non-sensitive, but should not be saved as reusable memory without user approval.
 
-Generated answers are limited to low-stakes motivation/comment prompts and default to draft-first. Techwerker must not invent factual personal data such as phone numbers, email addresses, dietary restrictions, accessibility needs, credentials, payment details, or one-time codes.
+Generated answers are limited to low-stakes motivation/comment prompts and default to draft-first. Techwerker must not invent factual personal data such as phone numbers, email addresses, dietary restrictions, accessibility needs, age/legal attestations, credentials, payment details, or one-time codes.
 
-Even with authorization, Techwerker should stop for credentials, one-time codes, payment details, captchas, unknown required fields, or a final confirmation that does not clearly belong to the selected event.
+Even with authorization, Techwerker should stop for credentials, one-time codes, payment details, captchas, unknown required fields, Partiful site errors/no-progress states, or a final confirmation that does not clearly belong to the selected event.
 
 ## Reporting Issues
 

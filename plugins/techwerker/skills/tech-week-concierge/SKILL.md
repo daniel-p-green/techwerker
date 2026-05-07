@@ -73,6 +73,7 @@ techweek state --city nyc <event-id> waitlisted
 techweek day-plan --city nyc 2026-06-03
 techweek export --city nyc --format md
 techweek demo-reset --city nyc
+techweek demo-reset --city nyc --persona daniel
 ```
 
 These commands are for agent execution, not user instructions. Run them yourself and summarize results. In normal operation, never tell the user "run `techweek ...`" or ask them to provide an event id. Translate user intent to the appropriate command and browser/computer action.
@@ -93,7 +94,7 @@ If the browser visibly shows account details, such as a Partiful display name, u
 
 For demos, demo profile values are acceptable. Still run the same setup flow so the product promise is clear: the user gives information once, and Techwerker reuses it for every relevant form.
 
-For recording prep, use `techweek demo-reset --city <city>` privately when you need a clean safe local state. It seeds the fake `Justin Buildman` profile/preferences and clears local RSVP queue/state files. Do not expose this as a normal user-facing feature unless the user is explicitly preparing a demo.
+For recording prep, use `techweek demo-reset --city <city>` privately when you need a clean safe local state. It seeds safe sample profile/preferences and clears local RSVP queue/state files. Use `--persona daniel` for the public reviewer recording profile with sample contact values. Do not expose this as a normal user-facing feature unless the user is explicitly preparing a demo.
 
 Use the simplified slash command surface:
 
@@ -107,7 +108,7 @@ For release or debugging work, use `techweek city-status --city all` and `techwe
 
 Never submit an RSVP, application, waitlist form, or "Going" action unless the user explicitly authorizes the RSVP/list action for that run or that selected event.
 
-Default mode is `assisted`: open the page, fill obvious visible fields, ask for missing required answers, and click scoped RSVP/list/Continue controls after event-specific authorization. Phrases like "get on the list", "sign me up", and "click RSVP" authorize attempting the RSVP/list join for the selected event, including clicking the relevant "Get on the list", "Join waitlist", "RSVP", "Continue", "Submit", "Going", or confirmation button if no credentials, payment, captcha, one-time code, unknown required field, or ambiguous selected-event confirmation blocks the flow. Use `needs-user-submit` only when the form is filled but the user has not authorized that event's RSVP/list action.
+Default mode is `assisted`: open the page, fill obvious visible fields, ask for missing required answers, and click scoped RSVP/list/Continue controls after event-specific authorization. Phrases like "get on the list", "sign me up", and "click RSVP" authorize attempting the RSVP/list join for the selected event, including clicking the relevant "Get on the list", "Join waitlist", "RSVP", "Continue", "Submit", "Going", or confirmation button if no credentials, payment, captcha, one-time code, unknown required field, ambiguous selected-event confirmation, Partiful error, or repeated no-progress click state blocks the flow. Use `needs-user-submit` only when the form is filled but the user has not authorized that event's RSVP/list action.
 
 Do not store Partiful credentials, one-time codes, payment details, or passwords.
 
@@ -141,9 +142,11 @@ For RSVP sessions:
 10. For `ask_user`, ask only for that answer and save it with `missing-fields resolve` as event-only by default or reusable if the user says it should apply broadly.
 11. For `stop`, pause immediately. Do not fill, generate, or store credentials, one-time codes, payment details, captchas, or sensitive private data.
 12. If the user authorized the selected event, click one unique or scoped allowed Partiful action at a time, then re-inspect the visible state before the next click. Do not use a global text click when labels repeat.
-13. If multiple Partiful tabs are open, record the event state before switching away from the active tab.
-14. Mark state `applied` when Partiful visibly confirms RSVP/request/on-list status, `waitlisted` when it confirms waitlist/list status, `needs-user-answer` for unresolved required fields, and `needs-user-submit` only when there is no authorization for the selected event action.
-15. Stop only for credentials, one-time codes, payment, captcha, unknown required answers, a final confirmation that does not clearly belong to the selected event, or absent user authorization for the RSVP/list action.
+13. If a new host-question step appears after Continue, classify every new visible field before clicking again. Legal or factual attestations such as "I am 21 years of age or older" require a user-provided or saved answer; do not generate them.
+14. If Partiful shows an error such as "Something went wrong" or the same button repeats without visible progress, stop and record the exact state instead of pressing again.
+15. If multiple Partiful tabs are open, record the event state before switching away from the active tab.
+16. Mark state `applied` when Partiful visibly confirms RSVP/request/on-list status, `waitlisted` when it confirms waitlist/list status, `cancelled` when a previously submitted demo or RSVP is visibly removed after explicit user authorization, `needs-user-answer` for unresolved required fields, and `needs-user-submit` only when there is no authorization for the selected event action.
+17. Stop only for credentials, one-time codes, payment, captcha, unknown required answers, Partiful errors/no-progress states, a final confirmation that does not clearly belong to the selected event, or absent user authorization for the RSVP/list action.
 
 Use `form-memory` for repeated Partiful labels and custom questions:
 

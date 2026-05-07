@@ -102,7 +102,7 @@
       }
 
       h1 {
-        font-size: 92px;
+        font-size: 96px;
       }
 
       h2 {
@@ -111,7 +111,7 @@
 
       .micro {
         color: #d6d6d6;
-        font-size: 28px;
+        font-size: 34px;
         font-weight: 900;
         line-height: 1.1;
         text-transform: uppercase;
@@ -150,8 +150,8 @@
         object-fit: cover;
       }
 
-      .home-shot {
-        height: 560px;
+      .calendar-shot {
+        height: 610px;
         object-position: top center;
       }
 
@@ -163,17 +163,20 @@
       .city-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 12px;
       }
 
       .tile {
-        min-height: 180px;
+        display: flex;
+        align-items: center;
+        min-height: 158px;
         border: 3px solid #ffffff;
-        padding: 20px;
+        padding: 22px;
         background: #030303;
         color: var(--accent);
-        font-size: 30px;
+        font-size: 58px;
         font-weight: 1000;
+        line-height: 0.9;
         text-transform: uppercase;
       }
 
@@ -195,7 +198,7 @@
 
       .chat strong {
         display: block;
-        font-size: 46px;
+        font-size: 50px;
         line-height: 1.02;
         text-transform: uppercase;
       }
@@ -205,7 +208,7 @@
         padding: 22px 24px;
         background: #101010;
         color: #ffffff;
-        font-size: 38px;
+        font-size: 44px;
         font-weight: 1000;
         line-height: 1.03;
         text-transform: uppercase;
@@ -223,7 +226,7 @@
         color: var(--accent);
         background: #030303;
         font-family: "JetBrains Mono", Consolas, monospace;
-        font-size: 21px;
+        font-size: 24px;
         font-weight: 900;
         text-transform: uppercase;
       }
@@ -240,7 +243,7 @@
         border: 3px solid #ffffff;
         padding: 20px;
         background: #101010;
-        font-size: 27px;
+        font-size: 32px;
         font-weight: 1000;
         text-transform: uppercase;
       }
@@ -252,7 +255,7 @@
       .proof {
         display: grid;
         place-items: center;
-        min-height: 540px;
+        min-height: 520px;
         border: 3px solid #ffffff;
         background:
           radial-gradient(circle, rgba(87, 168, 255, 0.45), transparent 58%),
@@ -260,18 +263,39 @@
       }
 
       .proof img {
-        width: 220px;
-        height: 220px;
+        width: 250px;
+        height: 250px;
         object-fit: contain;
       }
 
       .pending {
         margin-top: 20px;
         color: #57a8ff;
-        font-size: 86px;
+        font-size: 96px;
         font-weight: 1000;
         text-align: center;
         text-transform: uppercase;
+      }
+
+      .state-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        border: 3px solid #ffffff;
+        padding: 18px 20px;
+        background: #030303;
+        color: #ffffff;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 23px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .state-line b {
+        color: var(--accent);
+        font-family: Inter, "Arial Black", "Helvetica Neue", Arial, sans-serif;
+        font-size: 36px;
       }
 
       .footer {
@@ -325,9 +349,9 @@
       <section class="scene" id="scene-2">
         <div class="chat">
           <small>Ask Codex</small>
-          <strong>Find me an ElevenLabs AI hackathon near SoHo.</strong>
+          <strong>Find me a cool AI event Wednesday near Midtown.</strong>
         </div>
-        <div class="recommend">Rebuild x Eleven Labs Hackathon</div>
+        <div class="recommend">Camp AI: Agents at Work</div>
         <div class="chips">
           <div class="chip accent-cyan">Official calendar</div>
           <div class="chip accent-green">SoHo / LES</div>
@@ -338,18 +362,18 @@
 
       <section class="scene" id="scene-3">
         <div class="panel">
-          <div class="browser-bar"><span>iab</span><span class="url">tech-week.com</span></div>
-          <img class="shot home-shot" src="assets/tech-week-home-style.png" alt="Tech Week homepage" />
+          <div class="browser-bar"><span>Codex</span><span class="url">tech-week.com/calendar/nyc</span></div>
+          <img class="shot calendar-shot" src="assets/calendar-nyc.png" alt="Tech Week NYC calendar" />
         </div>
-        <h2>Official<br />calendar in.</h2>
+        <h2>Real calendar.<br />Real filters.</h2>
       </section>
 
       <section class="scene" id="scene-4">
         <div class="panel">
-          <div class="browser-bar"><span>iab</span><span class="url">partiful.com/e/5gz90...</span></div>
-          <img class="shot event-shot" src="assets/elevenlabs-event-crop.png" alt="ElevenLabs Partiful page" />
+          <div class="browser-bar"><span>Codex</span><span class="url">partiful.com/e/Fp5STy...</span></div>
+          <img class="shot event-shot" src="assets/elevenlabs-event-crop.png" alt="Official Partiful event page" />
         </div>
-        <div class="micro">One active RSVP tab. Scoped clicks.</div>
+        <div class="micro">Official Partiful. One active RSVP.</div>
       </section>
 
       <section class="scene" id="scene-5">
@@ -358,19 +382,21 @@
           <div class="field accent-cyan">Email <span>saved</span></div>
           <div class="field accent-green">LinkedIn <span>saved</span></div>
           <div class="field accent-yellow">Role + company <span>saved</span></div>
-          <div class="field accent-magenta">Allergy <span>ask</span></div>
+          <div class="field accent-magenta">Allergy <span>asks once</span></div>
         </div>
       </section>
 
       <section class="scene" id="scene-6">
         <div class="tag accent-green">Authorized</div>
         <h2>Get me<br />on the list.</h2>
+        <div class="state-line accent-yellow"><span>Codex clicks scoped CTA</span><b>Continue</b></div>
         <div class="proof">
           <div>
             <img src="assets/elevenlabs-pending-proof.png" alt="Partiful pending proof" />
             <div class="pending">Pending</div>
           </div>
         </div>
+        <div class="state-line accent-green"><span>Local state</span><b>Applied</b></div>
       </section>
 
       <section class="scene" id="scene-7">

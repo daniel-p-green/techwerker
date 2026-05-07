@@ -1,16 +1,17 @@
 # Techwerker Reviewer Walkthrough
 
-Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, and minimal-text; let the official calendar, Partiful page, form handling, and Pending proof carry the story.
+Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, and minimal-text; let the official calendar, Partiful page, multi-step form handling, Pending proof, and immediate cleanup carry the story.
 
 Recommended recording setup:
 
 - Use Codex Desktop on Mac with Browser Use in the in-app browser.
+- Use Browser Use for the visible official Tech Week/Partiful work. Use Recordly or CleanShot X only for the screen capture layer; keep the final social cut square, silent-first, and readable without zooming.
 - Use direct calendar parsing for Tech Week, not visual scrolling.
-- Keep Computer Use available only as an explicit macOS external-browser fallback.
+- Keep Computer Use available for desktop capture controls and only as an explicit macOS external-browser fallback.
 
 Opening frame:
 
-> Techwerker turns Tech Week chaos into a fill-once workflow: find the events worth your time, build a smart RSVP queue, and let Codex remove the repetitive signup drag.
+Show the four readable verbs: Plan, Rank, Fill, RSVP. Keep the unofficial/not-affiliated disclaimer visible.
 
 ## Setup
 
@@ -19,6 +20,21 @@ Use a clean or disposable profile state when recording:
 ```text
 /techweek-setup
 ```
+
+Private prep command for this recording:
+
+```bash
+techweek demo-reset --city nyc --persona daniel --keep-state
+```
+
+Sample visible profile:
+
+- Name: Daniel Green
+- Email: dg@gmail.com
+- Phone: 123-456-7891
+- Company: The AI Enablement Company
+- Title: AI Enablement Lead
+- LinkedIn: linkedin.com/in/danielpgreen
 
 Narration:
 
@@ -45,7 +61,7 @@ Narration:
 ## Portfolio
 
 ```text
-/techweek Find me an ElevenLabs AI hackathon on Saturday morning near SoHo.
+/techweek Find me a cool AI event on Wednesday evening near Midtown.
 ```
 
 Show:
@@ -53,7 +69,7 @@ Show:
 - natural-language parsing,
 - official Tech Week calendar source,
 - neighborhood cluster fit,
-- the selected `Rebuild x Eleven Labs Hackathon` recommendation.
+- the selected `Camp AI: Agents at Work` recommendation.
 
 Narration:
 
@@ -86,12 +102,13 @@ For the live RSVP demo, use the narrow queue instead of the full portfolio queue
 Then let Codex work the official Partiful page in the in-app browser:
 
 1. confirm the selected event,
-2. open `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW`,
+2. open `https://partiful.com/e/Fp5STyPH0McEt0awlWFD`,
 3. inspect visible fields,
 4. fill known, saved, or visibly prefilled non-sensitive fields,
 5. ask for any unknown required factual answer,
-6. click scoped RSVP/list/Continue controls if the selected event is authorized,
-7. stop for credentials, one-time codes, payment, captchas, or ambiguous final confirmation.
+6. if Partiful opens another host-question step after Continue, classify and fill those fields before clicking again,
+7. click scoped RSVP/list/Continue controls if the selected event is authorized,
+8. stop for credentials, one-time codes, payment, captchas, ambiguous final confirmation, site errors, or repeated no-progress click states.
 
 Narration:
 
@@ -99,13 +116,18 @@ Narration:
 
 Reviewer target:
 
-- Event: `Rebuild x Eleven Labs Hackathon - #NYTechWeek`
-- Official Partiful URL: `https://partiful.com/e/5gz90KPGpE1XoK3GZtoW`
+- Event: `Camp AI: Agents at Work`
+- Official Partiful URL: `https://partiful.com/e/Fp5STyPH0McEt0awlWFD`
 - Expected demo ending after approved run: visible Partiful `Pending`, with local state marked `applied` only after confirmation.
+- Cleanup after proof: click the visible `Pending` state, remove the RSVP only with explicit user authorization, confirm removal, and mark local state `cancelled`.
+
+For a no-blur public recording, fill the sample profile values above and stop before transmitting them to a real event unless the user explicitly approves that exact final RSVP/list action during the recording.
 
 ## Recording Rules
 
 - Do not show real email, phone, LinkedIn, or private profile values.
+- Use the Daniel sample profile for public recording if contact fields need to be visible.
 - Do not submit a real RSVP unless the user explicitly approves that exact event during the walkthrough.
 - Do not show private accepted-event locations.
 - If a form asks for a custom factual answer, ask once and save it only with the user's chosen scope.
+- Legal or factual attestations, such as a 21+ question, require a user answer before reuse.

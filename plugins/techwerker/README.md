@@ -19,7 +19,7 @@ Plain-English version for people new to Codex:
 9. Codex fills repeated fields it already knows, asks when it sees a new required question, and clicks the scoped RSVP/list buttons you authorized.
 10. Techwerker tracks the result locally so Codex can keep working through the queue.
 
-Techwerker is there to reduce repetitive signup work. It still stops for logins, one-time codes, payment, captchas, unknown required factual questions, or anything that does not clearly belong to the selected event.
+Techwerker is there to reduce repetitive signup work. It still stops for logins, one-time codes, payment, captchas, unknown required factual questions, Partiful site errors/no-progress states, or anything that does not clearly belong to the selected event.
 
 Users can ask in plain English, such as "find me a cool AI event on Tuesday afternoon near Williamsburg" or "near SoHo." Techwerker maps that to Tech Week dates, time slots, topics, city neighborhood clusters, and nearby commute-aware alternatives before recommending events.
 
@@ -65,7 +65,7 @@ Default RSVP mode is assisted: build a narrow live queue when speed matters, gen
 
 Calendar planning and local state helpers are ordinary Codex plugin behavior. Live Partiful RSVP filling is Mac-first today because it depends on Codex Desktop's in-app Browser Use tab, with Computer Use available only as a macOS desktop fallback for explicit external-browser debugging. Non-Mac users can still use planning, profile memory, portfolios, and RSVP state, but this release does not promise desktop form-control fallback outside macOS.
 
-The public surface is intentionally practical: first-time signup setup, calendar triage, overlap-aware oversignup portfolio management, neighborhood-aware day planning, repeated identity-entry relief, and safer Partiful handoff. It does not store credentials, and it only completes RSVP/list actions after event-specific authorization such as "get me on the list" or "click RSVP."
+The public surface is intentionally practical: first-time signup setup, calendar triage, overlap-aware oversignup portfolio management, neighborhood-aware day planning, repeated identity-entry relief, multi-step Partiful host-question handling, and safer Partiful handoff. It does not store credentials, and it only completes RSVP/list actions after event-specific authorization such as "get me on the list" or "click RSVP."
 
 For release diagnostics, agents can run `techweek city-status --city all` and `techweek release-check --city all` privately, then summarize the result.
 
