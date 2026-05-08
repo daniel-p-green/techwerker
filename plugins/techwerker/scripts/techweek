@@ -3192,6 +3192,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
     demo_html = root / "docs" / "demo-video" / "index.html"
     demo_check = root / "docs" / "demo-video" / "check.sh"
     asset_manifest = root / "docs" / "demo-video" / "ASSET-MANIFEST.md"
+    calendar_flow_asset = root / "docs" / "demo-video" / "assets" / "calendar-to-partiful-flow.mp4"
     camp_live_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-live-proof.mp4"
     camp_event_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-event-crop.png"
     camp_pending_asset = root / "docs" / "demo-video" / "assets" / "camp-ai-pending-proof.png"
@@ -3218,6 +3219,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "demoVideoHtml": demo_html,
         "demoVideoCheck": demo_check,
         "demoAssetManifest": asset_manifest,
+        "calendarToPartifulAsset": calendar_flow_asset,
         "campAiLiveAsset": camp_live_asset,
         "campAiEventAsset": camp_event_asset,
         "campAiPendingAsset": camp_pending_asset,
@@ -3272,6 +3274,7 @@ def release_artifact_check(root: Path | None) -> dict[str, Any]:
         "launchUsesConversationalFlow": "What can you do?" in launch_text and "Yes, get me on the list" in launch_text,
         "demoVideoUsesCampAI": "Camp AI: Agents at Work" in demo_text and "Pending" in demo_text,
         "demoVideoIsLiveFirst": "Actual screen recording" in demo_text and "camp-ai-live-proof.mp4" in demo_text and "TWKR" not in demo_text,
+        "demoVideoShowsFullFlow": "calendar-to-partiful-flow.mp4" in demo_text and "Official</b> Tech Week calendar" in demo_text and "Camp AI</b> selected" in demo_text,
         "demoVideoHasUnofficialDisclaimer": "Unofficial Codex demo" in demo_text and "Not affiliated" in demo_text,
         "demoVideoSquareSource": 'data-width="1080"' in demo_text and 'data-height="1080"' in demo_text and "Not affiliated" in demo_text,
         "demoCheckPreventsToolHang": "accepted $command output after timeout" in demo_check_text and "No console errors" in demo_check_text and "0 layout issues" in demo_check_text,

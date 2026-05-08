@@ -1,6 +1,6 @@
 # Techwerker Reviewer Walkthrough
 
-Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, live-first, and minimal-text; let the official Partiful page, multi-step form handling, and Pending proof carry the story. Keep cleanup in release evidence instead of the public cut.
+Use this for a live Codex walkthrough or screen recording. Keep all profile values sanitized and keep the story conversational. The shareable social cut is square, silent-first, live-first, and minimal-text; let the official Tech Week calendar, selected event, official Partiful page, multi-step form handling, and Pending proof carry the story. Keep cleanup in release evidence instead of the public cut.
 
 Recommended recording setup:
 
@@ -12,7 +12,7 @@ Recommended recording setup:
 
 Opening frame:
 
-Start on the actual browser proof. Avoid logo tiles, fake product cards, and static screenshot montages. Keep the unofficial/not-affiliated disclaimer in the final card or a small corner label.
+Start on the official Tech Week calendar, not the Partiful form. Show the event selection before the RSVP form. Avoid logo tiles, fake product cards, and static screenshot montages. Keep the unofficial/not-affiliated disclaimer in the final card or a small corner label.
 
 ## Setup
 

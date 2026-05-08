@@ -192,13 +192,24 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="13" data-width="1080" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="19" data-width="1080" data-height="1080">
+      <video
+        id="calendar"
+        class="live-video"
+        data-start="0"
+        data-duration="5.833"
+        data-track-index="0"
+        src="assets/calendar-to-partiful-flow.mp4"
+        muted
+        playsinline
+      ></video>
+
       <video
         id="live"
         class="live-video"
-        data-start="0"
+        data-start="5.833"
         data-duration="10"
-        data-track-index="0"
+        data-track-index="1"
         src="assets/camp-ai-live-proof.mp4"
         muted
         playsinline
@@ -207,10 +218,12 @@
       <div class="shade"></div>
       <div class="proof-badge">Actual screen recording</div>
 
-      <div id="label-1" class="label cyan"><b>Official</b> Partiful form</div>
-      <div id="label-2" class="label yellow"><b>Host questions</b> handled</div>
-      <div id="label-3" class="label green"><b>Continue</b> clicked</div>
-      <div id="label-4" class="label cyan"><b>Pending</b> visible</div>
+      <div id="label-1" class="label cyan"><b>Official</b> Tech Week calendar</div>
+      <div id="label-2" class="label magenta"><b>Camp AI</b> selected</div>
+      <div id="label-3" class="label cyan"><b>Official</b> Partiful form</div>
+      <div id="label-4" class="label yellow"><b>Host questions</b> handled</div>
+      <div id="label-5" class="label green"><b>Continue</b> clicked</div>
+      <div id="label-6" class="label cyan"><b>Pending</b> visible</div>
 
       <div class="event-badge">
         Camp AI: Agents at Work
@@ -238,15 +251,17 @@
         tl.to(selector, { autoAlpha: 0, y: -16, duration: 0.18, ease: "power2.in" }, start + duration);
       }
 
-      flashLabel("#label-1", 0.2, 2.2);
-      flashLabel("#label-2", 2.8, 2.2);
-      flashLabel("#label-3", 5.25, 1.8);
-      flashLabel("#label-4", 7.35, 2.1);
+      flashLabel("#label-1", 0.2, 2.0);
+      flashLabel("#label-2", 2.75, 2.1);
+      flashLabel("#label-3", 6.05, 2.0);
+      flashLabel("#label-4", 8.85, 2.0);
+      flashLabel("#label-5", 11.25, 1.9);
+      flashLabel("#label-6", 13.45, 2.1);
 
-      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 10);
-      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 10.2);
-      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 10.42);
-      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 10.72);
+      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 15.85);
+      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 16.05);
+      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 16.27);
+      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 16.57);
 
       window.__timelines["main"] = tl;
     </script>

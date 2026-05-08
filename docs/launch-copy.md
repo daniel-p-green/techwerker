@@ -117,11 +117,11 @@ https://github.com/daniel-p-green/techwerker
 
 ## Video Caption
 
-Live proof: Techwerker lets Codex work an official Partiful RSVP flow, handle host questions, click the authorized Continue path, and reach visible Pending without making the user retype rote fields.
+Full-flow proof: Techwerker goes from the official Tech Week calendar to a selected Camp AI event, opens the official Partiful page, handles host questions, clicks the authorized Continue path, and reaches visible Pending.
 
 ## Alt Text
 
-Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video is a live-first screen recording of the official Camp AI Partiful signup flow, showing multi-step host questions, user-provided facts reused, an authorized Continue action, response recorded, and visible Pending status. The RSVP cleanup happened after proof and is documented separately.
+Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video shows the official New York Tech Week calendar, a Camp AI event selected from the calendar, the official Camp AI Partiful signup flow, multi-step host questions, user-provided facts reused, an authorized Continue action, response recorded, and visible Pending status. The RSVP cleanup happened after proof and is documented separately.
 
 ## First Reply / Comment
 
