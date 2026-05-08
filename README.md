@@ -83,9 +83,9 @@ Codex may notice visible account details or previous Partiful responses in the a
 
 Actual frames from the finder-to-RSVP reviewer demo:
 
-| Plain-English request | Real shortlist |
+| Techwerker promise | Real shortlist |
 | --- | --- |
-| ![Plain-English Tech Week event request](assets/readme/02-ask.jpg) | ![Techwerker shortlist from a real Tech Week query](assets/readme/03-calendar.jpg) |
+| ![Techwerker: Tech Week without the werk](assets/readme/02-ask.jpg) | ![Techwerker shortlist from a real Tech Week query](assets/readme/03-calendar.jpg) |
 
 | Official Partiful | Live Pending proof |
 | --- | --- |

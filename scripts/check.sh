@@ -701,6 +701,8 @@ grep -q 'Camp AI: Agents at Work' docs/release-evidence.md docs/demo-script.md d
 grep -q 'Actual screen recording' docs/demo-video/index.html
 grep -q 'camp-ai-live-proof.mp4' docs/demo-video/index.html docs/demo-video/ASSET-MANIFEST.md
 grep -q 'calendar-to-partiful-flow.mp4' docs/demo-video/index.html docs/demo-video/ASSET-MANIFEST.md
+grep -q 'Techwerker' docs/demo-video/index.html
+grep -q 'Tech Week, without the werk' docs/demo-video/index.html
 grep -q 'Plain-English event finder' docs/demo-video/index.html
 grep -q '28</b> matching events' docs/demo-video/index.html
 grep -q 'Selected from the queue' docs/demo-video/index.html

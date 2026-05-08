@@ -25,7 +25,7 @@ Make a square X/Twitter feed demo that feels native to the Tech Week 2026 site: 
 
 ## Motion
 
-- 35-50 seconds total for the proof cut; keep any shorter social cut derivative under 20 seconds.
+- 45-65 seconds total for the full proof cut; keep any shorter social cut derivative under 20 seconds.
 - Hard cuts, quick vertical slides, and small scale punches.
 - Keep text sparse: no paragraphs, no tiny terminal text.
 - Use color blocks and proof badges for rhythm.

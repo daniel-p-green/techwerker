@@ -18,7 +18,7 @@ This manifest exists because the demo uses visual assets from an authenticated l
 - `assets/readme/03-calendar.jpg`
 - `assets/readme/04-partiful.jpg`
 - `assets/readme/06-pending.jpg`
-  - Purpose: README still frames showing the full proof arc: plain-English request, real shortlist, official Partiful form, and visible Pending.
+  - Purpose: README still frames showing the full proof arc: Techwerker promise, real shortlist, official Partiful form, and visible Pending.
   - Format: 1080x1080 JPG frames exported from `assets/techwerker-reviewer-demo.mp4`.
   - Privacy review: generated from the reviewed MP4; no real email, phone, LinkedIn, profile page, OTP, payment detail, or private message is intentionally visible. Sample public demo fields may appear where needed.
 - `docs/demo-video/assets/calendar-to-partiful-flow.mp4`

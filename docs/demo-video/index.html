@@ -72,6 +72,7 @@
         color: var(--accent);
       }
 
+      .brand-scene,
       .finder-scene {
         position: absolute;
         inset: 0;
@@ -87,6 +88,66 @@
           #030303;
         background-size: 14px 14px, auto, auto, auto;
         z-index: 4;
+      }
+
+      .brand-scene {
+        z-index: 6;
+      }
+
+      .brand-lockup {
+        border: 4px solid #ffffff;
+        background: rgba(3, 3, 3, 0.94);
+        padding: 34px;
+        box-shadow: 14px 14px 0 #ff35ff;
+      }
+
+      .brand-name {
+        color: #ffffff;
+        font-size: 118px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 0.82;
+        text-transform: uppercase;
+      }
+
+      .brand-tagline {
+        margin-top: 24px;
+        color: #7cff00;
+        font-size: 52px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 0.94;
+        text-transform: uppercase;
+      }
+
+      .brand-copy {
+        max-width: 820px;
+        color: #d8d8d8;
+        font-size: 31px;
+        font-weight: 900;
+        line-height: 1.12;
+        text-transform: uppercase;
+      }
+
+      .brand-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .brand-pill {
+        border: 3px solid #ffffff;
+        padding: 12px 16px;
+        background: #030303;
+        color: var(--accent);
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 19px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .finder-scene {
+        opacity: 0;
       }
 
       .query-card {
@@ -163,6 +224,7 @@
         font-size: 18px;
         font-weight: 900;
         text-transform: uppercase;
+        opacity: 0;
         z-index: 8;
       }
 
@@ -212,10 +274,10 @@
 
       .end-card h1 {
         color: #ffffff;
-        font-size: 96px;
+        font-size: 88px;
         font-weight: 1000;
         letter-spacing: 0;
-        line-height: 0.9;
+        line-height: 0.86;
         text-transform: uppercase;
       }
 
@@ -277,11 +339,11 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="23" data-width="1080" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30.5" data-width="1080" data-height="1080">
       <video
         id="calendar"
         class="live-video"
-        data-start="4.4"
+        data-start="9.4"
         data-duration="5.833"
         data-track-index="0"
         src="assets/calendar-to-partiful-flow.mp4"
@@ -292,13 +354,26 @@
       <video
         id="live"
         class="live-video"
-        data-start="10.233"
+        data-start="15.233"
         data-duration="10"
         data-track-index="1"
         src="assets/camp-ai-live-proof.mp4"
         muted
         playsinline
       ></video>
+
+      <section class="brand-scene" id="brand-scene">
+        <div class="brand-lockup">
+          <div class="brand-name">Techwerker</div>
+          <div class="brand-tagline">Tech Week, without the werk.</div>
+        </div>
+        <p class="brand-copy">Tell Codex what you want. It finds events, remembers repeated RSVP fields, and works official Partiful flows after you approve the event.</p>
+        <div class="brand-row">
+          <div class="brand-pill cyan">Custom finder</div>
+          <div class="brand-pill green">Form memory</div>
+          <div class="brand-pill yellow">Live RSVP proof</div>
+        </div>
+      </section>
 
       <section class="finder-scene" id="finder-scene">
         <div class="query-card">
@@ -339,7 +414,7 @@
       </div>
 
       <section class="end-card" id="end-card">
-        <h1>Tech Week,<br />without<br />the werk.</h1>
+        <h1>Techwerker<br />Tech Week,<br />without<br />the werk.</h1>
         <p>Tell Codex what you want. It finds options, fills repeated fields, and works official RSVP flows after approval.</p>
         <div class="chips">
           <div class="chip cyan">Custom finder</div>
@@ -359,25 +434,31 @@
         tl.to(selector, { autoAlpha: 0, y: -16, duration: 0.18, ease: "power2.in" }, start + duration);
       }
 
-      flashLabel("#label-1", 0.25, 1.9);
-      flashLabel("#label-2", 2.25, 1.6);
-      flashLabel("#label-3", 4.65, 1.9);
-      flashLabel("#label-4", 7.35, 2.0);
-      flashLabel("#label-5", 10.65, 1.9);
-      flashLabel("#label-6", 13.35, 2.0);
-      flashLabel("#label-7", 15.85, 1.9);
-      flashLabel("#label-8", 18.0, 2.0);
+      flashLabel("#label-1", 5.05, 1.9);
+      flashLabel("#label-2", 7.25, 1.6);
+      flashLabel("#label-3", 9.65, 1.9);
+      flashLabel("#label-4", 12.35, 2.0);
+      flashLabel("#label-5", 15.65, 1.9);
+      flashLabel("#label-6", 18.35, 2.0);
+      flashLabel("#label-7", 20.85, 1.9);
+      flashLabel("#label-8", 23.0, 2.0);
 
-      tl.from(".query-card", { y: 34, autoAlpha: 0, duration: 0.36, ease: "power3.out" }, 0.08);
-      tl.from(".result-card", { y: 26, autoAlpha: 0, stagger: 0.08, duration: 0.28, ease: "power3.out" }, 1.8);
-      tl.to("#finder-scene", { autoAlpha: 0, duration: 0.28, ease: "power2.in" }, 4.15);
-      tl.to("#selection-badge", { autoAlpha: 1, duration: 0.22, ease: "power2.out" }, 7.2);
-      tl.to("#selection-badge", { autoAlpha: 0, duration: 0.2, ease: "power2.in" }, 20.1);
+      tl.from(".brand-lockup", { y: 34, autoAlpha: 0, duration: 0.36, ease: "power3.out" }, 0.08);
+      tl.from(".brand-copy", { y: 26, autoAlpha: 0, duration: 0.3, ease: "power3.out" }, 0.58);
+      tl.from(".brand-pill", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 1.05);
+      tl.to("#brand-scene", { autoAlpha: 0, duration: 0.3, ease: "power2.in" }, 4.65);
+      tl.to("#finder-scene", { autoAlpha: 1, duration: 0.26, ease: "power2.out" }, 4.75);
+      tl.from(".query-card", { y: 34, autoAlpha: 0, duration: 0.36, ease: "power3.out" }, 4.85);
+      tl.from(".result-card", { y: 26, autoAlpha: 0, stagger: 0.08, duration: 0.28, ease: "power3.out" }, 6.75);
+      tl.to("#finder-scene", { autoAlpha: 0, duration: 0.28, ease: "power2.in" }, 9.15);
+      tl.to(".proof-badge", { autoAlpha: 1, duration: 0.18, ease: "power2.out" }, 9.35);
+      tl.to("#selection-badge", { autoAlpha: 1, duration: 0.22, ease: "power2.out" }, 12.2);
+      tl.to("#selection-badge", { autoAlpha: 0, duration: 0.2, ease: "power2.in" }, 24.35);
 
-      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 20.25);
-      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 20.45);
-      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 20.67);
-      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 20.97);
+      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 24.55);
+      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 24.75);
+      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 24.97);
+      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 25.27);
 
       window.__timelines["main"] = tl;
     </script>
