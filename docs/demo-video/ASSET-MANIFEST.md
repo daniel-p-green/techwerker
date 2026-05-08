@@ -5,20 +5,20 @@ This manifest exists because the demo uses visual assets from an authenticated l
 ## Assets
 
 - `assets/techwerker-reviewer-demo.mp4`
-  - Purpose: square X/Twitter calendar-to-RSVP reviewer cut.
+  - Purpose: square X/Twitter finder-to-RSVP reviewer cut.
   - Format: 1080x1080 MP4.
-  - Source: HyperFrames wrapper around an official Tech Week calendar capture plus a trimmed live screen recording of the official `Camp AI: Agents at Work` Partiful flow.
+  - Source: HyperFrames wrapper around a real `techweek ask` finder result, an official Tech Week calendar capture, a trimmed live screen recording of the official `Camp AI: Agents at Work` Partiful flow, and the Subway Turnstile Clicks instrumental background track.
   - Editorial note: the shareable cut ends on visible `Pending`; the immediate RSVP removal/cleanup is documented in release evidence but edited out of the public video.
   - Privacy review: no real email, phone, LinkedIn, profile page, OTP, payment detail, or private message is intentionally visible. Sample public demo fields may appear where needed.
 - `assets/techwerker-demo.gif`
-  - Purpose: README preview generated from the square calendar-to-RSVP reviewer MP4.
-  - Format: 960x960 GIF.
+  - Purpose: README preview generated from the square finder-to-RSVP reviewer MP4.
+  - Format: 720x720 GIF.
   - Privacy review: generated from the reviewed MP4.
 - `assets/readme/02-ask.jpg`
 - `assets/readme/03-calendar.jpg`
 - `assets/readme/04-partiful.jpg`
 - `assets/readme/06-pending.jpg`
-  - Purpose: README still frames showing the full proof arc: official calendar, selected event, official Partiful form, and visible Pending.
+  - Purpose: README still frames showing the full proof arc: plain-English request, real shortlist, official Partiful form, and visible Pending.
   - Format: 1080x1080 JPG frames exported from `assets/techwerker-reviewer-demo.mp4`.
   - Privacy review: generated from the reviewed MP4; no real email, phone, LinkedIn, profile page, OTP, payment detail, or private message is intentionally visible. Sample public demo fields may appear where needed.
 - `docs/demo-video/assets/calendar-to-partiful-flow.mp4`
@@ -26,7 +26,7 @@ This manifest exists because the demo uses visual assets from an authenticated l
   - Source: browser capture of `https://www.tech-week.com/calendar/nyc`, search for `Camp AI`, visible matching row, then official Partiful event page.
   - Privacy review: public calendar/event pages only; no account details, contact fields, OTP, payment detail, or private message.
 - `docs/demo-video/assets/camp-ai-live-proof.mp4`
-  - Purpose: trimmed source clip for the live-first HyperFrames cut.
+  - Purpose: trimmed source clip for the official Partiful proof segment.
   - Source: official `Camp AI: Agents at Work` Partiful screen recording, ending before the removal/unsubscribe modal.
   - Privacy review: no real email, phone, LinkedIn, OTP, payment detail, or private message is intentionally visible.
 - `docs/demo-video/assets/tech-week-home-style.png`

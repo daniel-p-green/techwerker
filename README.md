@@ -81,17 +81,17 @@ Codex may notice visible account details or previous Partiful responses in the a
 
 ![Techwerker demo](assets/techwerker-demo.gif)
 
-Actual frames from the calendar-to-RSVP reviewer demo:
+Actual frames from the finder-to-RSVP reviewer demo:
 
-| Official calendar | Camp AI selected |
+| Plain-English request | Real shortlist |
 | --- | --- |
-| ![Official New York Tech Week calendar](assets/readme/02-ask.jpg) | ![Camp AI selected from the official Tech Week calendar](assets/readme/03-calendar.jpg) |
+| ![Plain-English Tech Week event request](assets/readme/02-ask.jpg) | ![Techwerker shortlist from a real Tech Week query](assets/readme/03-calendar.jpg) |
 
 | Official Partiful | Live Pending proof |
 | --- | --- |
 | ![Official Camp AI Partiful RSVP form](assets/readme/04-partiful.jpg) | ![Visible Pending state on the official Camp AI Partiful page](assets/readme/06-pending.jpg) |
 
-The square X/Twitter demo artifact is [assets/techwerker-reviewer-demo.mp4](assets/techwerker-reviewer-demo.mp4). It shows the full public proof arc: official New York Tech Week calendar, Camp AI selected, official Partiful page, host questions, scoped Continue, response recorded, and visible `Pending`. The immediate cleanup/removal is documented in [docs/release-evidence.md](docs/release-evidence.md), but not included in the shareable cut.
+The square X/Twitter demo artifact is [assets/techwerker-reviewer-demo.mp4](assets/techwerker-reviewer-demo.mp4). It shows the full public proof arc: a plain-English event request, real Tech Week shortlist, official Tech Week calendar, one selected proof target, official Partiful page, host questions, scoped Continue, response recorded, and visible `Pending`. The immediate cleanup/removal is documented in [docs/release-evidence.md](docs/release-evidence.md), but not included in the shareable cut.
 
 Example:
 

@@ -117,11 +117,11 @@ https://github.com/daniel-p-green/techwerker
 
 ## Video Caption
 
-Full-flow proof: Techwerker goes from the official Tech Week calendar to a selected Camp AI event, opens the official Partiful page, handles host questions, clicks the authorized Continue path, and reaches visible Pending.
+Full-flow proof: Techwerker turns a plain-English request into a real Tech Week shortlist, selects one proof target, opens the official Partiful page, handles host questions, clicks the authorized Continue path, and reaches visible Pending.
 
 ## Alt Text
 
-Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video shows the official New York Tech Week calendar, a Camp AI event selected from the calendar, the official Camp AI Partiful signup flow, multi-step host questions, user-provided facts reused, an authorized Continue action, response recorded, and visible Pending status. The RSVP cleanup happened after proof and is documented separately.
+Square demo video for Techwerker, an unofficial Codex plugin for Tech Week. The video shows a plain-English event request, a real Tech Week shortlist, the official New York Tech Week calendar, one selected proof target, the official Camp AI Partiful signup flow, multi-step host questions, user-provided facts reused, an authorized Continue action, response recorded, and visible Pending status. The RSVP cleanup happened after proof and is documented separately.
 
 ## First Reply / Comment
 

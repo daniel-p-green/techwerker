@@ -18,7 +18,7 @@ Use this as the compact reviewer proof packet for the public beta / open-source 
 
 ## Live Proof
 
-On May 7, 2026, Codex used the official `Camp AI: Agents at Work` Partiful flow as the fresh reviewer demo target. The flow handled a multi-step host-question form, filled user-provided sample fields, used the user-provided 21+ answer, clicked the scoped authorized Continue path, reached visible Partiful `Pending`, and then removed the RSVP immediately after the proof with explicit user authorization. The public demo video now shows the full public proof arc: official New York Tech Week calendar, Camp AI selected, official Partiful page, host questions, scoped Continue, and visible `Pending`; the removal step is kept as release evidence rather than shareable footage.
+On May 7, 2026, Codex used the official `Camp AI: Agents at Work` Partiful flow as the fresh reviewer demo target. The flow handled a multi-step host-question form, filled user-provided sample fields, used the user-provided 21+ answer, clicked the scoped authorized Continue path, reached visible Partiful `Pending`, and then removed the RSVP immediately after the proof with explicit user authorization. The public demo video now shows the full public proof arc: a plain-English event request, real Tech Week shortlist, official New York Tech Week calendar, one selected proof target, official Partiful page, host questions, scoped Continue, and visible `Pending`; the removal step is kept as release evidence rather than shareable footage.
 
 Proof event:
 

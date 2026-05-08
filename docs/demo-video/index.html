@@ -45,6 +45,7 @@
           linear-gradient(to bottom, rgba(0, 0, 0, 0.42), transparent 20%, transparent 72%, rgba(0, 0, 0, 0.54)),
           linear-gradient(to right, rgba(0, 0, 0, 0.2), transparent 34%, transparent 78%, rgba(0, 0, 0, 0.18));
         pointer-events: none;
+        z-index: 5;
       }
 
       .label {
@@ -64,10 +65,90 @@
         line-height: 1;
         text-transform: uppercase;
         opacity: 0;
+        z-index: 8;
       }
 
       .label b {
         color: var(--accent);
+      }
+
+      .finder-scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 28px;
+        padding: 72px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+          radial-gradient(circle at 78% 16%, rgba(0, 216, 255, 0.2), transparent 30%),
+          radial-gradient(circle at 18% 82%, rgba(124, 255, 0, 0.14), transparent 26%),
+          #030303;
+        background-size: 14px 14px, auto, auto, auto;
+        z-index: 4;
+      }
+
+      .query-card {
+        border: 4px solid #ffffff;
+        background: rgba(3, 3, 3, 0.92);
+        padding: 28px;
+        box-shadow: 12px 12px 0 #00d8ff;
+      }
+
+      .query-kicker {
+        color: #7cff00;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 22px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .query-card h2 {
+        margin-top: 18px;
+        color: #ffffff;
+        font-size: 58px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 0.98;
+        text-transform: uppercase;
+      }
+
+      .result-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .result-card {
+        min-height: 190px;
+        border: 3px solid #ffffff;
+        background: #0a0a0a;
+        padding: 18px;
+      }
+
+      .result-card strong {
+        display: block;
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 1000;
+        line-height: 0.98;
+        text-transform: uppercase;
+      }
+
+      .result-card span {
+        display: block;
+        margin-top: 16px;
+        color: #00d8ff;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1.15;
+        text-transform: uppercase;
+      }
+
+      .result-card.pick {
+        box-shadow: 8px 8px 0 #ff35ff;
       }
 
       .proof-badge {
@@ -82,13 +163,14 @@
         font-size: 18px;
         font-weight: 900;
         text-transform: uppercase;
+        z-index: 8;
       }
 
-      .event-badge {
+      .selection-badge {
         position: absolute;
         left: 36px;
         bottom: 34px;
-        max-width: 640px;
+        max-width: 700px;
         border: 3px solid #ffffff;
         padding: 16px 18px;
         background: rgba(3, 3, 3, 0.86);
@@ -97,9 +179,11 @@
         font-weight: 1000;
         line-height: 1.02;
         text-transform: uppercase;
+        opacity: 0;
+        z-index: 8;
       }
 
-      .event-badge span {
+      .selection-badge span {
         display: block;
         margin-top: 7px;
         color: #00d8ff;
@@ -123,6 +207,7 @@
           #030303;
         background-size: 14px 14px, auto, auto, auto;
         opacity: 0;
+        z-index: 10;
       }
 
       .end-card h1 {
@@ -192,11 +277,11 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="19" data-width="1080" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="23" data-width="1080" data-height="1080">
       <video
         id="calendar"
         class="live-video"
-        data-start="0"
+        data-start="4.4"
         data-duration="5.833"
         data-track-index="0"
         src="assets/calendar-to-partiful-flow.mp4"
@@ -207,7 +292,7 @@
       <video
         id="live"
         class="live-video"
-        data-start="5.833"
+        data-start="10.233"
         data-duration="10"
         data-track-index="1"
         src="assets/camp-ai-live-proof.mp4"
@@ -215,27 +300,50 @@
         playsinline
       ></video>
 
+      <section class="finder-scene" id="finder-scene">
+        <div class="query-card">
+          <div class="query-kicker">Plain-English event finder</div>
+          <h2>Find me a cool AI event Wednesday evening near Flatiron.</h2>
+        </div>
+        <div class="result-grid">
+          <div class="result-card pick">
+            <strong>Camp AI: Agents at Work</strong>
+            <span>Selected proof target<br />Official Partiful RSVP</span>
+          </div>
+          <div class="result-card">
+            <strong>Agent Harnesses</strong>
+            <span>Union Square<br />Same cluster</span>
+          </div>
+          <div class="result-card">
+            <strong>AI Collective Demo Night</strong>
+            <span>Flatiron<br />Open signup link</span>
+          </div>
+        </div>
+      </section>
+
       <div class="shade"></div>
       <div class="proof-badge">Actual screen recording</div>
 
-      <div id="label-1" class="label cyan"><b>Official</b> Tech Week calendar</div>
-      <div id="label-2" class="label magenta"><b>Camp AI</b> selected</div>
-      <div id="label-3" class="label cyan"><b>Official</b> Partiful form</div>
-      <div id="label-4" class="label yellow"><b>Host questions</b> handled</div>
-      <div id="label-5" class="label green"><b>Continue</b> clicked</div>
-      <div id="label-6" class="label cyan"><b>Pending</b> visible</div>
+      <div id="label-1" class="label cyan"><b>Intent</b> becomes a shortlist</div>
+      <div id="label-2" class="label green"><b>28</b> matching events</div>
+      <div id="label-3" class="label cyan"><b>Official</b> Tech Week calendar</div>
+      <div id="label-4" class="label magenta"><b>One</b> event selected</div>
+      <div id="label-5" class="label cyan"><b>Official</b> RSVP page</div>
+      <div id="label-6" class="label yellow"><b>Host questions</b> handled</div>
+      <div id="label-7" class="label green"><b>Continue</b> clicked</div>
+      <div id="label-8" class="label cyan"><b>Pending</b> visible</div>
 
-      <div class="event-badge">
-        Camp AI: Agents at Work
-        <span>Official Tech Week / Partiful flow</span>
+      <div id="selection-badge" class="selection-badge">
+        Selected from the queue
+        <span>Camp AI is the proof target, not the whole product</span>
       </div>
 
       <section class="end-card" id="end-card">
         <h1>Tech Week,<br />without<br />the werk.</h1>
-        <p>Codex plans the queue, fills repeated fields, and works the official RSVP flow after you approve the event.</p>
+        <p>Tell Codex what you want. It finds options, fills repeated fields, and works official RSVP flows after approval.</p>
         <div class="chips">
-          <div class="chip cyan">Official pages</div>
-          <div class="chip green">Authorized clicks</div>
+          <div class="chip cyan">Custom finder</div>
+          <div class="chip green">RSVP queue</div>
           <div class="chip yellow">Stops safely</div>
         </div>
         <div class="micro"><span>Unofficial Codex demo</span><span>Not affiliated</span></div>
@@ -251,17 +359,25 @@
         tl.to(selector, { autoAlpha: 0, y: -16, duration: 0.18, ease: "power2.in" }, start + duration);
       }
 
-      flashLabel("#label-1", 0.2, 2.0);
-      flashLabel("#label-2", 2.75, 2.1);
-      flashLabel("#label-3", 6.05, 2.0);
-      flashLabel("#label-4", 8.85, 2.0);
-      flashLabel("#label-5", 11.25, 1.9);
-      flashLabel("#label-6", 13.45, 2.1);
+      flashLabel("#label-1", 0.25, 1.9);
+      flashLabel("#label-2", 2.25, 1.6);
+      flashLabel("#label-3", 4.65, 1.9);
+      flashLabel("#label-4", 7.35, 2.0);
+      flashLabel("#label-5", 10.65, 1.9);
+      flashLabel("#label-6", 13.35, 2.0);
+      flashLabel("#label-7", 15.85, 1.9);
+      flashLabel("#label-8", 18.0, 2.0);
 
-      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 15.85);
-      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 16.05);
-      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 16.27);
-      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 16.57);
+      tl.from(".query-card", { y: 34, autoAlpha: 0, duration: 0.36, ease: "power3.out" }, 0.08);
+      tl.from(".result-card", { y: 26, autoAlpha: 0, stagger: 0.08, duration: 0.28, ease: "power3.out" }, 1.8);
+      tl.to("#finder-scene", { autoAlpha: 0, duration: 0.28, ease: "power2.in" }, 4.15);
+      tl.to("#selection-badge", { autoAlpha: 1, duration: 0.22, ease: "power2.out" }, 7.2);
+      tl.to("#selection-badge", { autoAlpha: 0, duration: 0.2, ease: "power2.in" }, 20.1);
+
+      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 20.25);
+      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 20.45);
+      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 20.67);
+      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 20.97);
 
       window.__timelines["main"] = tl;
     </script>

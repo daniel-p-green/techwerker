@@ -701,8 +701,10 @@ grep -q 'Camp AI: Agents at Work' docs/release-evidence.md docs/demo-script.md d
 grep -q 'Actual screen recording' docs/demo-video/index.html
 grep -q 'camp-ai-live-proof.mp4' docs/demo-video/index.html docs/demo-video/ASSET-MANIFEST.md
 grep -q 'calendar-to-partiful-flow.mp4' docs/demo-video/index.html docs/demo-video/ASSET-MANIFEST.md
-grep -q 'Official</b> Tech Week calendar' docs/demo-video/index.html
-grep -q 'Camp AI</b> selected' docs/demo-video/index.html
+grep -q 'Plain-English event finder' docs/demo-video/index.html
+grep -q '28</b> matching events' docs/demo-video/index.html
+grep -q 'Selected from the queue' docs/demo-video/index.html
+grep -q 'Camp AI is the proof target, not the whole product' docs/demo-video/index.html
 ! grep -q 'TWKR' docs/demo-video/index.html
 grep -q 'https://partiful.com/e/Fp5STyPH0McEt0awlWFD' docs/release-evidence.md docs/demo-script.md
 grep -q 'Rebuild x Eleven Labs Hackathon' docs/release-evidence.md
