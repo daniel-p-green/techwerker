@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background: #030303;
+        color: #ffffff;
+        font-family: Inter, "Arial Black", "Helvetica Neue", Arial, sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background: #030303;
+      }
+
+      .live-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.08) contrast(1.06);
+      }
+
+      .shade {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.42), transparent 20%, transparent 72%, rgba(0, 0, 0, 0.54)),
+          linear-gradient(to right, rgba(0, 0, 0, 0.2), transparent 34%, transparent 78%, rgba(0, 0, 0, 0.18));
+        pointer-events: none;
+      }
+
+      .label {
+        position: absolute;
+        left: 36px;
+        top: 34px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border: 3px solid #ffffff;
+        padding: 14px 18px;
+        background: rgba(3, 3, 3, 0.88);
+        color: #ffffff;
+        font-size: 32px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 1;
+        text-transform: uppercase;
+        opacity: 0;
+      }
+
+      .label b {
+        color: var(--accent);
+      }
+
+      .proof-badge {
+        position: absolute;
+        right: 34px;
+        top: 34px;
+        border: 2px solid #ffffff;
+        padding: 10px 14px;
+        background: rgba(3, 3, 3, 0.8);
+        color: #b9b9b9;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 18px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .event-badge {
+        position: absolute;
+        left: 36px;
+        bottom: 34px;
+        max-width: 640px;
+        border: 3px solid #ffffff;
+        padding: 16px 18px;
+        background: rgba(3, 3, 3, 0.86);
+        color: #ffffff;
+        font-size: 30px;
+        font-weight: 1000;
+        line-height: 1.02;
+        text-transform: uppercase;
+      }
+
+      .event-badge span {
+        display: block;
+        margin-top: 7px;
+        color: #00d8ff;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .end-card {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 28px;
+        padding: 72px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+          radial-gradient(circle at 83% 18%, rgba(0, 216, 255, 0.24), transparent 28%),
+          radial-gradient(circle at 20% 82%, rgba(255, 53, 255, 0.2), transparent 24%),
+          #030303;
+        background-size: 14px 14px, auto, auto, auto;
+        opacity: 0;
+      }
+
+      .end-card h1 {
+        color: #ffffff;
+        font-size: 96px;
+        font-weight: 1000;
+        letter-spacing: 0;
+        line-height: 0.9;
+        text-transform: uppercase;
+      }
+
+      .end-card p {
+        max-width: 760px;
+        color: #d8d8d8;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.12;
+        text-transform: uppercase;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .chip {
+        border: 3px solid #ffffff;
+        padding: 12px 16px;
+        background: #030303;
+        color: var(--accent);
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .micro {
+        position: absolute;
+        left: 72px;
+        right: 72px;
+        bottom: 48px;
+        display: flex;
+        justify-content: space-between;
+        color: #b9b9b9;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 17px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .cyan {
+        --accent: #00d8ff;
+      }
+
+      .green {
+        --accent: #7cff00;
+      }
+
+      .yellow {
+        --accent: #fff200;
+      }
+
+      .magenta {
+        --accent: #ff35ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="19" data-width="1080" data-height="1080">
+      <video
+        id="calendar"
+        class="live-video"
+        data-start="0"
+        data-duration="5.833"
+        data-track-index="0"
+        src="assets/calendar-to-partiful-flow.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <video
+        id="live"
+        class="live-video"
+        data-start="5.833"
+        data-duration="10"
+        data-track-index="1"
+        src="assets/camp-ai-live-proof.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <div class="shade"></div>
+      <div class="proof-badge">Actual screen recording</div>
+
+      <div id="label-1" class="label cyan"><b>Official</b> Tech Week calendar</div>
+      <div id="label-2" class="label magenta"><b>Camp AI</b> selected</div>
+      <div id="label-3" class="label cyan"><b>Official</b> Partiful form</div>
+      <div id="label-4" class="label yellow"><b>Host questions</b> handled</div>
+      <div id="label-5" class="label green"><b>Continue</b> clicked</div>
+      <div id="label-6" class="label cyan"><b>Pending</b> visible</div>
+
+      <div class="event-badge">
+        Camp AI: Agents at Work
+        <span>Official Tech Week / Partiful flow</span>
+      </div>
+
+      <section class="end-card" id="end-card">
+        <h1>Tech Week,<br />without<br />the werk.</h1>
+        <p>Codex plans the queue, fills repeated fields, and works the official RSVP flow after you approve the event.</p>
+        <div class="chips">
+          <div class="chip cyan">Official pages</div>
+          <div class="chip green">Authorized clicks</div>
+          <div class="chip yellow">Stops safely</div>
+        </div>
+        <div class="micro"><span>Unofficial Codex demo</span><span>Not affiliated</span></div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      function flashLabel(selector, start, duration) {
+        tl.fromTo(selector, { autoAlpha: 0, y: -20 }, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power3.out" }, start);
+        tl.to(selector, { autoAlpha: 0, y: -16, duration: 0.18, ease: "power2.in" }, start + duration);
+      }
+
+      flashLabel("#label-1", 0.2, 2.0);
+      flashLabel("#label-2", 2.75, 2.1);
+      flashLabel("#label-3", 6.05, 2.0);
+      flashLabel("#label-4", 8.85, 2.0);
+      flashLabel("#label-5", 11.25, 1.9);
+      flashLabel("#label-6", 13.45, 2.1);
+
+      tl.to("#end-card", { autoAlpha: 1, duration: 0.28, ease: "power2.out" }, 15.85);
+      tl.from("#end-card h1", { y: 34, autoAlpha: 0, duration: 0.34, ease: "power3.out" }, 16.05);
+      tl.from("#end-card p", { y: 28, autoAlpha: 0, duration: 0.28, ease: "power3.out" }, 16.27);
+      tl.from("#end-card .chip", { y: 18, autoAlpha: 0, stagger: 0.06, duration: 0.22, ease: "power3.out" }, 16.57);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

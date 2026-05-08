@@ -22,3 +22,6 @@ __pycache__/
 **/portfolio.json
 **/interest-options.json
 **/latest.json
+
+# Raw recording frames are large and may include authenticated browser chrome.
+docs/demo-video/captures/

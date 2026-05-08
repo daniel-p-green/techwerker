@@ -9,17 +9,20 @@ First ask the user which Tech Week city they want to plan, using the calendar's 
 
 - New York (`nyc`)
 - Boston (`boston`)
-- San Francisco (`san-francisco`, coming soon)
+- San Francisco (`san-francisco`, pending until the public calendar launches)
 
 Do not assume a city in chat onboarding. If the user chooses San Francisco, explain that support is present but the calendar may stay pending until San Francisco launches.
 
 After the city is chosen, initialize local state privately:
 
 ```bash
+techweek onboarding-context --city <city> --json
 techweek setup --city <city> --no-interactive
 techweek profile --city <city> missing
 techweek interests --city <city>
 ```
+
+Use `onboarding-context` to keep first-run setup compact: collect reusable identity fields once, collect preferences once, and then let Codex handle calendar review, event selection, RSVP, and repeated forms privately.
 
 Collect only the basic non-secret fields Tech Week RSVP forms commonly ask for:
 
@@ -32,7 +35,7 @@ Collect only the basic non-secret fields Tech Week RSVP forms commonly ask for:
 - LinkedIn profile (`linkedin`)
 - goal of attending (`why_attending`, optional)
 
-Ask for the missing required fields in one compact batch. Include the optional goal-of-attending question, but make clear it can be skipped.
+Ask for the missing required fields in one compact batch. Include the optional goal-of-attending question, but make clear it can be skipped. Explain that this optional answer can help Codex draft low-stakes "why do you want to attend?" responses later, but Codex will not invent factual personal data.
 
 Then ask for lightweight event preferences from the selected city's available calendar options:
 
@@ -40,6 +43,7 @@ Then ask for lightweight event preferences from the selected city's available ca
 - neighborhoods or location clusters to prefer
 - event types to prioritize or avoid
 - start times to prefer or avoid
+- how tightly to cluster each day geographically, defaulting to one or two location clusters per day
 
 For New York and Boston, the visible calendar filters include these common options:
 
@@ -72,7 +76,7 @@ techweek profile --city <city> set linkedin "<linkedin-url>"
 techweek profile --city <city> set why_attending "<goal>"
 ```
 
-Save preference answers privately with `techweek preferences --city <city> set-list <field> "<comma-separated values>"`.
+Save preference answers privately with `techweek preferences --city <city> set-list <field> "<comma-separated values>"`. For the commute strategy, set `max_clusters_per_day` to `2` by default unless the user wants a tighter or looser day.
 
 Do not ask for or store credentials, passwords, one-time codes, payment details, or anything Partiful-login-specific.
 
